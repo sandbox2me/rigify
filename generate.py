@@ -393,7 +393,7 @@ def generate_rig(context, metarig):
     else:
         script = bpy.data.texts.new("rig_ui.py")
 
-    #TODO CLEANUP
+    #TODO: CLEANUP AND GET DEFAULT TEMPLATE rig_ui_template.py (how?)
     id_store = bpy.context.window_manager
     template_name = id_store.rigify_templates[id_store.rigify_active_template].name
     template = get_ui_template_module(template_name)

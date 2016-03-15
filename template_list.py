@@ -31,6 +31,7 @@ def get_template_list():
     files = os.listdir(TTE_DIR_ABS)
     files.sort()
 
+    files = [f for f in files if f.endswith(".py")]
     # for f in files:
     #     is_dir = os.path.isdir(os.path.join(SEARCH_DIR_ABS, f))  # Whether the file is a directory
 
