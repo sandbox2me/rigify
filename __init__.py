@@ -38,13 +38,18 @@ if "bpy" in locals():
     importlib.reload(utils)
     importlib.reload(metarig_menu)
     importlib.reload(rig_lists)
+    importlib.reload(template_list)
 else:
-    from . import utils, rig_lists, generate, ui, metarig_menu
+    from . import utils, rig_lists, template_list, generate, ui, metarig_menu
 
 import bpy
 
 
 class RigifyName(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty()
+
+
+class RigifyTemplate(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty()
 
 
@@ -64,6 +69,7 @@ def register():
     metarig_menu.register()
 
     bpy.utils.register_class(RigifyName)
+    bpy.utils.register_class(RigifyTemplate)
     bpy.utils.register_class(RigifyParameters)
     bpy.utils.register_class(RigifyArmatureLayer)
 
@@ -76,6 +82,9 @@ def register():
     IDStore.rigify_collection = bpy.props.EnumProperty(items=rig_lists.col_enum_list, default="All", name="Rigify Active Collection", description="The selected rig collection")
     IDStore.rigify_types = bpy.props.CollectionProperty(type=RigifyName)
     IDStore.rigify_active_type = bpy.props.IntProperty(name="Rigify Active Type", description="The selected rig type")
+
+    IDStore.rigify_templates = bpy.props.CollectionProperty(type=RigifyTemplate)
+    IDStore.rigify_active_template = bpy.props.IntProperty(name="Rigify Active Template", description="The selected ui template")
 
     # Add rig parameters
     for rig in rig_lists.rig_list:
@@ -94,8 +103,11 @@ def unregister():
     del IDStore.rigify_collection
     del IDStore.rigify_types
     del IDStore.rigify_active_type
+    del IDStore.rigify_templates
+    del IDStore.rigify_active_template
 
     bpy.utils.unregister_class(RigifyName)
+    bpy.utils.unregister_class(RigifyTemplate)
     bpy.utils.unregister_class(RigifyParameters)
     bpy.utils.unregister_class(RigifyArmatureLayer)
 

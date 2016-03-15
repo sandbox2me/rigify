@@ -29,6 +29,7 @@ from rna_prop_ui import rna_idprop_ui_prop_get
 
 RIG_DIR = "rigs"  # Name of the directory where rig types are kept
 METARIG_DIR = "metarigs"  # Name of the directory where metarigs are kept
+TEMPLATE_DIR = "ui_templates"  # Name of the directory where ui templates are kept
 
 ORG_PREFIX = "ORG-"  # Prefix of original bones.
 MCH_PREFIX = "MCH-"  # Prefix of mechanism bones.
@@ -708,6 +709,15 @@ def get_metarig_module(metarig_name):
     """ Fetches a rig module by name, and returns it.
     """
     name = ".%s.%s" % (METARIG_DIR, metarig_name)
+    submod = importlib.import_module(name, package=MODULE_NAME)
+    importlib.reload(submod)
+    return submod
+
+
+def get_ui_template_module(template_name):
+    """ Fetches a ui template module by name, and returns it.
+    """
+    name = ".%s.%s" % (TEMPLATE_DIR, template_name)
     submod = importlib.import_module(name, package=MODULE_NAME)
     importlib.reload(submod)
     return submod

@@ -31,7 +31,8 @@ from .utils import RIG_DIR
 from .utils import create_root_widget
 from .utils import random_id
 from .utils import copy_attributes
-from .rig_ui_template import UI_SLIDERS, layers_ui, UI_REGISTER
+#from .rig_ui_template import UI_SLIDERS, layers_ui, UI_REGISTER
+from .utils import get_ui_template_module
 
 RIG_MODULE = "rigs"
 ORG_LAYER = [n == 31 for n in range(0, 32)]  # Armature layer that original bones should be moved to.
@@ -391,11 +392,16 @@ def generate_rig(context, metarig):
         script.clear()
     else:
         script = bpy.data.texts.new("rig_ui.py")
-    script.write(UI_SLIDERS % rig_id)
+
+    #TODO CLEANUP
+    id_store = bpy.context.window_manager
+    template_name = id_store.rigify_templates[id_store.rigify_active_template].name
+    template = get_ui_template_module(template_name)
+    script.write(template.UI_SLIDERS % rig_id)
     for s in ui_scripts:
         script.write("\n        " + s.replace("\n", "\n        ") + "\n")
-    script.write(layers_ui(vis_layers, layer_layout))
-    script.write(UI_REGISTER)
+    script.write(template.layers_ui(vis_layers, layer_layout))
+    script.write(template.UI_REGISTER)
     script.use_module = True
 
     # Run UI script

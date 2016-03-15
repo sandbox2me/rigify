@@ -24,6 +24,7 @@ from bpy.props import StringProperty
 from .utils import get_rig_type, MetarigError
 from .utils import write_metarig, write_widget
 from . import rig_lists
+from . import template_list
 from . import generate
 
 
@@ -51,6 +52,25 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
         id_store = C.window_manager
 
         if obj.mode in {'POSE', 'OBJECT'}:
+            # Rig type field
+            # row = layout.row()
+
+            for i in range(0, len(id_store.rigify_templates)):
+                id_store.rigify_templates.remove(0)
+
+            for t in template_list.template_list:
+                # collection = r.split('.')[0]  # UNUSED
+                # if collection_name == "All":
+                a = id_store.rigify_templates.add()
+                a.name = t[:-3]
+                # elif r.startswith(collection_name + '.'):
+                #     a = id_store.rigify_templates.add()
+                #     a.name = t
+                # elif (collection_name == "None") and ("." not in r):
+                #     a = id_store.rigify_templates.add()
+                #     a.name = t
+
+            layout.template_list("UI_UL_list", "rigify_templates", id_store, "rigify_templates", id_store, "rigify_active_template")
             layout.operator("pose.rigify_generate", text="Generate")
         elif obj.mode == 'EDIT':
             # Build types list
