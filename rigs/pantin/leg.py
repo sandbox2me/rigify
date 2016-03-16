@@ -15,7 +15,20 @@ importlib.reload(limb_common)
 class Rig:
     def __init__(self, obj, bone_name, params):
         self.obj = obj
-        self.org_bones = [bone_name] + connected_children_names(obj, bone_name)[:2]
+
+        bones = obj.data.bones
+        leg = bone_name
+        shin = bones[leg].children[0].name
+        for b in bones[shin].children:
+            if not len(b.children):
+                heel = b.name
+            else:
+                foot = b.name
+        print(heel, foot)
+        toe = bones[foot].children[0].name
+        roll = bones[toe].children[0].name
+
+        self.org_bones = [leg, shin, foot, heel, toe, roll]# + connected_children_names(obj, bone_name)[:2]
         self.params = params
         if "right_layers" in params:
             self.right_layers = [bool(l) for l in params["right_layers"]]
@@ -30,18 +43,23 @@ class Rig:
         
         self.ik_limbs = {}
         for s in sides:
-            self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones, joint_name, s)
+            self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones[:3], joint_name, s, ik_limits=[-150.0, 150.0, 0.0, 160.0])
 
     def generate(self):
         for s, ik_limb in self.ik_limbs.items():
             ulimb_ik, ulimb_str, flimb_str, joint_str, elimb_ik, elimb_str = ik_limb.generate()
 
-            bpy.ops.object.mode_set(mode='EDIT')        
+            bpy.ops.object.mode_set(mode='EDIT')
 
             # Def bones
             eb = self.obj.data.edit_bones
-            for i, b in enumerate([ulimb_str, flimb_str, elimb_str]):
-                def_bone = pantin_utils.create_deformation(self.obj, b, 5-self.params.Z_index, i, b[4:-13]+s)
+            if s == '.L':
+                Z_index = self.params.Z_index
+            else:
+                Z_index = 5-self.params.Z_index
+                
+            for i, b in enumerate([elimb_str, flimb_str, ulimb_str]):
+                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, Z_index, i, b[4:-13]+s)
 
             # Set layers if specified
             if s == '.R' and self.right_layers:

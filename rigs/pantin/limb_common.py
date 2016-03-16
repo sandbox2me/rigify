@@ -1,5 +1,6 @@
 import bpy
 from mathutils import Vector
+from math import radians
 import importlib
 
 from ...utils import copy_bone, new_bone, put_bone
@@ -13,7 +14,7 @@ from . import pantin_utils
 importlib.reload(pantin_utils)
 
 class IKLimb:
-    def __init__(self, obj, org_bones, stretch_joint_name, side_suffix='', follow_org=False):
+    def __init__(self, obj, org_bones, stretch_joint_name, side_suffix='', follow_org=False, ik_limits=[-150.0, 150.0, 0.0, 160.0]):
         self.obj = obj
 
         # Get the chain of 3 connected bones
@@ -27,6 +28,7 @@ class IKLimb:
 
         self.stretch_joint_name = stretch_joint_name
         self.side_suffix = side_suffix
+        self.ik_limits = ik_limits
 
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
@@ -127,6 +129,7 @@ class IKLimb:
         con.subtarget = joint_str
         con.volume = 'NO_VOLUME'
         con.rest_length = ulimb_str_p.length
+        con.keep_axis = 'PLANE_Z'
 
         con = flimb_str_p.constraints.new('STRETCH_TO')
         con.name = "stretch to"
@@ -134,5 +137,21 @@ class IKLimb:
         con.subtarget = elimb_str
         con.volume = 'NO_VOLUME'
         con.rest_length = flimb_str_p.length
+        con.keep_axis = 'PLANE_Z'
+
+        # IK Limits
+        ulimb_ik_p.lock_ik_x = True
+        ulimb_ik_p.lock_ik_y = True
+        ulimb_ik_p.use_ik_limit_z = True
+        
+        ulimb_ik_p.ik_min_z = radians(self.ik_limits[0]) #radians(-150.0)
+        ulimb_ik_p.ik_max_z = radians(self.ik_limits[1]) #radians(150.0)
+
+        flimb_ik_p.lock_ik_x = True
+        flimb_ik_p.lock_ik_y = True
+        flimb_ik_p.use_ik_limit_z = True
+        flimb_ik_p.ik_min_z = radians(self.ik_limits[2]) #0.0
+        flimb_ik_p.ik_max_z = radians(self.ik_limits[3]) #radians(160.0)
+        
 
         return [ulimb_ik, ulimb_str, flimb_str, joint_str, elimb_ik, elimb_str]

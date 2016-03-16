@@ -44,7 +44,7 @@ class Rig:
             ctrl_chain += [ctrl_bone_e.name]
 
             # Def bones
-            def_bone = pantin_utils.create_deformation(self.obj, b, self.params.Z_index, i)
+            def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, self.params.Z_index, i)
             def_chain.append(def_bone)
 
         bpy.ops.object.mode_set(mode='OBJECT')

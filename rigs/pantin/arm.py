@@ -30,18 +30,23 @@ class Rig:
         
         self.ik_limbs = {}
         for s in sides:
-            self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones, joint_name, s)
+            self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones, joint_name, s, ik_limits=[-150.0, 150.0, -160.0, 0.0])
 
     def generate(self):
         for s, ik_limb in self.ik_limbs.items():
             ulimb_ik, ulimb_str, flimb_str, joint_str, elimb_ik, elimb_str = ik_limb.generate()
 
-            bpy.ops.object.mode_set(mode='EDIT')        
+            bpy.ops.object.mode_set(mode='EDIT')
 
             # Def bones
             eb = self.obj.data.edit_bones
-            for i, b in enumerate([ulimb_str, flimb_str, elimb_str]):
-                def_bone = pantin_utils.create_deformation(self.obj, b, 5-self.params.Z_index, i, b[4:-13]+s)
+            if s == '.L':
+                Z_index = self.params.Z_index
+            else:
+                Z_index = 5-self.params.Z_index
+                
+            for i, b in enumerate([elimb_str, flimb_str, ulimb_str]):
+                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, Z_index, i, b[4:-13]+s)
 
             # Set layers if specified
             if s == '.R' and self.right_layers:

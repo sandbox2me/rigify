@@ -53,7 +53,7 @@ def create(obj):
     arm.rigify_layers[20].row = 3
     arm.rigify_layers[21].name = " "
     arm.rigify_layers[21].row = 1
-    arm.rigify_layers[22].name = "Jambe Gauche"
+    arm.rigify_layers[22].name = "Jambe Droite"
     arm.rigify_layers[22].row = 4
     arm.rigify_layers[23].name = " "
     arm.rigify_layers[23].row = 1
@@ -74,12 +74,6 @@ def create(obj):
     bone.roll = -3.1311
     bone.use_connect = False
     bones['Bassin'] = bone.name
-    bone = arm.edit_bones.new('Pointe')
-    bone.head[:] = 0.1349, 0.0000, 0.0000
-    bone.tail[:] = 0.2170, 0.0000, 0.0000
-    bone.roll = -1.5708
-    bone.use_connect = False
-    bones['Pointe'] = bone.name
     bone = arm.edit_bones.new('Cuisse')
     bone.head[:] = 0.0025, 0.0000, 0.7926
     bone.tail[:] = 0.1005, 0.0000, 0.4196
@@ -94,13 +88,6 @@ def create(obj):
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Bassin']]
     bones['Abdomen'] = bone.name
-    bone = arm.edit_bones.new('Cou_pied.ik')
-    bone.head[:] = -0.0952, -0.0000, 0.0890
-    bone.tail[:] = -0.1901, -0.0000, 0.0890
-    bone.roll = 1.5708
-    bone.use_connect = False
-    bone.parent = arm.edit_bones[bones['Pointe']]
-    bones['Cou_pied.ik'] = bone.name
     bone = arm.edit_bones.new('Jambe')
     bone.head[:] = 0.1005, 0.0000, 0.4196
     bone.tail[:] = -0.0091, 0.0000, 0.0871
@@ -157,6 +144,13 @@ def create(obj):
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['Epaule']]
     bones['Bras'] = bone.name
+    bone = arm.edit_bones.new('Pointe')
+    bone.head[:] = 0.1349, 0.0000, 0.0000
+    bone.tail[:] = 0.2170, 0.0000, 0.0000
+    bone.roll = -1.5708
+    bone.use_connect = False
+    bone.parent = arm.edit_bones[bones['Orteils']]
+    bones['Pointe'] = bone.name
     bone = arm.edit_bones.new('Tete')
     bone.head[:] = 0.2614, 0.0000, 1.4641
     bone.tail[:] = 0.2935, 0.0000, 1.6094
@@ -171,6 +165,13 @@ def create(obj):
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Bras']]
     bones['Avant-bras'] = bone.name
+    bone = arm.edit_bones.new('Cou_pied.ik')
+    bone.head[:] = -0.0952, -0.0000, 0.0890
+    bone.tail[:] = -0.1901, -0.0000, 0.0890
+    bone.roll = 1.5708
+    bone.use_connect = False
+    bone.parent = arm.edit_bones[bones['Pointe']]
+    bones['Cou_pied.ik'] = bone.name
     bone = arm.edit_bones.new('Machoire')
     bone.head[:] = 0.2935, 0.0000, 1.4777
     bone.tail[:] = 0.3976, 0.0000, 1.4107
@@ -203,14 +204,6 @@ def create(obj):
         pbone.rigify_parameters.mutable_order = False
     except AttributeError:
         pass
-    pbone = obj.pose.bones[bones['Pointe']]
-    pbone.rigify_type = ''
-    pbone.lock_location = (False, False, True)
-    pbone.lock_rotation = (True, True, False)
-    pbone.lock_rotation_w = False
-    pbone.lock_scale = (False, False, False)
-    pbone.rotation_mode = 'XZY'
-    pbone.bone.layers = [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     pbone = obj.pose.bones[bones['Cuisse']]
     pbone.rigify_type = 'pantin.leg'
     pbone.lock_location = (False, False, True)
@@ -223,6 +216,14 @@ def create(obj):
         pbone.rigify_parameters.Z_index = 1
     except AttributeError:
         pass
+    try:
+        pbone.rigify_parameters.joint_name = "Genou"
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.right_layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False]
+    except AttributeError:
+        pass
     pbone = obj.pose.bones[bones['Abdomen']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
@@ -231,14 +232,6 @@ def create(obj):
     pbone.lock_scale = (True, True, True)
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
-    pbone = obj.pose.bones[bones['Cou_pied.ik']]
-    pbone.rigify_type = ''
-    pbone.lock_location = (True, True, True)
-    pbone.lock_rotation = (True, True, False)
-    pbone.lock_rotation_w = False
-    pbone.lock_scale = (True, True, True)
-    pbone.rotation_mode = 'XZY'
-    pbone.bone.layers = [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     pbone = obj.pose.bones[bones['Jambe']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
@@ -311,6 +304,22 @@ def create(obj):
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+    try:
+        pbone.rigify_parameters.right_layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False]
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.joint_name = "Coude"
+    except AttributeError:
+        pass
+    pbone = obj.pose.bones[bones['Pointe']]
+    pbone.rigify_type = ''
+    pbone.lock_location = (False, False, True)
+    pbone.lock_rotation = (True, True, False)
+    pbone.lock_rotation_w = False
+    pbone.lock_scale = (False, False, False)
+    pbone.rotation_mode = 'XZY'
+    pbone.bone.layers = [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     pbone = obj.pose.bones[bones['Tete']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
@@ -327,6 +336,14 @@ def create(obj):
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+    pbone = obj.pose.bones[bones['Cou_pied.ik']]
+    pbone.rigify_type = ''
+    pbone.lock_location = (True, True, True)
+    pbone.lock_rotation = (True, True, False)
+    pbone.lock_rotation_w = False
+    pbone.lock_scale = (True, True, True)
+    pbone.rotation_mode = 'XZY'
+    pbone.bone.layers = [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     pbone = obj.pose.bones[bones['Machoire']]
     pbone.rigify_type = ''
     pbone.lock_location = (True, True, True)
