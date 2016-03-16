@@ -29,20 +29,20 @@ rig_id = "%s"
 #######################
 ## Driver namespace  ##
 #######################
-ecartement_membres = 0.01
-ecartement_os = 0.005
+member_offset = 0.01
+bone_offset = 0.005
 
-def z_index(indice_membre, retourne, nbr_membres, indice_os):
-    if retourne:
-        return -(nbr_membres - indice_membre) * ecartement_membres - indice_os * ecartement_os
+def z_index(member_index, flip, members_number, bone_index):
+    if flip:
+        return -(members_number - member_index) * member_offset - bone_index * bone_offset
     else:
-        return indice_membre * ecartement_membres + indice_os * ecartement_os
+        return member_index * member_offset + bone_index * bone_offset
 
-def z_index_same(indice_membre, retourne, indice_os):
-    if retourne:
-        return -indice_membre * ecartement_membres - indice_os * ecartement_os
+def z_index_same(member_index, flip, bone_index):
+    if flip:
+        return -member_index * member_offset - bone_index * bone_offset
     else:
-        return indice_membre * ecartement_membres + indice_os * ecartement_os
+        return member_index * member_offset + bone_index * bone_offset
 
 
 ###################
