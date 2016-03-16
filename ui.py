@@ -59,19 +59,13 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
                 id_store.rigify_templates.remove(0)
 
             for t in template_list.template_list:
-                # collection = r.split('.')[0]  # UNUSED
-                # if collection_name == "All":
                 a = id_store.rigify_templates.add()
                 a.name = t[:-3]
-                # elif r.startswith(collection_name + '.'):
-                #     a = id_store.rigify_templates.add()
-                #     a.name = t
-                # elif (collection_name == "None") and ("." not in r):
-                #     a = id_store.rigify_templates.add()
-                #     a.name = t
 
-            layout.template_list("UI_UL_list", "rigify_templates", id_store, "rigify_templates", id_store, "rigify_active_template")
-            layout.operator("pose.rigify_generate", text="Generate")
+            col = layout.column(align=True)
+            col.label("UI template for rig:")
+            col.template_list("UI_UL_list", "rigify_templates", id_store, "rigify_templates", id_store, "rigify_active_template")
+            col.operator("pose.rigify_generate", text="Generate")
         elif obj.mode == 'EDIT':
             # Build types list
             collection_name = str(id_store.rigify_collection).replace(" ", "")

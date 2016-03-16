@@ -6,18 +6,19 @@ from ...utils import make_deformer_name, strip_org, copy_bone
 from ...utils import create_widget
 from ...utils import create_circle_polygon
 
-def create_deformation(obj, bone_name, member_index=0, bone_index=0):
+def create_deformation(obj, bone_name, member_index=0, bone_index=0, new_name=''):
     bpy.ops.object.mode_set(mode='EDIT')
-    
     eb = obj.data.edit_bones
 
     org_bone_e = eb[bone_name]
+    def_bone_e = eb.new(bone_name)
 
 #    bone = copy_bone(obj, bone_name, strip_org(bone_name))
 #    bone_e = eb[bone]
 
-    def_bone_e = eb.new(bone_name)
-    def_name = make_deformer_name(strip_org(bone_name))
+    if new_name == '':
+        new_name = bone_name
+    def_name = make_deformer_name(strip_org(new_name))
     def_bone_e.name = def_name
 #    def_bone_e.name = strip_org(bone_name)
 

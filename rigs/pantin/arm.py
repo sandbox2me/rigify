@@ -17,10 +17,10 @@ class Rig:
         self.obj = obj
         self.org_bones = [bone_name] + connected_children_names(obj, bone_name)[:2]
         self.params = params
-        if "layers" in params:
-            layers = get_layers(params["layers"])
+        if "right_layers" in params:
+            self.right_layers = [bool(l) for l in params["right_layers"]]
         else:
-            layers = None
+            self.right_layers = None
         joint_name = self.params.joint_name
 
         if params.duplicate_lr:
@@ -30,7 +30,7 @@ class Rig:
         
         self.ik_limbs = {}
         for s in sides:
-            self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones, joint_name, layers, s)
+            self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones, joint_name, s)
 
     def generate(self):
         for s, ik_limb in self.ik_limbs.items():
@@ -41,7 +41,13 @@ class Rig:
             # Def bones
             eb = self.obj.data.edit_bones
             for i, b in enumerate([ulimb_str, flimb_str, elimb_str]):
-                def_bone = pantin_utils.create_deformation(self.obj, b, 5-self.params.Z_index, i)
+                def_bone = pantin_utils.create_deformation(self.obj, b, 5-self.params.Z_index, i, b[4:-13]+s)
+
+            # Set layers if specified
+            if s == '.R' and self.right_layers:
+                eb[ulimb_ik].layers = self.right_layers
+                eb[joint_str].layers = self.right_layers
+                eb[elimb_ik].layers = self.right_layers
 
             bpy.ops.object.mode_set(mode='OBJECT')
             pb = self.obj.pose.bones
@@ -60,18 +66,20 @@ class Rig:
             #     pantin_utils.create_capsule_widget(self.obj, bone, head_tail=0.5)
             #     # create_widget(self.obj, bone)
 
-            # # Constraints
-            # for org, ctrl in zip(self.org_bones, ctrl_chain):
-            #     con = pb[org].constraints.new('COPY_TRANSFORMS')
-            #     con.name = "copy_transforms"
-            #     con.target = self.obj
-            #     con.subtarget = ctrl
-            
+            # Constraints
+            if s == '.R':
+                for org, ctrl in zip(self.org_bones, [ulimb_str, flimb_str, elimb_str]):
+                    con = pb[org].constraints.new('COPY_TRANSFORMS')
+                    con.name = "copy_transforms"
+                    con.target = self.obj
+                    con.subtarget = ctrl
+                    
 def add_parameters(params):
     params.Z_index = bpy.props.IntProperty(name="Z index", default=0, description="Defines member's Z order")
     params.mutable_order = bpy.props.BoolProperty(name="Ordre change", default=True, description="This member may change depth when flipped")
     params.duplicate_lr = bpy.props.BoolProperty(name="Duplicate LR", default=True, description="Create two limbs for left and right")
     params.joint_name = bpy.props.StringProperty(name="Joint Name", default="Joint", description="Name of the middle joint")
+    params.right_layers = bpy.props.BoolVectorProperty(size=32, description="Layers for the duplicated limb to be on")
 
 def parameters_ui(layout, params):
     """ Create the ui for the rig parameters.
@@ -84,6 +92,50 @@ def parameters_ui(layout, params):
     r.prop(params, "joint_name")
     r = layout.row()
     r.prop(params, "duplicate_lr")
+
+    r = layout.row()
+    r.active = params.duplicate_lr
+    
+    # Layers for the right arm
+    col = r.column(align=True)
+    row = col.row(align=True)
+    row.prop(params, "right_layers", index=0, toggle=True, text="")
+    row.prop(params, "right_layers", index=1, toggle=True, text="")
+    row.prop(params, "right_layers", index=2, toggle=True, text="")
+    row.prop(params, "right_layers", index=3, toggle=True, text="")
+    row.prop(params, "right_layers", index=4, toggle=True, text="")
+    row.prop(params, "right_layers", index=5, toggle=True, text="")
+    row.prop(params, "right_layers", index=6, toggle=True, text="")
+    row.prop(params, "right_layers", index=7, toggle=True, text="")
+    row = col.row(align=True)
+    row.prop(params, "right_layers", index=16, toggle=True, text="")
+    row.prop(params, "right_layers", index=17, toggle=True, text="")
+    row.prop(params, "right_layers", index=18, toggle=True, text="")
+    row.prop(params, "right_layers", index=19, toggle=True, text="")
+    row.prop(params, "right_layers", index=20, toggle=True, text="")
+    row.prop(params, "right_layers", index=21, toggle=True, text="")
+    row.prop(params, "right_layers", index=22, toggle=True, text="")
+    row.prop(params, "right_layers", index=23, toggle=True, text="")
+
+    col = r.column(align=True)
+    row = col.row(align=True)
+    row.prop(params, "right_layers", index=8, toggle=True, text="")
+    row.prop(params, "right_layers", index=9, toggle=True, text="")
+    row.prop(params, "right_layers", index=10, toggle=True, text="")
+    row.prop(params, "right_layers", index=11, toggle=True, text="")
+    row.prop(params, "right_layers", index=12, toggle=True, text="")
+    row.prop(params, "right_layers", index=13, toggle=True, text="")
+    row.prop(params, "right_layers", index=14, toggle=True, text="")
+    row.prop(params, "right_layers", index=15, toggle=True, text="")
+    row = col.row(align=True)
+    row.prop(params, "right_layers", index=24, toggle=True, text="")
+    row.prop(params, "right_layers", index=25, toggle=True, text="")
+    row.prop(params, "right_layers", index=26, toggle=True, text="")
+    row.prop(params, "right_layers", index=27, toggle=True, text="")
+    row.prop(params, "right_layers", index=28, toggle=True, text="")
+    row.prop(params, "right_layers", index=29, toggle=True, text="")
+    row.prop(params, "right_layers", index=30, toggle=True, text="")
+    row.prop(params, "right_layers", index=31, toggle=True, text="")
 
 def create_sample(obj):
     # generated by rigify.utils.write_metarig

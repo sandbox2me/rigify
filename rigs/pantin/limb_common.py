@@ -13,7 +13,7 @@ from . import pantin_utils
 importlib.reload(pantin_utils)
 
 class IKLimb:
-    def __init__(self, obj, org_bones, stretch_joint_name, layers, side_suffix='', follow_org=False):
+    def __init__(self, obj, org_bones, stretch_joint_name, side_suffix='', follow_org=False):
         self.obj = obj
 
         # Get the chain of 3 connected bones
@@ -27,8 +27,6 @@ class IKLimb:
 
         self.stretch_joint_name = stretch_joint_name
         self.side_suffix = side_suffix
-
-        self.layers = layers
 
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
@@ -51,8 +49,7 @@ class IKLimb:
         eb[joint_str].tail = eb[flimb_str].head + Vector((0,0,1)) * eb[flimb_str].length/2
         align_bone_x_axis(self.obj, joint_str, Vector((-1, 0, 0)))
         #put_bone(self.obj, joint_str, Vector(eb[flimb_str].head))
-        print('POS', eb[joint_str].head)
-
+        
         # Get edit bones
         ulimb_ik_e = eb[ulimb_ik]
         flimb_ik_e = eb[flimb_ik]
@@ -86,6 +83,8 @@ class IKLimb:
         joint_str_e.use_connect = False
         joint_str_e.parent = ulimb_ik_e
 
+        # Layers
+        joint_str_e.layers = elimb_str_e.layers 
         # Object mode, get pose bones
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
@@ -136,9 +135,4 @@ class IKLimb:
         con.volume = 'NO_VOLUME'
         con.rest_length = flimb_str_p.length
 
-        # Set layers if specified
-        if self.layers:
-            ulimb_ik_p.bone.layers = self.layers
-            joint_str_p.bone.layers = self.layers
-            elimb_ik_p.bone.layers = self.layers
         return [ulimb_ik, ulimb_str, flimb_str, joint_str, elimb_ik, elimb_str]
