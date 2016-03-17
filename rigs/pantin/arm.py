@@ -81,7 +81,7 @@ class Rig:
                     
 def add_parameters(params):
     params.Z_index = bpy.props.IntProperty(name="Z index", default=0, description="Defines member's Z order")
-    params.mutable_order = bpy.props.BoolProperty(name="Ordre change", default=True, description="This member may change depth when flipped")
+    params.mutable_order = bpy.props.BoolProperty(name="Mutable order", default=True, description="This member may change depth when flipped")
     params.duplicate_lr = bpy.props.BoolProperty(name="Duplicate LR", default=True, description="Create two limbs for left and right")
     params.joint_name = bpy.props.StringProperty(name="Joint Name", default="Joint", description="Name of the middle joint")
     params.right_layers = bpy.props.BoolVectorProperty(size=32, description="Layers for the duplicated limb to be on")

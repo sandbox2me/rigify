@@ -67,6 +67,7 @@ class RigUI(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         pose_bones = context.active_object.pose.bones
+        bones = context.active_object.data.bones
         try:
             selected_bones = [bone.name for bone in context.selected_pose_bones]
             selected_bones += [context.active_pose_bone.name]
@@ -82,6 +83,9 @@ class RigUI(bpy.types.Panel):
             elif names in selected_bones:
                 return True
             return False
+
+        layout.prop(bones["MCH-Flip"], '["flip"]', text="Flip", slider=True)
+        layout.separator()
 
 
 '''

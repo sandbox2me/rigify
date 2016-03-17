@@ -51,7 +51,7 @@ def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index
         var_mn.name = 'members_number'
         var_mn.targets[0].id_type = 'ARMATURE'
         var_mn.targets[0].id = obj.data
-        var_mn.targets[0].data_path = 'bones["Flip"]["members_number"]'
+        var_mn.targets[0].data_path = 'bones["MCH-Flip"]["members_number"]'
 
         
 
@@ -71,7 +71,7 @@ def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index
     var_flip.name = 'flip'
     var_flip.targets[0].id_type = 'ARMATURE'
     var_flip.targets[0].id = obj.data
-    var_flip.targets[0].data_path = 'bones["Flip"]["flip"]'
+    var_flip.targets[0].data_path = 'bones["MCH-Flip"]["flip"]'
 
     bpy.ops.object.mode_set(mode='EDIT')
     return def_bone_e.name
