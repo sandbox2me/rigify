@@ -12,6 +12,12 @@ from . import limb_common
 importlib.reload(pantin_utils)
 importlib.reload(limb_common)
 
+script = """
+ik_arm = ["%s", "%s", "%s"]
+if is_selected(ik_arm):
+    layout.prop(pose_bones[ik_arm[2]], '["pelvis_follow"]', text="Follow pelvis (" + ik_arm[2] + ")", slider=True)
+"""
+
 class Rig:
     def __init__(self, obj, bone_name, params):
         self.obj = obj
@@ -33,6 +39,7 @@ class Rig:
             self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones, joint_name, s, ik_limits=[-150.0, 150.0, -160.0, 0.0])
 
     def generate(self):
+        ui_script = ""
         for s, ik_limb in self.ik_limbs.items():
             ulimb_ik, ulimb_str, flimb_str, joint_str, elimb_ik, elimb_str = ik_limb.generate()
 
@@ -58,18 +65,10 @@ class Rig:
             pb = self.obj.pose.bones
 
             # Widgets
-            # pelvis = ctrl_chain[0]
-            # abdomen = ctrl_chain[1]
-            # torso = ctrl_chain[2]
-            # shoulder = ctrl_chain[3]
 
             pantin_utils.create_aligned_circle_widget(self.obj, ulimb_ik, radius=0.1)
             pantin_utils.create_aligned_circle_widget(self.obj, joint_str, radius=0.1)
             pantin_utils.create_aligned_circle_widget(self.obj, elimb_ik, radius=0.1)
-
-            # for bone in ctrl_chain[1:]:
-            #     pantin_utils.create_capsule_widget(self.obj, bone, head_tail=0.5)
-            #     # create_widget(self.obj, bone)
 
             # Constraints
             if s == '.R':
@@ -78,6 +77,10 @@ class Rig:
                     con.name = "copy_transforms"
                     con.target = self.obj
                     con.subtarget = ctrl
+
+            ui_script += script % (ulimb_ik, joint_str, elimb_ik)
+
+        return [ui_script]
                     
 def add_parameters(params):
     params.Z_index = bpy.props.IntProperty(name="Z index", default=0, description="Defines member's Z order")
@@ -149,61 +152,51 @@ def create_sample(obj):
 
     bones = {}
 
-    bone = arm.edit_bones.new('Bassin')
-    bone.head[:] = 0.0025, 0.0000, 0.7926
-    bone.tail[:] = 0.0038, 0.0000, 0.9127
-    bone.roll = -3.1311
+    bone = arm.edit_bones.new('Bras haut')
+    bone.head[:] = 0.0056, -0.0000, 1.3408
+    bone.tail[:] = 0.0100, -0.0000, 1.1262
+    bone.roll = -0.0201
     bone.use_connect = False
-    bones['Bassin'] = bone.name
-    bone = arm.edit_bones.new('Abdomen')
-    bone.head[:] = 0.0038, 0.0000, 0.9127
-    bone.tail[:] = 0.0197, 0.0000, 1.0736
-    bone.roll = -3.0427
+    bones['Bras haut'] = bone.name
+    bone = arm.edit_bones.new('Bras bas')
+    bone.head[:] = 0.0100, -0.0000, 1.1262
+    bone.tail[:] = 0.0383, -0.0000, 0.8731
+    bone.roll = -0.1117
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Bassin']]
-    bones['Abdomen'] = bone.name
-    bone = arm.edit_bones.new('Torse')
-    bone.head[:] = 0.0197, 0.0000, 1.0736
-    bone.tail[:] = 0.0654, 0.0000, 1.2325
-    bone.roll = -2.8616
+    bone.parent = arm.edit_bones[bones['Bras haut']]
+    bones['Bras bas'] = bone.name
+    bone = arm.edit_bones.new('Main')
+    bone.head[:] = 0.0383, -0.0000, 0.8731
+    bone.tail[:] = 0.0383, -0.0000, 0.7657
+    bone.roll = 0.0000
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Abdomen']]
-    bones['Torse'] = bone.name
-    bone = arm.edit_bones.new('Epaule')
-    bone.head[:] = 0.0654, 0.0000, 1.2325
-    bone.tail[:] = 0.1611, 0.0000, 1.3800
-    bone.roll = -2.5661
-    bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Torse']]
-    bones['Epaule'] = bone.name
+    bone.parent = arm.edit_bones[bones['Bras bas']]
+    bones['Main'] = bone.name
 
     bpy.ops.object.mode_set(mode='OBJECT')
-    pbone = obj.pose.bones[bones['Bassin']]
-    pbone.rigify_type = 'pantin.torso'
+    pbone = obj.pose.bones[bones['Bras haut']]
+    pbone.rigify_type = 'pantin.arm'
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
-    pbone.lock_scale = (True, True, True)
+    pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
     try:
-        pbone.rigify_parameters.Z_index = 2
+        pbone.rigify_parameters.right_layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False]
     except AttributeError:
         pass
-    pbone = obj.pose.bones[bones['Abdomen']]
-    pbone.rigify_type = ''
-    pbone.lock_location = (False, False, True)
-    pbone.lock_rotation = (True, True, False)
-    pbone.lock_rotation_w = False
-    pbone.lock_scale = (True, True, True)
-    pbone.rotation_mode = 'XZY'
-    pbone = obj.pose.bones[bones['Torse']]
+    try:
+        pbone.rigify_parameters.joint_name = "Coude"
+    except AttributeError:
+        pass
+    pbone = obj.pose.bones[bones['Bras bas']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
-    pbone = obj.pose.bones[bones['Epaule']]
+    pbone = obj.pose.bones[bones['Main']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
