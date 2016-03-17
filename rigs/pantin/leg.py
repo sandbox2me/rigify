@@ -77,9 +77,25 @@ class Rig:
             bpy.ops.object.mode_set(mode='OBJECT')
             pb = self.obj.pose.bones
 
-            pantin_utils.create_aligned_circle_widget(self.obj, ulimb_ik, radius=0.1)
-            pantin_utils.create_aligned_circle_widget(self.obj, joint_str, radius=0.1)
-            pantin_utils.create_aligned_circle_widget(self.obj, elimb_ik, radius=0.1)
+            # Widgets
+            if s == '.R':
+                side_factor = 1.2
+            else:
+                side_factor = 1.0
+            widget_size = pb[elimb_ik].length * side_factor
+            pantin_utils.create_aligned_circle_widget(self.obj, ulimb_ik, radius=widget_size)
+            pantin_utils.create_aligned_circle_widget(self.obj, joint_str, radius=widget_size)
+            pantin_utils.create_aligned_circle_widget(self.obj, elimb_ik, radius=widget_size)
+
+            # Bone groups
+            if s == '.R':
+                pantin_utils.assign_bone_group(self.obj, ulimb_ik, 'R')
+                pantin_utils.assign_bone_group(self.obj, joint_str, 'R')
+                pantin_utils.assign_bone_group(self.obj, elimb_ik, 'R')
+            if s == '.L':
+                pantin_utils.assign_bone_group(self.obj, ulimb_ik, 'L')
+                pantin_utils.assign_bone_group(self.obj, joint_str, 'L')
+                pantin_utils.assign_bone_group(self.obj, elimb_ik, 'L')
 
             # Constraints
             if s == '.R':

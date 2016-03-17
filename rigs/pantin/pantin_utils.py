@@ -166,3 +166,11 @@ def create_aligned_circle_widget(rig, bone_name, radius=1.0, head_tail=0.0, bone
         mesh = obj.data
         mesh.from_pydata(verts, edges, [])
         mesh.update()
+
+def assign_bone_group(rig, bone_name, bone_group):
+    """ Assign bone to bone group.
+    """
+    
+    if not bone_group in rig.pose.bone_groups:
+        rig.pose.bone_groups.new(bone_group)
+    rig.pose.bones[bone_name].bone_group = rig.pose.bone_groups[bone_group]
