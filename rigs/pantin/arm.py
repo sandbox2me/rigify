@@ -36,7 +36,7 @@ class Rig:
         
         self.ik_limbs = {}
         for s in sides:
-            self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones, joint_name, s, ik_limits=[-150.0, 150.0, -160.0, 0.0])
+            self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones, joint_name, params.do_flip, params.pelvis_name, s, ik_limits=[-150.0, 150.0, -160.0, 0.0])
 
     def generate(self):
         ui_script = ""
@@ -70,8 +70,9 @@ class Rig:
             else:
                 side_factor = 1.0
             widget_size = pb[elimb_ik].length * side_factor
-            pantin_utils.create_aligned_circle_widget(self.obj, ulimb_ik, radius=widget_size)
-            pantin_utils.create_aligned_circle_widget(self.obj, joint_str, radius=widget_size)
+            pantin_utils.create_aligned_circle_widget(self.obj, ulimb_ik, number_verts=3, radius=widget_size)
+            #pantin_utils.create_aligned_polygon_widget(self.obj, ulimb_ik, [[-1,-1], [-1,1], [1,1], [1,-1]])
+            pantin_utils.create_aligned_circle_widget(self.obj, joint_str, radius=widget_size * 0.7)
             pantin_utils.create_aligned_circle_widget(self.obj, elimb_ik, radius=widget_size)
 
             # Bone groups
@@ -101,6 +102,8 @@ def add_parameters(params):
     params.Z_index = bpy.props.IntProperty(name="Z index", default=0, description="Defines member's Z order")
     params.mutable_order = bpy.props.BoolProperty(name="Mutable order", default=True, description="This member may change depth when flipped")
     params.duplicate_lr = bpy.props.BoolProperty(name="Duplicate LR", default=True, description="Create two limbs for left and right")
+    params.do_flip = bpy.props.BoolProperty(name="Do Flip", default=True, description="True if the rig has a torso with flip system")
+    params.pelvis_name = bpy.props.StringProperty(name="Pelvis Name", default="Pelvis", description="Name of the pelvis bone in whole rig")
     params.joint_name = bpy.props.StringProperty(name="Joint Name", default="Joint", description="Name of the middle joint")
     params.right_layers = bpy.props.BoolVectorProperty(size=32, description="Layers for the duplicated limb to be on")
 
@@ -109,10 +112,12 @@ def parameters_ui(layout, params):
     """
     r = layout.row()
     r.prop(params, "Z_index")
-    r = layout.row()
     r.prop(params, "mutable_order")
-    r = layout.row()
-    r.prop(params, "joint_name")
+    c = layout.column()
+    c.prop(params, "joint_name")
+    c = layout.column()
+    c.prop(params, "do_flip")
+    c.prop(params, "pelvis_name")
     r = layout.row()
     r.prop(params, "duplicate_lr")
 

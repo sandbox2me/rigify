@@ -148,8 +148,7 @@ def create_capsule_widget(rig, bone_name, width=None, height=None, head_tail=0.0
         mesh.from_pydata(verts, edges, [])
         mesh.update()
 
-
-def create_aligned_circle_widget(rig, bone_name, radius=1.0, head_tail=0.0, bone_transform_name=None):
+def create_aligned_polygon_widget(rig, bone_name, vertex_points, bone_transform_name=None):
     """ Creates a basic line widget which remains horizontal.
     """
     obj = create_widget(rig, bone_name, bone_transform_name)
@@ -159,7 +158,29 @@ def create_aligned_circle_widget(rig, bone_name, radius=1.0, head_tail=0.0, bone
         # print(pbone.matrix.translation)
         pos = pbone.matrix.translation
         
-        verts, edges = create_circle_polygon(32, 'Y', radius, head_tail)
+        verts = [Vector((x, y, 0.0)) for x,y in vertex_points]
+        edges = []
+        for i in range(len(verts)):
+            edges.append((i, i+1))
+        edges[-1] = (0, len(verts)-1)
+        # head_tail_vector = pbone.vector * head_tail
+        verts = [(pbone.matrix * pbone.length).inverted() * (pos + v) for v in verts]
+
+        mesh = obj.data
+        mesh.from_pydata(verts, edges, [])
+        mesh.update()
+
+def create_aligned_circle_widget(rig, bone_name, number_verts=32, radius=1.0, head_tail=0.0, bone_transform_name=None):
+    """ Creates a basic line widget which remains horizontal.
+    """
+    obj = create_widget(rig, bone_name, bone_transform_name)
+    if obj is not None:
+        
+        pbone = rig.pose.bones[bone_name]
+        # print(pbone.matrix.translation)
+        pos = pbone.matrix.translation
+        
+        verts, edges = create_circle_polygon(number_verts, 'Y', radius, head_tail)
         head_tail_vector = pbone.vector * head_tail
         verts = [(pbone.matrix * pbone.length).inverted() * (pos + Vector(v) + head_tail_vector) for v in verts]
 

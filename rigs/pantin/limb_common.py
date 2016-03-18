@@ -15,7 +15,7 @@ from . import pantin_utils
 importlib.reload(pantin_utils)
 
 class IKLimb:
-    def __init__(self, obj, org_bones, stretch_joint_name, side_suffix='', follow_org=False, ik_limits=[-150.0, 150.0, 0.0, 160.0]):
+    def __init__(self, obj, org_bones, stretch_joint_name, do_flip, pelvis_name, side_suffix='', follow_org=False, ik_limits=[-150.0, 150.0, 0.0, 160.0]):
         self.obj = obj
 
         # Get the chain of 3 connected bones
@@ -30,6 +30,8 @@ class IKLimb:
         self.stretch_joint_name = stretch_joint_name
         self.side_suffix = side_suffix
         self.ik_limits = ik_limits
+        self.do_flip = do_flip
+        self.pelvis_name = pelvis_name
 
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
@@ -65,8 +67,9 @@ class IKLimb:
         joint_str_e = eb[joint_str]
 
         # Parenting
-        ulimb_ik_e.use_connect = False
-        ulimb_ik_e.parent = eb[self.org_parent]
+        if self.org_parent is not None:
+            ulimb_ik_e.use_connect = False
+            ulimb_ik_e.parent = eb[self.org_parent]
 
         flimb_ik_e.use_connect = False
         flimb_ik_e.parent = ulimb_ik_e
@@ -74,8 +77,9 @@ class IKLimb:
         elimb_ik_e.use_connect = False
         elimb_ik_e.parent = None
 
-        ulimb_str_e.use_connect = False
-        ulimb_str_e.parent = eb[self.org_parent]
+        if self.org_parent is not None:
+            ulimb_str_e.use_connect = False
+            ulimb_str_e.parent = eb[self.org_parent]
 
         flimb_str_e.use_connect = False
         flimb_str_e.parent = joint_str_e
@@ -149,45 +153,46 @@ class IKLimb:
         
         # Pelvis follow
         # TODO get real bone name. From UI?
-        pelvis_bone_name = 'Bassin'
-        flip_bone_name = 'MCH-Flip'
+        if self.do_flip:
+            pelvis_bone_name = self.pelvis_name
+            flip_bone_name = 'MCH-Flip'
 
-        con1 = elimb_ik_p.constraints.new('CHILD_OF')
-        con1.name = "Child Normal"
-        con1.target = self.obj
-        con1.subtarget = pelvis_bone_name
-        con1.inverse_matrix = pb[pelvis_bone_name].matrix.inverted()
+            con1 = elimb_ik_p.constraints.new('CHILD_OF')
+            con1.name = "Child Normal"
+            con1.target = self.obj
+            con1.subtarget = pelvis_bone_name
+            con1.inverse_matrix = pb[pelvis_bone_name].matrix.inverted()
 
-        self.obj.data.bones[flip_bone_name]["flip"] = 1
+            self.obj.data.bones[flip_bone_name]["flip"] = 1
 
-        con2 = elimb_ik_p.constraints.new('CHILD_OF')
-        con2.name = "Child Flipped"
-        con2.target = self.obj
-        con2.subtarget = flip_bone_name
-        con2.inverse_matrix = pb[flip_bone_name].matrix.inverted()
+            con2 = elimb_ik_p.constraints.new('CHILD_OF')
+            con2.name = "Child Flipped"
+            con2.target = self.obj
+            con2.subtarget = flip_bone_name
+            con2.inverse_matrix = pb[flip_bone_name].matrix.inverted()
 
-        self.obj.data.bones[flip_bone_name]["flip"] = 0
+            self.obj.data.bones[flip_bone_name]["flip"] = 0
 
-        # Drivers
-        driver = self.obj.driver_add(con1.path_from_id("influence"))
-        driver.driver.expression = 'pelvis_follow'
-        var_pf = driver.driver.variables.new()
+            # Drivers
+            driver = self.obj.driver_add(con1.path_from_id("influence"))
+            driver.driver.expression = 'pelvis_follow'
+            var_pf = driver.driver.variables.new()
 
-        var_pf.type = 'SINGLE_PROP'
-        var_pf.name = 'pelvis_follow'
-        var_pf.targets[0].id_type = 'OBJECT'
-        var_pf.targets[0].id = self.obj
-        var_pf.targets[0].data_path = elimb_ik_p.path_from_id() + '["pelvis_follow"]'# 'bones["{}"]["pelvis_follow"]'.format(elimb_ik)
+            var_pf.type = 'SINGLE_PROP'
+            var_pf.name = 'pelvis_follow'
+            var_pf.targets[0].id_type = 'OBJECT'
+            var_pf.targets[0].id = self.obj
+            var_pf.targets[0].data_path = elimb_ik_p.path_from_id() + '["pelvis_follow"]'# 'bones["{}"]["pelvis_follow"]'.format(elimb_ik)
+            
+            driver = self.obj.driver_add(con2.path_from_id("influence"))
+            driver.driver.expression = '1-pelvis_follow'
+            var_pf = driver.driver.variables.new()
 
-        driver = self.obj.driver_add(con2.path_from_id("influence"))
-        driver.driver.expression = '1-pelvis_follow'
-        var_pf = driver.driver.variables.new()
-
-        var_pf.type = 'SINGLE_PROP'
-        var_pf.name = 'pelvis_follow'
-        var_pf.targets[0].id_type = 'OBJECT'
-        var_pf.targets[0].id = self.obj
-        var_pf.targets[0].data_path = elimb_ik_p.path_from_id() + '["pelvis_follow"]'# 'bones["{}"]["pelvis_follow"]'.format(elimb_ik)
+            var_pf.type = 'SINGLE_PROP'
+            var_pf.name = 'pelvis_follow'
+            var_pf.targets[0].id_type = 'OBJECT'
+            var_pf.targets[0].id = self.obj
+            var_pf.targets[0].data_path = elimb_ik_p.path_from_id() + '["pelvis_follow"]'# 'bones["{}"]["pelvis_follow"]'.format(elimb_ik)
 
         # IK Limits
         ulimb_ik_p.lock_ik_x = True
