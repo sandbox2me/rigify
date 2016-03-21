@@ -70,8 +70,8 @@ class Rig:
             roll_fr = new_bone(self.obj, "Foot roll" + s)
 
             # Position
-            eb[roll_fr].head = eb[elimb_str].head + Vector((-1,0,0)) * eb[elimb_str].length
-            eb[roll_fr].tail = eb[elimb_str].head + Vector((-1,0,1)) * eb[elimb_str].length
+            eb[roll_fr].head = eb[elimb_str].head + Vector((-1,0,0)) * eb[elimb_str].length * 2
+            eb[roll_fr].tail = eb[elimb_str].head + Vector((-1,0,1)) * eb[elimb_str].length * 2
             eb[roll_fr].layers = eb[elimb_ik].layers
 
             align_bone_x_axis(self.obj, roll_fr, Vector((-1, 0, 0)))
@@ -111,7 +111,7 @@ class Rig:
                 
             for i, b in enumerate([flimb_str, ulimb_str]):
                 def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, Z_index, i, b[4:-11]+s)
-            print(foot_fr)
+
             def_bone = pantin_utils.create_deformation(self.obj, foot_fr, self.params.mutable_order, Z_index, 2, foot_fr[4:-3] + s)
             def_bone = pantin_utils.create_deformation(self.obj, toe_ctl, self.params.mutable_order, Z_index, 3, toe_ctl + s)
 
@@ -121,12 +121,16 @@ class Rig:
                 eb[joint_str].layers = self.right_layers
                 eb[elimb_ik].layers = self.right_layers
                 eb[roll_fr].layers = self.right_layers
+                eb[toe_ctl].layers = self.right_layers
 
             bpy.ops.object.mode_set(mode='OBJECT')
             pb = self.obj.pose.bones
 
             # Bone settings
             pb[roll_fr].rotation_mode = 'XZY'
+            pb[roll_fr].lock_location = [True]*3
+            pb[roll_fr].lock_rotation = [True, True, False]
+            pb[roll_fr].lock_scale = [True]*3
             pb[foot_fr].rotation_mode = 'XZY'
             
             # Widgets
@@ -137,22 +141,46 @@ class Rig:
             widget_size = pb[elimb_ik].length * side_factor
             pantin_utils.create_aligned_circle_widget(self.obj, ulimb_ik, number_verts=3, radius=widget_size)
             pantin_utils.create_aligned_circle_widget(self.obj, joint_str, radius=widget_size)
-            pantin_utils.create_aligned_circle_widget(self.obj, elimb_ik, radius=widget_size)
+
+            down = pb[heel_fr].head[2]
+            left = pb[heel_fr].head[0] - (side_factor - 1) * pb[heel_fr].length
+            right = pb[foot_fr].head[0]
+            up = pb[foot_fr].head[0] + (side_factor - 1) * pb[heel_fr].length
+
+            foot_verts = ((left, down), (left, up), (right, (up + down) * 2 / 3), (right, down))
+            #foot_verts = ((0,0), (0,1), (1,1), (1,0))
+            pantin_utils.create_aligned_polygon_widget(self.obj, elimb_ik, foot_verts)
+
+            #down = pb[heel_fr].head[2]
+            left = right
+            right = pb[toe_fr].head[0] + (side_factor - 1) * pb[heel_fr].length
+            up = (up + down) * 2 / 3
+
+            toe_verts = ((left, down), (left, up), (right, (up + down) * 2 / 3), (right, down))
+            #foot_verts = ((0,0), (0,1), (1,1), (1,0))
+            pantin_utils.create_aligned_polygon_widget(self.obj, toe_ctl, toe_verts)
+
+            pantin_utils.create_aligned_crescent_widget(self.obj, roll_fr, radius=side_factor * pb[roll_fr].length / 2)
 
             # Bone groups
             if s == '.R':
                 pantin_utils.assign_bone_group(self.obj, ulimb_ik, 'R')
                 pantin_utils.assign_bone_group(self.obj, joint_str, 'R')
                 pantin_utils.assign_bone_group(self.obj, elimb_ik, 'R')
+                pantin_utils.assign_bone_group(self.obj, toe_ctl, 'R')
+                pantin_utils.assign_bone_group(self.obj, roll_fr, 'R')
             if s == '.L':
                 pantin_utils.assign_bone_group(self.obj, ulimb_ik, 'L')
                 pantin_utils.assign_bone_group(self.obj, joint_str, 'L')
                 pantin_utils.assign_bone_group(self.obj, elimb_ik, 'L')
+                pantin_utils.assign_bone_group(self.obj, toe_ctl, 'L')
+                pantin_utils.assign_bone_group(self.obj, roll_fr, 'L')
 
             # Constraints
             foot_fr_p = pb[foot_fr]
             heel_fr_p = pb[heel_fr]
             toe_fr_p = pb[toe_fr]
+            roll_fr_p = pb[roll_fr]
 
             hor_vector = Vector((1,0,0))
             foot_rotation = foot_fr_p.vector.rotation_difference(hor_vector).to_euler('XZY')
@@ -213,6 +241,15 @@ class Rig:
             con.to_max_z_rot = -toe_vertical_rot
             con.target_space = 'LOCAL'
             con.owner_space = 'LOCAL'
+
+            # Roll limits
+            con = roll_fr_p.constraints.new('LIMIT_ROTATION')
+            con.name = "limit rotation"
+            con.use_limit_z = True
+            con.min_z = radians(-60.0)
+            con.max_z = radians(90.0)
+            con.owner_space = 'LOCAL'
+
 
             if s == '.R':
                 for org, ctrl in zip(self.org_bones, [ulimb_str, flimb_str, elimb_str]):
@@ -281,7 +318,7 @@ def parameters_ui(layout, params):
     row.prop(params, "right_layers", index=12, toggle=True, text="")
     row.prop(params, "right_layers", index=13, toggle=True, text="")
     row.prop(params, "right_layers", index=14, toggle=True, text="")
-    row.prop(params, "right_layers", index=15, toggle=True, text="")
+    row.prop(params, "righ2t_layers", index=15, toggle=True, text="")
     row = col.row(align=True)
     row.prop(params, "right_layers", index=24, toggle=True, text="")
     row.prop(params, "right_layers", index=25, toggle=True, text="")

@@ -158,20 +158,20 @@ def create_aligned_polygon_widget(rig, bone_name, vertex_points, bone_transform_
         # print(pbone.matrix.translation)
         pos = pbone.matrix.translation
         
-        verts = [Vector((x, y, 0.0)) for x,y in vertex_points]
+        verts = [Vector((x, 0.0, y)) for x,y in vertex_points]
         edges = []
         for i in range(len(verts)):
             edges.append((i, i+1))
         edges[-1] = (0, len(verts)-1)
         # head_tail_vector = pbone.vector * head_tail
-        verts = [(pbone.matrix * pbone.length).inverted() * (pos + v) for v in verts]
+        verts = [(pbone.matrix * pbone.length).inverted() * (v) for v in verts]
 
         mesh = obj.data
         mesh.from_pydata(verts, edges, [])
         mesh.update()
 
 def create_aligned_circle_widget(rig, bone_name, number_verts=32, radius=1.0, head_tail=0.0, bone_transform_name=None):
-    """ Creates a basic line widget which remains horizontal.
+    """ Creates a circle widget, aligned to view.
     """
     obj = create_widget(rig, bone_name, bone_transform_name)
     if obj is not None:
@@ -187,6 +187,31 @@ def create_aligned_circle_widget(rig, bone_name, number_verts=32, radius=1.0, he
         mesh = obj.data
         mesh.from_pydata(verts, edges, [])
         mesh.update()
+
+def create_aligned_crescent_widget(rig, bone_name, radius=1.0, head_tail=0.0, bone_transform_name=None):
+    """ Creates a crescent widget, aligned to view.
+    """
+    obj = create_widget(rig, bone_name, bone_transform_name)
+    if obj is not None:
+        
+        pbone = rig.pose.bones[bone_name]
+        # print(pbone.matrix.translation)
+        pos = pbone.matrix.translation
+        
+        verts = [Vector((-0.3826834559440613, 3.5762786865234375e-07, 0.9238792061805725)), Vector((-0.5555702447891235, 3.5762786865234375e-07, 0.8314692974090576)), Vector((-0.7071067690849304, 3.5762786865234375e-07, 0.7071064710617065)), Vector((-0.8314696550369263, 2.980232238769531e-07, 0.5555698871612549)), Vector((-0.9238795042037964, 3.2782554626464844e-07, 0.382683128118515)), Vector((-0.9807852506637573, 2.980232238769531e-07, 0.19509007036685944)), Vector((-1.0, 2.84984679410627e-07, -2.0948681367372046e-07)), Vector((-0.9807853102684021, 2.682209014892578e-07, -0.19509048759937286)), Vector((-0.9238795638084412, 2.682209014892578e-07, -0.38268357515335083)), Vector((-0.8314696550369263, 2.384185791015625e-07, -0.5555704832077026)), Vector((-0.7071067690849304, 2.384185791015625e-07, -0.7071070671081543)), Vector((-0.5555701851844788, 2.384185791015625e-07, -0.8314699530601501)), Vector((-0.38268327713012695, 2.384185791015625e-07, -0.9238799214363098)), Vector((-0.19509008526802063, 2.384185791015625e-07, -0.980785608291626)), Vector((3.2584136988589307e-07, 2.384185791015625e-07, -1.000000238418579)), Vector((0.19509072601795197, 2.384185791015625e-07, -0.9807854890823364)), Vector((0.38268381357192993, 2.384185791015625e-07, -0.923284649848938)), Vector((0.22629565000534058, 2.384185791015625e-07, -0.9575635194778442)), Vector((0.06365743279457092, 2.384185791015625e-07, -0.954291045665741)), Vector((-0.09898078441619873, 2.384185791015625e-07, -0.9143458008766174)), Vector((-0.2553688883781433, 2.384185791015625e-07, -0.8406103253364563)), Vector((-0.39949703216552734, 2.384185791015625e-07, -0.737377941608429)), Vector((-0.5258263349533081, 2.384185791015625e-07, -0.6102247834205627)), Vector((-0.6295021176338196, 2.384185791015625e-07, -0.465727299451828)), Vector((-0.7065401673316956, 2.682209014892578e-07, -0.3110540509223938)), Vector((-0.7539799809455872, 2.682209014892578e-07, -0.15349547564983368)), Vector((-0.7699984908103943, 2.84984679410627e-07, -1.378889180614351e-07)), Vector((-0.7539798617362976, 2.980232238769531e-07, 0.153495192527771)), Vector((-0.706540048122406, 3.2782554626464844e-07, 0.31105372309684753)), Vector((-0.6295021176338196, 2.980232238769531e-07, 0.4657267928123474)), Vector((-0.5258263349533081, 3.5762786865234375e-07, 0.6102243065834045)), Vector((-0.3994970917701721, 3.5762786865234375e-07, 0.737377405166626)), Vector((-0.25536900758743286, 3.5762786865234375e-07, 0.8406097292900085)), Vector((-0.09898099303245544, 3.5762786865234375e-07, 0.9143452048301697)), Vector((0.06365716457366943, 3.5762786865234375e-07, 0.9542905688285828)), Vector((0.22629405558109283, 3.5762786865234375e-07, 0.9575631022453308)), Vector((0.3826821446418762, 3.5762786865234375e-07, 0.9232847094535828)), Vector((0.19508881866931915, 3.5762786865234375e-07, 0.9807852506637573)), Vector((0.0, 3.5762786865234375e-07, 0.9999997019767761))]
+
+        edges = []
+        for i in range(len(verts)):
+            edges.append((i, i+1))
+        edges[-1] = (0, len(verts)-1)
+
+        head_tail_vector = pbone.vector * head_tail
+        verts = [(pbone.matrix * pbone.length).inverted() * (pos + Vector(v) + head_tail_vector) * radius for v in verts]
+
+        mesh = obj.data
+        mesh.from_pydata(verts, edges, [])
+        mesh.update()
+
 
 def assign_bone_group(rig, bone_name, bone_group):
     """ Assign bone to bone group.
