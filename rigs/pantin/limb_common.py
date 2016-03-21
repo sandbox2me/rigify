@@ -15,7 +15,7 @@ from . import pantin_utils
 importlib.reload(pantin_utils)
 
 class IKLimb:
-    def __init__(self, obj, org_bones, stretch_joint_name, do_flip, pelvis_name, side_suffix='', follow_org=False, ik_limits=[-150.0, 150.0, 0.0, 160.0]):
+    def __init__(self, obj, org_bones, stretch_joint_name, do_flip, pelvis_follow, pelvis_name, side_suffix='', follow_org=False, ik_limits=[-150.0, 150.0, 0.0, 160.0]):
         self.obj = obj
 
         # Get the chain of 3 connected bones
@@ -31,6 +31,7 @@ class IKLimb:
         self.side_suffix = side_suffix
         self.ik_limits = ik_limits
         self.do_flip = do_flip
+        self.pelvis_follow = pelvis_follow
         self.pelvis_name = pelvis_name
 
     def generate(self):
@@ -108,7 +109,7 @@ class IKLimb:
 
         # Set up custom properties
         prop = rna_idprop_ui_prop_get(elimb_ik_p, "pelvis_follow", create=True)
-        elimb_ik_p["pelvis_follow"] = 1
+        elimb_ik_p["pelvis_follow"] = int(self.pelvis_follow)
         prop["soft_min"] = 0
         prop["soft_max"] = 1
         prop["min"] = 0
