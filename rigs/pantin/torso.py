@@ -134,29 +134,29 @@ def create_sample(obj):
     bones = {}
 
     bone = arm.edit_bones.new('Bassin')
-    bone.head[:] = 0.0515, -0.0000, 0.8916
-    bone.tail[:] = 0.0878, -0.0000, 1.0483
-    bone.roll = -2.9142
+    bone.head[:] = -0.0029, 0.0000, 0.8893
+    bone.tail[:] = 0.0294, -0.0000, 1.0480
+    bone.roll = -2.9413
     bone.use_connect = False
     bones['Bassin'] = bone.name
     bone = arm.edit_bones.new('Abdomen')
-    bone.head[:] = 0.0878, -0.0000, 1.0483
-    bone.tail[:] = 0.0729, -0.0000, 1.1827
-    bone.roll = -3.2517
+    bone.head[:] = 0.0294, -0.0000, 1.0480
+    bone.tail[:] = -0.0027, 0.0000, 1.1745
+    bone.roll = 2.8939
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Bassin']]
     bones['Abdomen'] = bone.name
     bone = arm.edit_bones.new('Thorax')
-    bone.head[:] = 0.0729, -0.0000, 1.1827
-    bone.tail[:] = 0.0644, -0.0000, 1.3085
-    bone.roll = -3.2094
+    bone.head[:] = -0.0027, 0.0000, 1.1745
+    bone.tail[:] = -0.0135, 0.0000, 1.3005
+    bone.roll = 3.0550
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Abdomen']]
     bones['Thorax'] = bone.name
     bone = arm.edit_bones.new('Buste')
-    bone.head[:] = 0.0644, -0.0000, 1.3085
-    bone.tail[:] = 0.0549, -0.0000, 1.4061
-    bone.roll = -3.2388
+    bone.head[:] = -0.0135, 0.0000, 1.3005
+    bone.tail[:] = 0.0005, 0.0000, 1.4038
+    bone.roll = -3.0064
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Thorax']]
     bones['Buste'] = bone.name
@@ -167,7 +167,7 @@ def create_sample(obj):
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
-    pbone.lock_scale = (True, True, True)
+    pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
     try:
         pbone.rigify_parameters.Z_index = 3
@@ -177,12 +177,16 @@ def create_sample(obj):
         pbone.rigify_parameters.mutable_order = False
     except AttributeError:
         pass
+    try:
+        pbone.rigify_parameters.members_number = 5
+    except AttributeError:
+        pass
     pbone = obj.pose.bones[bones['Abdomen']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
-    pbone.lock_scale = (True, True, True)
+    pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
     pbone = obj.pose.bones[bones['Thorax']]
     pbone.rigify_type = ''

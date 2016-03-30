@@ -196,21 +196,21 @@ def create_sample(obj):
     bones = {}
 
     bone = arm.edit_bones.new('Bras haut')
-    bone.head[:] = 0.0056, -0.0000, 1.3408
-    bone.tail[:] = 0.0100, -0.0000, 1.1262
-    bone.roll = -0.0201
+    bone.head[:] = -0.0488, 0.0000, 1.3385
+    bone.tail[:] = -0.0929, 0.0000, 1.1169
+    bone.roll = 0.1969
     bone.use_connect = False
     bones['Bras haut'] = bone.name
     bone = arm.edit_bones.new('Bras bas')
-    bone.head[:] = 0.0100, -0.0000, 1.1262
-    bone.tail[:] = 0.0383, -0.0000, 0.8731
-    bone.roll = -0.1117
+    bone.head[:] = -0.0929, 0.0000, 1.1169
+    bone.tail[:] = -0.0646, 0.0000, 0.8523
+    bone.roll = -0.1069
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Bras haut']]
     bones['Bras bas'] = bone.name
     bone = arm.edit_bones.new('Main')
-    bone.head[:] = 0.0383, -0.0000, 0.8731
-    bone.tail[:] = 0.0383, -0.0000, 0.7657
+    bone.head[:] = -0.0646, 0.0000, 0.8523
+    bone.tail[:] = -0.0646, 0.0000, 0.7518
     bone.roll = 0.0000
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Bras bas']]
@@ -230,6 +230,14 @@ def create_sample(obj):
         pass
     try:
         pbone.rigify_parameters.joint_name = "Coude"
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.pelvis_name = "Bassin"
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.duplicate_lr = True
     except AttributeError:
         pass
     pbone = obj.pose.bones[bones['Bras bas']]

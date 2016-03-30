@@ -110,21 +110,21 @@ def create_sample(obj):
     bones = {}
 
     bone = arm.edit_bones.new('Cou')
-    bone.head[:] = 0.0549, -0.0000, 1.4061
-    bone.tail[:] = 0.0815, -0.0000, 1.4743
+    bone.head[:] = 0.0005, 0.0000, 1.4038
+    bone.tail[:] = 0.0271, 0.0000, 1.4720
     bone.roll = -2.7688
     bone.use_connect = False
     bones['Cou'] = bone.name
     bone = arm.edit_bones.new('Tete')
-    bone.head[:] = 0.0815, -0.0000, 1.4743
-    bone.tail[:] = 0.1136, -0.0000, 1.6196
+    bone.head[:] = 0.0271, 0.0000, 1.4720
+    bone.tail[:] = 0.0592, 0.0000, 1.6173
     bone.roll = -2.9241
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Cou']]
     bones['Tete'] = bone.name
     bone = arm.edit_bones.new('Machoire')
-    bone.head[:] = 0.0767, -0.0000, 1.4961
-    bone.tail[:] = 0.1508, -0.0000, 1.4473
+    bone.head[:] = 0.0223, 0.0000, 1.4938
+    bone.tail[:] = 0.0964, 0.0000, 1.4450
     bone.roll = -0.9887
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['Tete']]
@@ -132,26 +132,34 @@ def create_sample(obj):
 
     bpy.ops.object.mode_set(mode='OBJECT')
     pbone = obj.pose.bones[bones['Cou']]
-    pbone.rigify_type = ''
-    pbone.lock_location = (False, False, False)
-    pbone.lock_rotation = (False, False, False)
+    pbone.rigify_type = 'pantin.head'
+    pbone.lock_location = (False, False, True)
+    pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
-    pbone.lock_scale = (False, False, False)
-    pbone.rotation_mode = 'QUATERNION'
+    pbone.lock_scale = (True, True, True)
+    pbone.rotation_mode = 'XZY'
+    try:
+        pbone.rigify_parameters.Z_index = 2
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.mutable_order = False
+    except AttributeError:
+        pass
     pbone = obj.pose.bones[bones['Tete']]
     pbone.rigify_type = ''
-    pbone.lock_location = (False, False, False)
-    pbone.lock_rotation = (False, False, False)
+    pbone.lock_location = (False, False, True)
+    pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
-    pbone.lock_scale = (False, False, False)
-    pbone.rotation_mode = 'QUATERNION'
+    pbone.lock_scale = (True, True, True)
+    pbone.rotation_mode = 'XZY'
     pbone = obj.pose.bones[bones['Machoire']]
     pbone.rigify_type = ''
-    pbone.lock_location = (False, False, False)
-    pbone.lock_rotation = (False, False, False)
+    pbone.lock_location = (True, True, True)
+    pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
-    pbone.lock_scale = (False, False, False)
-    pbone.rotation_mode = 'QUATERNION'
+    pbone.lock_scale = (True, True, True)
+    pbone.rotation_mode = 'XZY'
 
     bpy.ops.object.mode_set(mode='EDIT')
     for bone in arm.edit_bones:
