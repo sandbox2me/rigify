@@ -69,108 +69,108 @@ def create(obj):
     bones = {}
 
     bone = arm.edit_bones.new('Bassin')
-    bone.head[:] = 0.0515, -0.0000, 0.8916
-    bone.tail[:] = 0.0878, -0.0000, 1.0483
-    bone.roll = -2.9142
+    bone.head[:] = -0.0029, 0.0000, 0.8893
+    bone.tail[:] = 0.0294, -0.0000, 1.0480
+    bone.roll = -2.9413
     bone.use_connect = False
     bones['Bassin'] = bone.name
-    bone = arm.edit_bones.new('Cuisse')
-    bone.head[:] = 0.0515, -0.0000, 0.8916
-    bone.tail[:] = 0.0261, -0.0000, 0.4917
+    bone = arm.edit_bones.new('Jambe haut')
+    bone.head[:] = -0.0029, 0.0000, 0.8893
+    bone.tail[:] = -0.0283, 0.0000, 0.4894
     bone.roll = 0.0634
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['Bassin']]
-    bones['Cuisse'] = bone.name
+    bones['Jambe haut'] = bone.name
     bone = arm.edit_bones.new('Abdomen')
-    bone.head[:] = 0.0878, -0.0000, 1.0483
-    bone.tail[:] = 0.0729, -0.0000, 1.1827
-    bone.roll = -3.2517
+    bone.head[:] = 0.0294, -0.0000, 1.0480
+    bone.tail[:] = -0.0027, 0.0000, 1.1745
+    bone.roll = 2.8939
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Bassin']]
     bones['Abdomen'] = bone.name
-    bone = arm.edit_bones.new('Jambe')
-    bone.head[:] = 0.0261, -0.0000, 0.4917
-    bone.tail[:] = -0.0043, 0.0000, 0.0759
+    bone = arm.edit_bones.new('Jambe bas')
+    bone.head[:] = -0.0283, 0.0000, 0.4894
+    bone.tail[:] = -0.0587, 0.0000, 0.0736
     bone.roll = 0.0731
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Cuisse']]
-    bones['Jambe'] = bone.name
-    bone = arm.edit_bones.new('Torse')
-    bone.head[:] = 0.0729, -0.0000, 1.1827
-    bone.tail[:] = 0.0644, -0.0000, 1.3085
-    bone.roll = -3.2094
+    bone.parent = arm.edit_bones[bones['Jambe haut']]
+    bones['Jambe bas'] = bone.name
+    bone = arm.edit_bones.new('Thorax')
+    bone.head[:] = -0.0027, 0.0000, 1.1745
+    bone.tail[:] = -0.0135, 0.0000, 1.3005
+    bone.roll = 3.0550
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Abdomen']]
-    bones['Torse'] = bone.name
+    bones['Thorax'] = bone.name
     bone = arm.edit_bones.new('Pied')
-    bone.head[:] = -0.0043, 0.0000, 0.0759
-    bone.tail[:] = 0.0514, -0.0000, 0.0250
+    bone.head[:] = -0.0587, 0.0000, 0.0736
+    bone.tail[:] = -0.0030, 0.0000, 0.0227
     bone.roll = -0.8301
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Jambe']]
+    bone.parent = arm.edit_bones[bones['Jambe bas']]
     bones['Pied'] = bone.name
     bone = arm.edit_bones.new('Talon')
-    bone.head[:] = -0.0043, 0.0000, 0.0759
-    bone.tail[:] = -0.0410, -0.0000, 0.0027
-    bone.roll = -2.6771
+    bone.head[:] = -0.0587, 0.0000, 0.0736
+    bone.tail[:] = -0.0954, 0.0000, 0.0000
+    bone.roll = 0.4628
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Jambe']]
+    bone.parent = arm.edit_bones[bones['Jambe bas']]
     bones['Talon'] = bone.name
-    bone = arm.edit_bones.new('Epaule')
-    bone.head[:] = 0.0644, -0.0000, 1.3085
-    bone.tail[:] = 0.0549, -0.0000, 1.4061
-    bone.roll = -3.2388
+    bone = arm.edit_bones.new('Buste')
+    bone.head[:] = -0.0135, 0.0000, 1.3005
+    bone.tail[:] = 0.0005, 0.0000, 1.4038
+    bone.roll = -3.0064
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Torse']]
-    bones['Epaule'] = bone.name
-    bone = arm.edit_bones.new('Orteils')
-    bone.head[:] = 0.0514, -0.0000, 0.0250
-    bone.tail[:] = 0.1102, 0.0000, 0.0004
-    bone.roll = -1.1744
+    bone.parent = arm.edit_bones[bones['Thorax']]
+    bones['Buste'] = bone.name
+    bone = arm.edit_bones.new('Orteil')
+    bone.head[:] = -0.0030, 0.0000, 0.0227
+    bone.tail[:] = 0.0558, 0.0000, 0.0000
+    bone.roll = -1.2031
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Pied']]
-    bones['Orteils'] = bone.name
+    bones['Orteil'] = bone.name
     bone = arm.edit_bones.new('Cou')
-    bone.head[:] = 0.0549, -0.0000, 1.4061
-    bone.tail[:] = 0.0815, -0.0000, 1.4743
+    bone.head[:] = 0.0005, 0.0000, 1.4038
+    bone.tail[:] = 0.0271, 0.0000, 1.4720
     bone.roll = -2.7688
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Epaule']]
+    bone.parent = arm.edit_bones[bones['Buste']]
     bones['Cou'] = bone.name
-    bone = arm.edit_bones.new('Bras')
-    bone.head[:] = 0.0056, -0.0000, 1.3408
-    bone.tail[:] = 0.0100, -0.0000, 1.1262
-    bone.roll = -0.0201
+    bone = arm.edit_bones.new('Bras haut')
+    bone.head[:] = -0.0488, 0.0000, 1.3385
+    bone.tail[:] = -0.0929, 0.0000, 1.1169
+    bone.roll = 0.1969
     bone.use_connect = False
-    bone.parent = arm.edit_bones[bones['Epaule']]
-    bones['Bras'] = bone.name
+    bone.parent = arm.edit_bones[bones['Buste']]
+    bones['Bras haut'] = bone.name
     bone = arm.edit_bones.new('Tete')
-    bone.head[:] = 0.0815, -0.0000, 1.4743
-    bone.tail[:] = 0.1136, -0.0000, 1.6196
+    bone.head[:] = 0.0271, 0.0000, 1.4720
+    bone.tail[:] = 0.0592, 0.0000, 1.6173
     bone.roll = -2.9241
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Cou']]
     bones['Tete'] = bone.name
-    bone = arm.edit_bones.new('Avant-bras')
-    bone.head[:] = 0.0100, -0.0000, 1.1262
-    bone.tail[:] = 0.0383, -0.0000, 0.8731
-    bone.roll = -0.1117
+    bone = arm.edit_bones.new('Bras bas')
+    bone.head[:] = -0.0929, 0.0000, 1.1169
+    bone.tail[:] = -0.0646, 0.0000, 0.8523
+    bone.roll = -0.1069
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Bras']]
-    bones['Avant-bras'] = bone.name
+    bone.parent = arm.edit_bones[bones['Bras haut']]
+    bones['Bras bas'] = bone.name
     bone = arm.edit_bones.new('Machoire')
-    bone.head[:] = 0.0767, -0.0000, 1.4961
-    bone.tail[:] = 0.1508, -0.0000, 1.4473
+    bone.head[:] = 0.0223, 0.0000, 1.4938
+    bone.tail[:] = 0.0964, 0.0000, 1.4450
     bone.roll = -0.9887
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['Tete']]
     bones['Machoire'] = bone.name
     bone = arm.edit_bones.new('Main')
-    bone.head[:] = 0.0383, -0.0000, 0.8731
-    bone.tail[:] = 0.0383, -0.0000, 0.7657
+    bone.head[:] = -0.0646, 0.0000, 0.8523
+    bone.tail[:] = -0.0646, 0.0000, 0.7518
     bone.roll = 0.0000
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Avant-bras']]
+    bone.parent = arm.edit_bones[bones['Bras bas']]
     bones['Main'] = bone.name
 
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -194,7 +194,7 @@ def create(obj):
         pbone.rigify_parameters.members_number = 5
     except AttributeError:
         pass
-    pbone = obj.pose.bones[bones['Cuisse']]
+    pbone = obj.pose.bones[bones['Jambe haut']]
     pbone.rigify_type = 'pantin.leg'
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
@@ -218,6 +218,10 @@ def create(obj):
         pbone.rigify_parameters.pelvis_name = "Bassin"
     except AttributeError:
         pass
+    try:
+        pbone.rigify_parameters.duplicate_lr = True
+    except AttributeError:
+        pass
     pbone = obj.pose.bones[bones['Abdomen']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
@@ -226,7 +230,7 @@ def create(obj):
     pbone.lock_scale = (True, True, True)
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
-    pbone = obj.pose.bones[bones['Jambe']]
+    pbone = obj.pose.bones[bones['Jambe bas']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
@@ -234,7 +238,7 @@ def create(obj):
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
-    pbone = obj.pose.bones[bones['Torse']]
+    pbone = obj.pose.bones[bones['Thorax']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
@@ -258,7 +262,7 @@ def create(obj):
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
-    pbone = obj.pose.bones[bones['Epaule']]
+    pbone = obj.pose.bones[bones['Buste']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
@@ -266,7 +270,7 @@ def create(obj):
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
-    pbone = obj.pose.bones[bones['Orteils']]
+    pbone = obj.pose.bones[bones['Orteil']]
     pbone.rigify_type = ''
     pbone.lock_location = (True, True, True)
     pbone.lock_rotation = (True, True, False)
@@ -290,7 +294,7 @@ def create(obj):
         pbone.rigify_parameters.mutable_order = False
     except AttributeError:
         pass
-    pbone = obj.pose.bones[bones['Bras']]
+    pbone = obj.pose.bones[bones['Bras haut']]
     pbone.rigify_type = 'pantin.arm'
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
@@ -310,6 +314,10 @@ def create(obj):
         pbone.rigify_parameters.pelvis_name = "Bassin"
     except AttributeError:
         pass
+    try:
+        pbone.rigify_parameters.duplicate_lr = True
+    except AttributeError:
+        pass
     pbone = obj.pose.bones[bones['Tete']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
@@ -318,7 +326,7 @@ def create(obj):
     pbone.lock_scale = (True, True, True)
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
-    pbone = obj.pose.bones[bones['Avant-bras']]
+    pbone = obj.pose.bones[bones['Bras bas']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
