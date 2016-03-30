@@ -210,4 +210,4 @@ class IKLimb:
         flimb_ik_p.ik_max_z = radians(self.ik_limits[3]) #radians(160.0)
         
 
-        return [ulimb_ik, ulimb_str, flimb_str, joint_str, elimb_ik, elimb_str]
+        return [ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str, elimb_ik, elimb_str]
