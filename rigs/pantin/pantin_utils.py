@@ -27,7 +27,7 @@ def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index
 
     def_bone_e.head = org_bone_e.head
     def_bone_e.tail = org_bone_e.head
-    def_bone_e.tail.z += 0.1
+    def_bone_e.tail.z += org_bone_e.length * 0.5
 
     def_bone_e['member_index'] = member_index
     def_bone_e['bone_index'] = bone_index
@@ -155,15 +155,13 @@ def create_aligned_polygon_widget(rig, bone_name, vertex_points, bone_transform_
     if obj is not None:
         
         pbone = rig.pose.bones[bone_name]
-        # print(pbone.matrix.translation)
-        pos = pbone.matrix.translation
         
         verts = [Vector((x, 0.0, y)) for x,y in vertex_points]
         edges = []
         for i in range(len(verts)):
             edges.append((i, i+1))
         edges[-1] = (0, len(verts)-1)
-        # head_tail_vector = pbone.vector * head_tail
+
         verts = [(pbone.matrix * pbone.length).inverted() * (v) for v in verts]
 
         mesh = obj.data
