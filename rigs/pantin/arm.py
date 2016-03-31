@@ -53,7 +53,7 @@ class Rig:
                 Z_index = 5-self.params.Z_index
                 
             for i, b in enumerate([elimb_str, flimb_str, ulimb_str]):
-                def_bone_name = elimb_str.split('.')[0][4:]
+                def_bone_name = b.split('.')[0][4:]
                 def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, Z_index, i, def_bone_name + s)
 
             # Set layers if specified
