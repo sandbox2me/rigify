@@ -67,8 +67,8 @@ class Rig:
             foot_tgt = copy_bone(self.obj, self.org_bones[2], make_mechanism_name(strip_org(self.org_bones[2]) + '.tgt' + s))
             heel_fr = copy_bone(self.obj, self.org_bones[3], make_mechanism_name(strip_org(self.org_bones[3]) + '.fr' + s))
             toe_fr = copy_bone(self.obj, self.org_bones[4], make_mechanism_name(strip_org(self.org_bones[4]) + '.fr' + s))
-            toe_tgt = copy_bone(self.obj, self.org_bones[4], make_mechanism_name(strip_org(self.org_bones[4]) + '.tgt' + s))
             toe_ctl = copy_bone(self.obj, self.org_bones[4], strip_org(self.org_bones[4]) + s)
+            toe_pos = copy_bone(self.obj, self.org_bones[4], make_mechanism_name(strip_org(self.org_bones[4]) + '.pos' + s))
             roll_fr = new_bone(self.obj, "Foot roll" + s)
 
             # Position
@@ -105,10 +105,10 @@ class Rig:
             eb[toe_fr].parent = eb[heel_fr]
 
             eb[toe_ctl].use_connect = True
-            eb[toe_ctl].parent = eb[elimb_str]
+            eb[toe_ctl].parent = eb[toe_fr]
 
-            eb[toe_tgt].use_connect = True
-            eb[toe_tgt].parent = eb[toe_fr]
+            eb[toe_pos].use_connect = False
+            eb[toe_pos].parent = eb[elimb_str]
 
             eb[heel_fr].use_connect = False
             eb[heel_fr].parent = eb[elimb_ik]
@@ -129,7 +129,7 @@ class Rig:
             def_bone_name = elimb_str.split('.')[0][4:]
             def_bone = pantin_utils.create_deformation(self.obj, elimb_str, self.params.mutable_order, Z_index, 2, def_bone_name + s)
             def_bone_name = toe_ctl.split('.')[0]
-            def_bone = pantin_utils.create_deformation(self.obj, toe_ctl, self.params.mutable_order, Z_index, 3, def_bone_name + s)
+            def_bone = pantin_utils.create_deformation(self.obj, toe_pos, self.params.mutable_order, Z_index, 3, def_bone_name + s)
 
             # Set layers if specified
             if s == '.R' and self.right_layers:
@@ -175,7 +175,7 @@ class Rig:
             # TODO investigate why moving an edit bones screws up widgets' matrices (foot_ik has moved)
             toe_verts = ((left, down), (left, up), (right, down + (up - down) * 2 / 3), (right, down))
             pantin_utils.create_aligned_polygon_widget(self.obj, toe_ctl, toe_verts)
-            pantin_utils.create_aligned_polygon_widget(self.obj, toe_fr, toe_verts)
+            #pantin_utils.create_aligned_polygon_widget(self.obj, toe_fr, toe_verts)
             # pantin_utils.create_aligned_circle_widget(self.obj, toe_ctl, number_verts = 3, radius=widget_size)
 
             pantin_utils.create_aligned_crescent_widget(self.obj, roll_fr, radius=side_factor * pb[roll_fr].length / 2)
@@ -274,10 +274,10 @@ class Rig:
             con = pb[elimb_str].constraints[0]
             con.subtarget = foot_tgt
 
-            con = pb[toe_ctl].constraints.new('COPY_ROTATION')
+            con = pb[toe_pos].constraints.new('COPY_ROTATION')
             con.name = "copy rotation"
             con.target = self.obj
-            con.subtarget = toe_tgt
+            con.subtarget = toe_ctl
             #con.invert_x = True
             con.target_space = 'POSE'
             con.owner_space = 'POSE'
