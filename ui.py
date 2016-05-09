@@ -64,6 +64,7 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
             #     a.name = t[:-3]
 
             col = layout.column(align=True)
+            col.active = (not 'rig_id' in C.object.data)
             if len(obj.data.rigify_templates) == 0:
                 col.operator("pose.rigify_template_init")
             else:
