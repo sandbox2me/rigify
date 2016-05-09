@@ -23,6 +23,7 @@ from bpy.props import StringProperty
 
 from .utils import get_rig_type, MetarigError
 from .utils import write_metarig, write_widget
+from .utils import fill_ui_template_list
 from . import rig_lists
 from . import template_list
 from . import generate
@@ -64,9 +65,16 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
             #     a.name = t[:-3]
 
             col = layout.column(align=True)
-            col.label("UI template for rig:")
-            col.template_list("UI_UL_list", "rigify_templates", armature_id_store, "rigify_templates", armature_id_store, "rigify_active_template")
-            col.operator("pose.rigify_generate", text="Generate")
+            if len(obj.data.rigify_templates) == 0:
+                col.operator("pose.rigify_template_init")
+            else:
+                col.label("UI template for rig:")
+                col.template_list("UI_UL_list", "rigify_templates", armature_id_store, "rigify_templates", armature_id_store, "rigify_active_template")
+
+            col.separator()
+            row = col.row()
+            row.active = len(obj.data.rigify_templates) != 0
+            row.operator("pose.rigify_generate", text="Generate")
         elif obj.mode == 'EDIT':
             # Build types list
             collection_name = str(id_store.rigify_collection).replace(" ", "")
@@ -284,6 +292,19 @@ class LayerInit(bpy.types.Operator):
         return {'FINISHED'}
 
 
+
+class TemplateInit(bpy.types.Operator):
+    """Initialize armature rigify ui templates"""
+
+    bl_idname = "pose.rigify_template_init"
+    bl_label = "Add Rigify UI Templates"
+    bl_options = {'UNDO'}
+
+    def execute(self, context):
+        fill_ui_template_list(context.object)
+        return {'FINISHED'}
+
+
 class Generate(bpy.types.Operator):
     """Generates a rig from the active metarig armature"""
 
@@ -431,6 +452,7 @@ def register():
     bpy.utils.register_class(BONE_PT_rigify_buttons)
     bpy.utils.register_class(VIEW3D_PT_tools_rigify_dev)
     bpy.utils.register_class(LayerInit)
+    bpy.utils.register_class(TemplateInit)
     bpy.utils.register_class(Generate)
     bpy.utils.register_class(Sample)
     bpy.utils.register_class(EncodeMetarig)
@@ -445,6 +467,7 @@ def unregister():
     bpy.utils.unregister_class(BONE_PT_rigify_buttons)
     bpy.utils.unregister_class(VIEW3D_PT_tools_rigify_dev)
     bpy.utils.unregister_class(LayerInit)
+    bpy.utils.unregister_class(TemplateInit)
     bpy.utils.unregister_class(Generate)
     bpy.utils.unregister_class(Sample)
     bpy.utils.unregister_class(EncodeMetarig)
