@@ -45,6 +45,42 @@ def z_index_same(member_index, flip, bone_index):
         return member_index * member_offset + bone_index * bone_offset
 
 
+#######################
+## Swapping operator ##
+#######################
+
+class Rigify_Swap_Bones(bpy.types.Operator):
+    """ Swap left and right bones
+    """
+    bl_idname = "pose.rigify_swap_bones_" + rig_id
+    bl_label = "Rigify Swap left and right selected bones"
+    bl_options = {'UNDO'}
+
+
+    @classmethod
+    def poll(cls, context):
+        return (context.active_object != None and context.mode == 'POSE')
+
+    def execute(self, context):
+        def swap_LR(name):
+            if name[-2:] == '.L':
+                return name[:-1] + 'R'
+            elif name[-2:] == '.R':
+                return name[:-1] + 'L'
+            else:
+                return None
+
+        for pb in context.selected_pose_bones:
+            swapped_name = swap_LR(pb.name)
+            if swapped_name is not None:
+                other = context.object.pose.bones[swapped_name]
+                
+                tmp_matrix = pb.matrix
+                pb.matrix = other.matrix
+                other.matrix = tmp_matrix
+        return {'FINISHED'}
+
+
 ###################
 ## Rig UI Panels ##
 ###################
@@ -83,6 +119,9 @@ class RigUI(bpy.types.Panel):
             elif names in selected_bones:
                 return True
             return False
+
+        layout.operator("pose.rigify_swap_bones_" + rig_id)
+        layout.separator()
 
         layout.prop(bones["MCH-Flip"], '["flip"]', text="Flip", slider=True)
         layout.separator()
@@ -147,6 +186,7 @@ class RigLayers(bpy.types.Panel):
 UI_REGISTER = '''
 
 def register():
+    bpy.utils.register_class(Rigify_Swap_Bones)
     bpy.utils.register_class(RigUI)
     bpy.utils.register_class(RigLayers)
 
@@ -155,6 +195,7 @@ def register():
 
 
 def unregister():
+    bpy.utils.unregister_class(Rigify_Swap_Bones)
     bpy.utils.unregister_class(RigUI)
     bpy.utils.unregister_class(RigLayers)
 
