@@ -23,7 +23,6 @@ from bpy.props import StringProperty
 
 from .utils import get_rig_type, MetarigError
 from .utils import write_metarig, write_widget
-from .utils import fill_ui_template_list
 from . import rig_lists
 from . import template_list
 from . import generate
@@ -301,7 +300,7 @@ class TemplateInit(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     def execute(self, context):
-        fill_ui_template_list(context.object)
+        template_list.fill_ui_template_list(context.object)
         return {'FINISHED'}
 
 

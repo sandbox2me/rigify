@@ -72,6 +72,16 @@ def get_template_list():
 #             collection_list += [a[0]]
 #     return collection_list
 
+def fill_ui_template_list(obj):
+    """Fill rig's UI template list
+    """
+    armature_id_store = obj.data
+    for i in range(0, len(armature_id_store.rigify_templates)):
+        armature_id_store.rigify_templates.remove(0)
+
+    for t in template_list:
+        a = armature_id_store.rigify_templates.add()
+        a.name = t[:-3]
 
 # Public variables
 template_list = get_template_list()

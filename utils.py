@@ -27,8 +27,6 @@ import time
 from mathutils import Vector, Matrix
 from rna_prop_ui import rna_idprop_ui_prop_get
 
-from . import template_list
-
 RIG_DIR = "rigs"  # Name of the directory where rig types are kept
 METARIG_DIR = "metarigs"  # Name of the directory where metarigs are kept
 TEMPLATE_DIR = "ui_templates"  # Name of the directory where ui templates are kept
@@ -724,17 +722,6 @@ def get_ui_template_module(template_name):
     importlib.reload(submod)
     return submod
 
-
-def fill_ui_template_list(obj):
-    """Fill rig's UI template list
-    """
-    armature_id_store = obj.data
-    for i in range(0, len(armature_id_store.rigify_templates)):
-        armature_id_store.rigify_templates.remove(0)
-
-    for t in template_list.template_list:
-        a = armature_id_store.rigify_templates.add()
-        a.name = t[:-3]
 
 def connected_children_names(obj, bone_name):
     """ Returns a list of bone names (in order) of the bones that form a single

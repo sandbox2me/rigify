@@ -24,6 +24,7 @@ from string import capwords
 import bpy
 
 from . import utils
+from . import template_list
 
 
 def get_metarig_list(path):
@@ -68,7 +69,7 @@ def make_metarig_add_execute(m):
         bones = context.active_object.data.edit_bones
         bones.remove(bones[0])
 
-        utils.fill_ui_template_list(obj)
+        template_list.fill_ui_template_list(obj)
 
         # Create metarig
         m.create(obj)
