@@ -55,16 +55,17 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
             # Rig type field
             # row = layout.row()
 
-            for i in range(0, len(id_store.rigify_templates)):
-                id_store.rigify_templates.remove(0)
+            armature_id_store = C.object.data
+            # for i in range(0, len(armature_id_store.rigify_templates)):
+            #     armature_id_store.rigify_templates.remove(0)
 
-            for t in template_list.template_list:
-                a = id_store.rigify_templates.add()
-                a.name = t[:-3]
+            # for t in template_list.template_list:
+            #     a = armature_id_store.rigify_templates.add()
+            #     a.name = t[:-3]
 
             col = layout.column(align=True)
             col.label("UI template for rig:")
-            col.template_list("UI_UL_list", "rigify_templates", id_store, "rigify_templates", id_store, "rigify_active_template")
+            col.template_list("UI_UL_list", "rigify_templates", armature_id_store, "rigify_templates", armature_id_store, "rigify_active_template")
             col.operator("pose.rigify_generate", text="Generate")
         elif obj.mode == 'EDIT':
             # Build types list

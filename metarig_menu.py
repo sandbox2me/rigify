@@ -23,6 +23,7 @@ from string import capwords
 
 import bpy
 
+from . import template_list
 from . import utils
 
 
@@ -67,6 +68,15 @@ def make_metarig_add_execute(m):
         bpy.ops.object.mode_set(mode='EDIT')
         bones = context.active_object.data.edit_bones
         bones.remove(bones[0])
+
+        # Fill rig's UI template list
+        armature_id_store = context.object.data
+        for i in range(0, len(armature_id_store.rigify_templates)):
+            armature_id_store.rigify_templates.remove(0)
+
+        for t in template_list.template_list:
+            a = armature_id_store.rigify_templates.add()
+            a.name = t[:-3]
 
         # Create metarig
         m.create(obj)

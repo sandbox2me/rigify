@@ -365,5 +365,19 @@ def create(obj):
 
     arm.layers = [(x in [0, 2, 4, 6]) for x in range(32)]
 
+    # Select proper UI template
+    template_name = "pantin_template"
+    arm_templates = arm.rigify_templates.items()
+    template_index = None
+    for i, template in enumerate(arm_templates):
+        if template[0] == template_name:
+            template_index = i
+            break
+    if template_index is None:
+        template_index = 0 # Default to something...
+    else:
+        arm.rigify_active_template = template_index
+
 if __name__ == "__main__":
     create(bpy.context.active_object)
+    

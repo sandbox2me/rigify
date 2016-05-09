@@ -83,6 +83,7 @@ def register():
     IDStore.rigify_types = bpy.props.CollectionProperty(type=RigifyName)
     IDStore.rigify_active_type = bpy.props.IntProperty(name="Rigify Active Type", description="The selected rig type")
 
+    IDStore = bpy.types.Armature
     IDStore.rigify_templates = bpy.props.CollectionProperty(type=RigifyTemplate)
     IDStore.rigify_active_template = bpy.props.IntProperty(name="Rigify Active Template", description="The selected ui template")
 

@@ -2716,5 +2716,18 @@ def create(obj):
 
     arm.layers = [(x in [0, 3, 5, 7, 10, 13, 16]) for x in range(32)]
 
+    # Select proper UI template
+    template_name = "rig_ui_template"
+    template_index = None
+    arm_templates = arm.rigify_templates.items()
+    for i, template in enumerate(arm_templates):
+        if template[0] == template_name:
+            template_index = i
+            break
+    if template_index is None:
+        template_index = 0 # Default to something...
+    else:
+        arm.rigify_active_template = template_index
+        
 if __name__ == "__main__":
     create(bpy.context.active_object)
