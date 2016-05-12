@@ -25,16 +25,33 @@ class Rig:
 
         eb = self.obj.data.edit_bones
 
-        # Flip bone
-        flip = new_bone(self.obj, make_mechanism_name('Flip'))
-        flip_e = eb[flip]
         pelvis = self.org_bones[0]
         pelvis_e = eb[pelvis]
 
+        # Intermediate root bone
+        root = new_bone(self.obj, 'Racine')
+        root_e = eb['Racine']
+        root_e.head = Vector((0,0,0))
+        root_e.tail = Vector((0,0,1)) * pelvis_e.length/2
+        align_bone_x_axis(self.obj, root, Vector((-1, 0, 0)))
+        root_e.layers = [i == 28 for i in range(32)]
+
+        # Flip bone
+        flip = new_bone(self.obj, make_mechanism_name('Flip'))
+        flip_e = eb[flip]
+
         flip_e.head = pelvis_e.head
         flip_e.tail = flip_e.head + Vector((0,0,1)) * pelvis_e.length/2
-        align_bone_x_axis(self.obj, pelvis, Vector((-1, 0, 0)))
+        align_bone_x_axis(self.obj, flip, Vector((-1, 0, 0)))
 
+        # One needs to reset edit bone reference everytime a new bone is created:
+        # The referenced bone changes (use hash() to check...)
+        # Good to know.
+        root_e = eb['Racine']
+
+        flip_e.use_connect = False
+        flip_e.parent = root_e
+        
         ctrl_chain = []
         def_chain = []
         for i, b in enumerate(self.org_bones):
@@ -88,6 +105,8 @@ class Rig:
         shoulder = ctrl_chain[3]
 
         create_cube_widget(self.obj, pelvis, radius=1.0)
+        ellipse_radius = pb[pelvis].length * 3.0
+        pantin_utils.create_aligned_half_ellipse_widget(self.obj, root, width=ellipse_radius, height=ellipse_radius*0.7)
 
         for bone in ctrl_chain[1:]:
             pantin_utils.create_capsule_widget(self.obj, bone, head_tail=0.5)

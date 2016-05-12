@@ -75,9 +75,9 @@ class Rigify_Swap_Bones(bpy.types.Operator):
             if swapped_name is not None:
                 other = context.object.pose.bones[swapped_name]
                 
-                tmp_matrix = pb.matrix
-                pb.matrix = other.matrix
-                other.matrix = tmp_matrix
+                tmp_matrix = pb.matrix_basis.copy()
+                pb.matrix_basis = other.matrix_basis
+                other.matrix_basis = tmp_matrix
         return {'FINISHED'}
 
 

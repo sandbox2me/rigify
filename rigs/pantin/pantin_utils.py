@@ -210,6 +210,51 @@ def create_aligned_crescent_widget(rig, bone_name, radius=1.0, head_tail=0.0, bo
         mesh.from_pydata(verts, edges, [])
         mesh.update()
 
+def create_half_ellipse_polygon(number_verts, width=1.0, height=0.5):
+    """ Creates a half ellipse.
+        number_verts: number of vertices of the polygon
+        radius: the radius of the circle
+        head_tail: where along the length of the bone the circle is (0.0=head, 1.0=tail)
+    """
+    verts = []
+    edges = []
+    angle = pi / number_verts
+    i = 0
+
+    while i <= (number_verts):
+        a = cos(i * angle)
+        b = sin(i * angle)
+
+        verts.append((a * width, 0.0, b * height))
+
+        if i < (number_verts):
+            edges.append((i , i + 1))
+
+        i += 1
+
+    edges.append((0, number_verts))
+
+    return verts, edges
+
+def create_aligned_half_ellipse_widget(rig, bone_name, width, height, bone_transform_name=None, head_tail=0.0):
+    """ Creates a half ellipse widget, aligned to view.
+    """
+    obj = create_widget(rig, bone_name, bone_transform_name)
+    if obj is not None:
+        
+        pbone = rig.pose.bones[bone_name]
+        # print(pbone.matrix.translation)
+        pos = pbone.matrix.translation
+        
+        verts, edges = create_half_ellipse_polygon(16, width, height)
+
+        head_tail_vector = pbone.vector * head_tail
+        verts = [(pbone.matrix * pbone.length).inverted() * (pos + Vector(v) + head_tail_vector) for v in verts]
+
+        mesh = obj.data
+        mesh.from_pydata(verts, edges, [])
+        mesh.update()
+
 
 def assign_bone_group(rig, bone_name, bone_group):
     """ Assign bone to bone group.
