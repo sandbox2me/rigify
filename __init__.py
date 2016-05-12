@@ -104,6 +104,8 @@ def unregister():
     del IDStore.rigify_collection
     del IDStore.rigify_types
     del IDStore.rigify_active_type
+    
+    IDStore = bpy.types.Armature
     del IDStore.rigify_templates
     del IDStore.rigify_active_template
 
