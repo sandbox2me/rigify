@@ -14,9 +14,13 @@ class Rig:
 
         self.neck = bone_name
         self.head = connected_children_names(self.obj, bone_name)[0]
-        self.jaw = self.obj.data.bones[self.head].children[0].name
+        #sort jaw and eyelid based on their height. ok, that's dirty
+        head_children = sorted(self.obj.data.bones[self.head].children, key=lambda b:b.tail.z)
 
-        self.org_bones = [self.neck, self.head, self.jaw]
+        self.jaw = head_children[0].name
+        self.eyelid = head_children[1].name
+
+        self.org_bones = [self.neck, self.head, self.jaw, self.eyelid]
 
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
@@ -35,10 +39,13 @@ class Rig:
 
             # Parenting
             if i == 0:
-                # First bone
+                # First bone: neck
                 if eb[b].parent is not None:
                     bone_parent_name = strip_org(eb[b].parent.name)
                     ctrl_bone_e.parent = eb[bone_parent_name]
+            elif i >= len(self.org_bones)-1:
+                # Parent jaw and eyelid to the head (1)
+                ctrl_bone_e.parent = eb[ctrl_chain[1]]
             else:
                 # The rest
                 ctrl_bone_e.parent = eb[ctrl_chain[-1]]
@@ -57,6 +64,7 @@ class Rig:
         neck = ctrl_chain[0]
         head = ctrl_chain[1]
         jaw = ctrl_chain[2]
+        eyelid = ctrl_chain[3]
 
 #        create_cube_widget(self.obj, pelvis, radius=1.0)
 
@@ -84,6 +92,13 @@ class Rig:
         con.owner_space = 'LOCAL'
 
         con = pb[jaw].constraints.new('LIMIT_ROTATION')
+        con.name = "limit_rotation"
+        con.use_limit_z = True
+        con.min_z = 0.0
+        con.max_z = 0.39
+        con.owner_space = 'LOCAL'
+
+        con = pb[eyelid].constraints.new('LIMIT_ROTATION')
         con.name = "limit_rotation"
         con.use_limit_z = True
         con.min_z = 0.0
