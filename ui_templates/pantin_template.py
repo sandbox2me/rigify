@@ -172,11 +172,15 @@ class RigLayers(bpy.types.Panel):
             code += "        row.prop(context.active_object.data, 'layers', index=%s, toggle=True, text='%s')\n" % (str(l[1]), l[0])
             i += 1
 
-    # Root layer
+    # Def layer (for parenting)
     code += "\n        row = col.row()"
     code += "\n        row.separator()"
     code += "\n        row = col.row()"
     code += "\n        row.separator()\n"
+    code += "\n        row = col.row()\n"
+    code += "        row.prop(context.active_object.data, 'layers', index=29, toggle=True, text='Deformation')\n"
+
+    # Root layer
     code += "\n        row = col.row()\n"
     code += "        row.prop(context.active_object.data, 'layers', index=28, toggle=True, text='Root')\n"
 
