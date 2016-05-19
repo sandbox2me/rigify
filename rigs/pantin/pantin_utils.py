@@ -38,22 +38,12 @@ def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index
 
     driver = obj.driver_add('pose.bones["{}"].location'.format(def_name), 2)
     if mutable_order:
-        driver.driver.expression = 'z_index(member_index, flip, members_number, bone_index)'
+        driver.driver.expression = 'z_index(member_index, flip, bone_index)'
     else:
         driver.driver.expression = 'z_index_same(member_index, flip, bone_index)'
     var_mi = driver.driver.variables.new()
     var_bi = driver.driver.variables.new()
-    var_flip = driver.driver.variables.new()
-    if mutable_order:
-        var_mn = driver.driver.variables.new()
-
-        var_mn.type = 'SINGLE_PROP'
-        var_mn.name = 'members_number'
-        var_mn.targets[0].id_type = 'ARMATURE'
-        var_mn.targets[0].id = obj.data
-        var_mn.targets[0].data_path = 'bones["MCH-Flip"]["members_number"]'
-
-        
+    var_flip = driver.driver.variables.new()        
 
     var_mi.type = 'SINGLE_PROP'
     var_mi.name = 'member_index'

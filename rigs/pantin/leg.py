@@ -120,7 +120,7 @@ class Rig:
             if s == '.L':
                 Z_index = self.params.Z_index
             else:
-                Z_index = 5-self.params.Z_index
+                Z_index = -self.params.Z_index
                 
             for i, b in enumerate([flimb_str, ulimb_str]):
                 def_bone_name = b.split('.')[0][4:]
@@ -295,8 +295,8 @@ class Rig:
         return [ui_script]
                     
 def add_parameters(params):
-    params.Z_index = bpy.props.IntProperty(name="Z index",
-                                           default=0,
+    params.Z_index = bpy.props.FloatProperty(name="Z index",
+                                           default=0.0,
                                            description="Defines member's Z order")
     params.mutable_order = bpy.props.BoolProperty(name="Mutable Order",
                                                   default=True,

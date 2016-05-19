@@ -89,8 +89,6 @@ class Rig:
         prop["min"] = 0
         prop["max"] = 1
 
-        flip_e['members_number'] = self.params.members_number
-
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
         
@@ -131,9 +129,8 @@ class Rig:
             con.subtarget = ctrl
             
 def add_parameters(params):
-    params.Z_index = bpy.props.IntProperty(name="Z index", default=0, description="Defines member's Z order")
+    params.Z_index = bpy.props.FloatProperty(name="Z index", default=0.0, description="Defines member's Z order")
     params.mutable_order = bpy.props.BoolProperty(name="Mutable order", default=True, description="This member may change depth when flipped")
-    params.members_number = bpy.props.IntProperty(name="Number of members", default=1, description="Number of member types in rig. Used for flipping and Z order.")
 
 def parameters_ui(layout, params):
     """ Create the ui for the rig parameters.

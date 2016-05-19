@@ -106,7 +106,7 @@ class Rig:
         con.owner_space = 'LOCAL'
 
 def add_parameters(params):
-    params.Z_index = bpy.props.IntProperty(name="Indice Z", default=0, description="Définit l'ordre des membres dans l'espace")
+    params.Z_index = bpy.props.FloatProperty(name="Indice Z", default=0.0, description="Définit l'ordre des membres dans l'espace")
     params.mutable_order = bpy.props.BoolProperty(name="Ordre change", default=True, description="Ce membre peut changer de profondeur")
 
 def parameters_ui(layout, params):

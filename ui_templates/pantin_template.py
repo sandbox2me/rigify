@@ -32,9 +32,9 @@ rig_id = "%s"
 member_offset = 0.01
 bone_offset = 0.005
 
-def z_index(member_index, flip, members_number, bone_index):
+def z_index(member_index, flip, bone_index):
     if flip:
-        return -(members_number - member_index) * member_offset - bone_index * bone_offset
+        return member_index * member_offset - bone_index * bone_offset
     else:
         return member_index * member_offset + bone_index * bone_offset
 
