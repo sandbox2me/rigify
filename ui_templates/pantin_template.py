@@ -34,9 +34,9 @@ bone_offset = 0.005
 
 def z_index(member_index, flip, bone_index):
     if flip:
-        return member_index * member_offset - bone_index * bone_offset
+        return -member_index * member_offset - bone_index * bone_offset
     else:
-        return member_index * member_offset + bone_index * bone_offset
+        return -member_index * member_offset + bone_index * bone_offset
 
 def z_index_same(member_index, flip, bone_index):
     if flip:

@@ -210,7 +210,7 @@ def create(obj):
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     try:
-        pbone.rigify_parameters.Z_index = 3
+        pbone.rigify_parameters.Z_index = 2
     except AttributeError:
         pass
     try:
@@ -326,7 +326,7 @@ def create(obj):
     except AttributeError:
         pass
     try:
-        pbone.rigify_parameters.Z_index = 2
+        pbone.rigify_parameters.Z_index = 3
     except AttributeError:
         pass
     pbone = obj.pose.bones[bones['Tete']]
