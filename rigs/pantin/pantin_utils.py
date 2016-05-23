@@ -1,10 +1,21 @@
 import bpy
 from mathutils import Vector
 from math import pi, cos, sin
+import re
 
 from ...utils import make_deformer_name, strip_org, copy_bone
 from ...utils import create_widget
 from ...utils import create_circle_polygon
+
+def strip_numbers(name):
+    """ Returns the name with trailing numbers stripped from it.
+    """
+    # regexp = re.compile("\.[0-9]+$")
+    matches = re.findall("\.[0-9]+$", name)
+    if matches:
+        return name[:-len(matches[-1])]
+    else:
+        return name
 
 def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index=0, new_name=''):
     bpy.ops.object.mode_set(mode='EDIT')

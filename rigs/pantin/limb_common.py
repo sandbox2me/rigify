@@ -40,15 +40,15 @@ class IKLimb:
         eb = self.obj.data.edit_bones
 
         # Create the control bones
-        ulimb_ik = copy_bone(self.obj, self.org_bones[0], strip_org(self.org_bones[0]) + ".ik" + self.side_suffix)
-        flimb_ik = copy_bone(self.obj, self.org_bones[1], make_mechanism_name(strip_org(self.org_bones[1]) + ".ik" + self.side_suffix))
-        elimb_ik = copy_bone(self.obj, self.org_bones[2], strip_org(self.org_bones[2]) + ".ik" + self.side_suffix)
+        ulimb_ik = copy_bone(self.obj, self.org_bones[0], pantin_utils.strip_numbers(strip_org(self.org_bones[0])) + ".ik" + self.side_suffix)
+        flimb_ik = copy_bone(self.obj, self.org_bones[1], make_mechanism_name(pantin_utils.strip_numbers(strip_org(self.org_bones[1])) + ".ik" + self.side_suffix))
+        elimb_ik = copy_bone(self.obj, self.org_bones[2], pantin_utils.strip_numbers(strip_org(self.org_bones[2])) + ".ik" + self.side_suffix)
 
         # elimb_mch = copy_bone(self.obj, self.org_bones[2], make_mechanism_name(strip_org(self.org_bones[2])))
 
-        ulimb_str = copy_bone(self.obj, self.org_bones[0], make_mechanism_name(strip_org(self.org_bones[0]) + ".stretch.ik" + self.side_suffix))
-        flimb_str = copy_bone(self.obj, self.org_bones[1], make_mechanism_name(strip_org(self.org_bones[1]) + ".stretch.ik" + self.side_suffix))
-        elimb_str = copy_bone(self.obj, self.org_bones[2], make_mechanism_name(strip_org(self.org_bones[2]) + ".stretch.ik" + self.side_suffix))
+        ulimb_str = copy_bone(self.obj, self.org_bones[0], make_mechanism_name(pantin_utils.strip_numbers(strip_org(self.org_bones[0])) + ".stretch.ik" + self.side_suffix))
+        flimb_str = copy_bone(self.obj, self.org_bones[1], make_mechanism_name(pantin_utils.strip_numbers(strip_org(self.org_bones[1])) + ".stretch.ik" + self.side_suffix))
+        elimb_str = copy_bone(self.obj, self.org_bones[2], make_mechanism_name(pantin_utils.strip_numbers(strip_org(self.org_bones[2])) + ".stretch.ik" + self.side_suffix))
 
         joint_str = new_bone(self.obj, self.stretch_joint_name + self.side_suffix)
         eb[joint_str].head = eb[flimb_str].head
