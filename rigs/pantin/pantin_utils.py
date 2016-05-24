@@ -6,6 +6,7 @@ import re
 from ...utils import make_deformer_name, strip_org, copy_bone
 from ...utils import create_widget
 from ...utils import create_circle_polygon
+from ...utils import align_bone_z_axis
 
 def strip_numbers(name):
     """ Returns the name with trailing numbers stripped from it.
@@ -37,8 +38,9 @@ def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index
     def_bone_e.use_connect = False
 
     def_bone_e.head = org_bone_e.head
-    def_bone_e.tail = org_bone_e.head
-    def_bone_e.tail.z += org_bone_e.length * 0.5
+    def_bone_e.tail = org_bone_e.tail
+    align_bone_z_axis(obj, def_name, Vector((0, -1, 0)))
+    # def_bone_e.tail.z += org_bone_e.length * 0.5
 
     def_bone_e['member_index'] = member_index
     def_bone_e['bone_index'] = bone_index
