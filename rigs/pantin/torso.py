@@ -7,7 +7,7 @@ from ...utils import new_bone, copy_bone
 from ...utils import make_deformer_name, make_mechanism_name,  strip_org
 from ...utils import create_bone_widget, create_widget, create_cube_widget
 from ...utils import connected_children_names, has_connected_children
-from ...utils import align_bone_x_axis
+from ...utils import align_bone_x_axis, align_bone_z_axis
 
 from . import pantin_utils
 
@@ -60,12 +60,26 @@ class Rig:
             ctrl_bone_e = eb[ctrl_bone]
 
             # Name
-            ctrl_bone_e.name = strip_org(b)
+            ctrl_bone_e.name = ctrl_bone = strip_org(b)
 
             # Parenting
             if i == 0:
                 # First bone
-                ctrl_bone_e.parent = eb[self.org_bones[0]].parent
+
+                # Vertical intermediate pelvis (animation helper)
+                inter_pelvis = copy_bone(self.obj, b, make_mechanism_name(strip_org(b)+'.intermediate'))
+                
+                ctrl_bone_e = eb[ctrl_bone]
+                ctrl_bone_e.tail = ctrl_bone_e.head
+                ctrl_bone_e.tail[2] += 1.0 * eb[b].length
+                align_bone_z_axis(self.obj, ctrl_bone, Vector((0, 1, 0)))
+
+                ctrl_bone_e = eb[ctrl_bone]
+                # ctrl_bone_e.parent = eb[self.org_bones[0]].parent
+                # eb[ctrl_bone].parent = None
+                eb[inter_pelvis].parent = ctrl_bone_e
+            elif i == 1:
+                ctrl_bone_e.parent = eb[inter_pelvis]
             else:
                 # The rest
                 ctrl_bone_e.parent = eb[ctrl_chain[-1]]
@@ -77,6 +91,7 @@ class Rig:
             def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, self.params.Z_index, i)
             def_chain.append(def_bone)
 
+        flip_e = eb[flip]
         pelvis_e = eb[ctrl_chain[0]]
         pelvis_e.use_connect = False
         pelvis_e.parent = flip_e
