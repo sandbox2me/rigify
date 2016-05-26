@@ -156,8 +156,12 @@ class Rigify_Reorder_Bones(bpy.types.Operator):
                 active_bone['bone_index'] = previous_bone['bone_index']
                 previous_bone['bone_index'] = tmp
                 # move in UI
+                bone0 = obj.data.pantin_members[self.list_member_index].bones[active_bone_index]
+                bone1 = obj.data.pantin_members[self.list_member_index].bones[active_bone_index-1]
                 obj.data.pantin_members[self.list_member_index].bones.move(active_bone_index, active_bone_index - 1)
                 obj.data.pantin_members[self.list_member_index].active_bone -= 1
+                bone0.index += 1
+                bone1.index -= 1
             else:
                 pass
                 #REPORT ERROR !
@@ -167,8 +171,12 @@ class Rigify_Reorder_Bones(bpy.types.Operator):
                 active_bone['bone_index'] = next_bone['bone_index']
                 next_bone['bone_index'] = tmp
                 # move in UI
+                bone0 = obj.data.pantin_members[self.list_member_index].bones[active_bone_index]
+                bone1 = obj.data.pantin_members[self.list_member_index].bones[active_bone_index+1]
                 obj.data.pantin_members[self.list_member_index].bones.move(active_bone_index, active_bone_index + 1)
                 obj.data.pantin_members[self.list_member_index].active_bone += 1
+                bone0.index -= 1
+                bone1.index += 1
 
             else:
                 pass
