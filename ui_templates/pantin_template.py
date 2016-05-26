@@ -34,15 +34,15 @@ bone_offset = 0.001
 
 def z_index(member_index, flip, bone_index):
     if flip:
-        return -member_index * member_offset + bone_index * bone_offset
+        return member_index * member_offset - bone_index * bone_offset
     else:
-        return -member_index * member_offset - bone_index * bone_offset
+        return member_index * member_offset + bone_index * bone_offset
 
 def z_index_same(member_index, flip, bone_index):
     if flip:
-        return -member_index * member_offset + bone_index * bone_offset
+        return -member_index * member_offset - bone_index * bone_offset
     else:
-        return member_index * member_offset - bone_index * bone_offset
+        return member_index * member_offset + bone_index * bone_offset
 
 
 #######################
@@ -89,7 +89,6 @@ class Rigify_Fill_Members(bpy.types.Operator):
     """ Construct member and bone structure"""
     bl_idname = "pose.rigify_fill_members" + rig_id
     bl_label = "Construct member and bone structure"
-#    bl_options = {'UNDO'}
 
 
     @classmethod
@@ -110,10 +109,10 @@ class Rigify_Fill_Members(bpy.types.Operator):
             members[bone['member_index']].append((bone['bone_index'], bone.name))
         # print(members)
         
-        for member, bones in sorted(members.items(), key=lambda i:i[0]):
+        for member, bones in sorted(members.items(), key=lambda i:i[0], reverse=True):
             m = obj.data.pantin_members.add()
             m.index = member
-            for bone in sorted(bones, key=lambda i:i[0]):
+            for bone in sorted(bones, key=lambda i:i[0], reverse=True):
                 b = m.bones.add()
                 b.index = bone[0]
                 b.name = bone[1]
@@ -124,6 +123,7 @@ class Rigify_Reorder_Bones(bpy.types.Operator):
     """ Change bones' order"""
     bl_idname = "pose.rigify_reorder_bones_" + rig_id
     bl_label = "Change bones' order"
+    bl_options = {'UNDO'}
 
     direction = bpy.props.StringProperty()
     list_member_index = bpy.props.IntProperty()
@@ -134,59 +134,60 @@ class Rigify_Reorder_Bones(bpy.types.Operator):
 
     def execute(self, context):
         obj = context.object
-#        print(self.direction)
-#        print(self.list_member_index)
-        active_member_index = obj.data.pantin_members[self.list_member_index].index
-        active_bone_index = obj.data.pantin_members[self.list_member_index].active_bone
-        num_bones = len(obj.data.pantin_members[self.list_member_index].bones)
+        # print(self.direction)
+        # print(self.list_member_index)
+        active_member = obj.data.pantin_members[self.list_member_index]
+        active_member_index = active_member.index
+        list_bone_index = active_member.active_bone
+        rig_bone_index = active_member.bones[active_member.active_bone].index
+        print('BONE:', rig_bone_index)
+        num_bones = len(active_member.bones)
+        # get related bones in rig
         for b in obj.data.bones:
             if not b.use_deform:
                 continue
-            if b['member_index'] == active_member_index and b['bone_index'] == active_bone_index:
+            if b['member_index'] == active_member_index and b['bone_index'] == rig_bone_index:
                 active_bone = b
-            if active_bone_index >= 1 and b['member_index'] == active_member_index and b['bone_index'] == active_bone_index - 1 :
+            if rig_bone_index < num_bones-1 and b['member_index'] == active_member_index and b['bone_index'] == rig_bone_index + 1 :
                 previous_bone = b
-            if active_bone_index <= num_bones-2 and b['member_index'] == active_member_index and b['bone_index'] == active_bone_index + 1 :
+            if rig_bone_index > 0 and b['member_index'] == active_member_index and b['bone_index'] == rig_bone_index - 1 :
                 next_bone = b
-#        print(previous_bone, active_bone, next_bone)
+        # for b in(previous_bone, active_bone, next_bone):
+        #     try:
+        #         print(b)
+        #     except:
+        #         pass
         tmp = active_bone['bone_index']
         if self.direction == 'UP':
-            if active_bone_index >= 1:
+            if rig_bone_index < num_bones-1:
                 # move for real
                 active_bone['bone_index'] = previous_bone['bone_index']
                 previous_bone['bone_index'] = tmp
                 # move in UI
-                bone0 = obj.data.pantin_members[self.list_member_index].bones[active_bone_index]
-                bone1 = obj.data.pantin_members[self.list_member_index].bones[active_bone_index-1]
-                obj.data.pantin_members[self.list_member_index].bones.move(active_bone_index, active_bone_index - 1)
-                obj.data.pantin_members[self.list_member_index].active_bone -= 1
-                bone0.index += 1
-                bone1.index -= 1
-            else:
-                pass
-                #REPORT ERROR !
+                bone0 = active_member.bones[list_bone_index]
+                bone1 = active_member.bones[list_bone_index-1]
+                active_member.bones.move(list_bone_index, list_bone_index - 1)
+                active_member.active_bone -= 1
+                bone0.index -= 1
+                bone1.index += 1
+
         if self.direction == 'DOWN':
-            if active_bone_index <= num_bones-2:
+            if rig_bone_index > 0:
                 # move for real
                 active_bone['bone_index'] = next_bone['bone_index']
                 next_bone['bone_index'] = tmp
                 # move in UI
-                bone0 = obj.data.pantin_members[self.list_member_index].bones[active_bone_index]
-                bone1 = obj.data.pantin_members[self.list_member_index].bones[active_bone_index+1]
-                obj.data.pantin_members[self.list_member_index].bones.move(active_bone_index, active_bone_index + 1)
-                obj.data.pantin_members[self.list_member_index].active_bone += 1
-                bone0.index -= 1
-                bone1.index += 1
-
-            else:
-                pass
-                #REPORT ERROR !
+                bone0 = active_member.bones[list_bone_index]
+                bone1 = active_member.bones[list_bone_index+1]
+                active_member.bones.move(list_bone_index, list_bone_index + 1)
+                active_member.active_bone += 1
+                bone0.index += 1
+                bone1.index -= 1
             
         mode = bpy.context.mode
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.object.mode_set(mode=mode)
         
-        # exec("bpy.ops.pose.rigify_fill_members" + rig_id + "()")
         return {'FINISHED'}
 
 class PantinBones(bpy.types.PropertyGroup):
