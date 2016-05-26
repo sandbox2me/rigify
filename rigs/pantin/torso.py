@@ -137,7 +137,14 @@ class Rig:
         var_flip.targets[0].data_path = 'bones["{}"]["flip"]'.format(flip)
 
         # Constraints
-        for org, ctrl in zip(self.org_bones, ctrl_chain):
+        # for pelvis
+        con = pb[self.org_bones[0]].constraints.new('COPY_TRANSFORMS')
+        con.name = "copy_transforms"
+        con.target = self.obj
+        con.subtarget = inter_pelvis
+
+        # for others
+        for org, ctrl in zip(self.org_bones[1:], ctrl_chain[1:]):
             con = pb[org].constraints.new('COPY_TRANSFORMS')
             con.name = "copy_transforms"
             con.target = self.obj
