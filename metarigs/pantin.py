@@ -134,7 +134,7 @@ def create(obj):
     bone.head[:] = 0.0005, 0.0000, 1.4038
     bone.tail[:] = 0.0271, 0.0000, 1.4720
     bone.roll = -2.7688
-    bone.use_connect = True
+    bone.use_connect = False
     bone.parent = arm.edit_bones[bones['Buste']]
     bones['Cou'] = bone.name
     bone = arm.edit_bones.new('Bras haut')
@@ -283,7 +283,7 @@ def create(obj):
     pbone.bone.layers = [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     pbone = obj.pose.bones[bones['Cou']]
     pbone.rigify_type = 'pantin.head'
-    pbone.lock_location = (False, False, True)
+    pbone.lock_location = (True, True, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (True, True, True)
