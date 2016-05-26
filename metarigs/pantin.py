@@ -190,15 +190,11 @@ def create(obj):
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     try:
-        pbone.rigify_parameters.Z_index = 1
+        pbone.rigify_parameters.Z_index = 1.0
     except AttributeError:
         pass
     try:
         pbone.rigify_parameters.mutable_order = False
-    except AttributeError:
-        pass
-    try:
-        pbone.rigify_parameters.members_number = 5
     except AttributeError:
         pass
     pbone = obj.pose.bones[bones['Jambe haut']]
@@ -210,7 +206,7 @@ def create(obj):
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     try:
-        pbone.rigify_parameters.Z_index = 2
+        pbone.rigify_parameters.Z_index = 2.0
     except AttributeError:
         pass
     try:
@@ -294,7 +290,7 @@ def create(obj):
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     try:
-        pbone.rigify_parameters.Z_index = 0
+        pbone.rigify_parameters.Z_index = 0.0
     except AttributeError:
         pass
     try:
@@ -326,7 +322,7 @@ def create(obj):
     except AttributeError:
         pass
     try:
-        pbone.rigify_parameters.Z_index = 3
+        pbone.rigify_parameters.Z_index = 3.0
     except AttributeError:
         pass
     pbone = obj.pose.bones[bones['Tete']]
@@ -385,7 +381,7 @@ def create(obj):
     arm.layers = [(x in [0, 2, 4, 6]) for x in range(32)]
 
     # Select proper UI template
-    template_name = "pantin_template"
+    template_name = 'pantin_template'
     arm_templates = arm.rigify_templates.items()
     template_index = None
     for i, template in enumerate(arm_templates):
