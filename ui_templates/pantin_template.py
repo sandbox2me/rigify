@@ -30,19 +30,19 @@ rig_id = "%s"
 ## Driver namespace  ##
 #######################
 member_offset = 0.01
-bone_offset = 0.005
+bone_offset = 0.001
 
 def z_index(member_index, flip, bone_index):
     if flip:
-        return -member_index * member_offset - bone_index * bone_offset
-    else:
         return -member_index * member_offset + bone_index * bone_offset
+    else:
+        return -member_index * member_offset - bone_index * bone_offset
 
 def z_index_same(member_index, flip, bone_index):
     if flip:
-        return -member_index * member_offset - bone_index * bone_offset
+        return -member_index * member_offset + bone_index * bone_offset
     else:
-        return member_index * member_offset + bone_index * bone_offset
+        return member_index * member_offset - bone_index * bone_offset
 
 
 #######################
@@ -81,9 +81,197 @@ class Rigify_Swap_Bones(bpy.types.Operator):
         return {'FINISHED'}
 
 
+###################################
+## Bone Z Index Operators and UI ##
+###################################
+
+class Rigify_Fill_Members(bpy.types.Operator):
+    """ Construct member and bone structure"""
+    bl_idname = "pose.rigify_fill_members" + rig_id
+    bl_label = "Construct member and bone structure"
+#    bl_options = {'UNDO'}
+
+
+    @classmethod
+    def poll(cls, context):
+        return (context.active_object != None and context.active_object.type == 'ARMATURE')
+
+    def execute(self, context):
+        obj = context.object
+        
+        obj.data.pantin_members.clear()
+        members = {}
+        for bone in obj.data.bones:
+            # print(bone.name)
+            if not bone.use_deform:
+                continue
+            if not bone['member_index'] in members:
+                members[bone['member_index']] = []
+            members[bone['member_index']].append((bone['bone_index'], bone.name))
+        # print(members)
+        
+        for member, bones in sorted(members.items(), key=lambda i:i[0]):
+            m = obj.data.pantin_members.add()
+            m.index = member
+            for bone in sorted(bones, key=lambda i:i[0]):
+                b = m.bones.add()
+                b.index = bone[0]
+                b.name = bone[1]
+            
+        return {'FINISHED'}
+
+class Rigify_Reorder_Bones(bpy.types.Operator):
+    """ Change bones' order"""
+    bl_idname = "pose.rigify_reorder_bones_" + rig_id
+    bl_label = "Change bones' order"
+
+    direction = bpy.props.StringProperty()
+    list_member_index = bpy.props.IntProperty()
+
+    @classmethod
+    def poll(cls, context):
+        return (context.active_object != None and context.active_object.type == 'ARMATURE')
+
+    def execute(self, context):
+        obj = context.object
+#        print(self.direction)
+#        print(self.list_member_index)
+        active_member_index = obj.data.pantin_members[self.list_member_index].index
+        active_bone_index = obj.data.pantin_members[self.list_member_index].active_bone
+        num_bones = len(obj.data.pantin_members[self.list_member_index].bones)
+        for b in obj.data.bones:
+            if not b.use_deform:
+                continue
+            if b['member_index'] == active_member_index and b['bone_index'] == active_bone_index:
+                active_bone = b
+            if active_bone_index >= 1 and b['member_index'] == active_member_index and b['bone_index'] == active_bone_index - 1 :
+                previous_bone = b
+            if active_bone_index <= num_bones-2 and b['member_index'] == active_member_index and b['bone_index'] == active_bone_index + 1 :
+                next_bone = b
+#        print(previous_bone, active_bone, next_bone)
+        tmp = active_bone['bone_index']
+        if self.direction == 'UP':
+            if active_bone_index >= 1:
+                # move for real
+                active_bone['bone_index'] = previous_bone['bone_index']
+                previous_bone['bone_index'] = tmp
+                # move in UI
+                obj.data.pantin_members[self.list_member_index].bones.move(active_bone_index, active_bone_index - 1)
+                obj.data.pantin_members[self.list_member_index].active_bone -= 1
+            else:
+                pass
+                #REPORT ERROR !
+        if self.direction == 'DOWN':
+            if active_bone_index <= num_bones-2:
+                # move for real
+                active_bone['bone_index'] = next_bone['bone_index']
+                next_bone['bone_index'] = tmp
+                # move in UI
+                obj.data.pantin_members[self.list_member_index].bones.move(active_bone_index, active_bone_index + 1)
+                obj.data.pantin_members[self.list_member_index].active_bone += 1
+
+            else:
+                pass
+                #REPORT ERROR !
+            
+        mode = bpy.context.mode
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.object.mode_set(mode=mode)
+        
+        # exec("bpy.ops.pose.rigify_fill_members" + rig_id + "()")
+        return {'FINISHED'}
+
+class PantinBones(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty()
+    index = bpy.props.IntProperty()
+#    bone = bpy.props.PointerProperty(type=bpy.types.Bone)
+
+bpy.utils.register_class(PantinBones)
+    
+class PantinMembers(bpy.types.PropertyGroup):
+#    name = bpy.props.StringProperty()
+    index = bpy.props.FloatProperty()
+    bones = bpy.props.CollectionProperty(type=bpy.types.PantinBones)
+    active_bone = bpy.props.IntProperty()
+
+
+class PANTIN_UL_bones_list(bpy.types.UIList):
+    # The draw_item function is called for each item of the collection that is visible in the list.
+    #   data is the RNA object containing the collection,
+    #   item is the current drawn item of the collection,
+    #   icon is the "computed" icon for the item (as an integer, because some objects like materials or textures
+    #   have custom icons ID, which are not available as enum items).
+    #   active_data is the RNA object containing the active property for the collection (i.e. integer pointing to the
+    #   active item of the collection).
+    #   active_propname is the name of the active property (use 'getattr(active_data, active_propname)').
+    #   index is index of the current item in the collection.
+    #   flt_flag is the result of the filtering process for this item.
+    #   Note: as index and flt_flag are optional arguments, you do not have to use/declare them here if you don't
+    #         need them.
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        arm = data
+        # draw_item must handle the three layout types... Usually 'DEFAULT' and 'COMPACT' can share the same code.
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            row = layout.row()
+            row.label(icon='BONE_DATA', text=item.name[4:], translate=False, icon_value=icon)
+            row.alignment = 'RIGHT'
+            lab = row.label(text=str(item.index), translate=False)
+        # 'GRID' layout type should be as compact as possible (typically a single icon!).
+        elif self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+            layout.label(text="", icon_value=icon)
+
+
 ###################
 ## Rig UI Panels ##
 ###################
+
+class DATA_PT_members_panel(bpy.types.Panel):
+    bl_label = "Members"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    # bl_context = "object"
+    bl_options = {'DEFAULT_CLOSED'}
+    bl_idname = rig_id + "_PT_members"
+
+    @classmethod
+    def poll(self, context):
+        if context.mode not in ('POSE', 'OBJECT'):
+            return False
+        try:
+            return (context.active_object.data.get("rig_id") == rig_id)
+        except (AttributeError, KeyError, TypeError):
+            return False
+
+    def draw(self, context):
+        C = context
+        layout = self.layout
+        obj = context.object
+
+        if obj.mode in {'POSE', 'OBJECT'}:
+
+            id_store = C.object.data
+
+            if id_store.pantin_members and len(id_store.pantin_members):
+                box = layout.box()
+                col = box.column()
+    #            col.template_list("UI_UL_list", "pantin_members", armature_id_store, "pantin_members", armature_id_store, "pantin_active_member")
+                
+                for i, m in enumerate(id_store.pantin_members):
+                    col.label(str(m.index))#name.title()+':')
+                    row = col.row()
+#                    sub = row.column()
+                    row.template_list("PANTIN_UL_bones_list", "bones", id_store.pantin_members[i], "bones", id_store.pantin_members[i], "active_bone")
+
+                    sub = row.column(align=True)
+                    op = sub.operator("pose.rigify_reorder_bones_" + rig_id, icon='TRIA_UP', text="")
+                    op.list_member_index = i
+                    op.direction = 'UP'
+                    op = sub.operator("pose.rigify_reorder_bones_" + rig_id, icon='TRIA_DOWN', text="")
+                    op.list_member_index = i
+                    op.direction = 'DOWN'
+    #                col.separator()
+            layout.operator("pose.rigify_fill_members" + rig_id)
 
 class RigUI(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
@@ -125,7 +313,6 @@ class RigUI(bpy.types.Panel):
 
         layout.prop(bones["MCH-Flip"], '["flip"]', text="Flip", slider=True)
         layout.separator()
-
 
 '''
 
@@ -197,6 +384,12 @@ def register():
     bpy.app.driver_namespace["z_index"] = z_index
     bpy.app.driver_namespace["z_index_same"] = z_index_same
 
+    bpy.utils.register_class(Rigify_Fill_Members)
+    bpy.utils.register_class(Rigify_Reorder_Bones)
+    bpy.utils.register_class(PantinMembers)
+    bpy.utils.register_class(PANTIN_UL_bones_list)
+    bpy.utils.register_class(DATA_PT_members_panel)
+    bpy.types.Armature.pantin_members = bpy.props.CollectionProperty(type=PantinMembers)
 
 def unregister():
     bpy.utils.unregister_class(Rigify_Swap_Bones)
@@ -206,6 +399,13 @@ def unregister():
     del bpy.app.driver_namespace["z_index"]
     del bpy.app.driver_namespace["z_index_same"]
 
+    del bpy.types.Armature.pantin_members
+    bpy.utils.unregister_class(Rigify_Fill_Members)
+    bpy.utils.unregister_class(Rigify_Reorder_Bones)
+    bpy.utils.unregister_class(PANTIN_UL_bones_list)
+    bpy.utils.unregister_class(DATA_PT_members_panel)
+    bpy.utils.unregister_class(PantinMembers)
+    bpy.utils.unregister_class(PantinBones)
 
 register()
 '''
