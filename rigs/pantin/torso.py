@@ -16,7 +16,7 @@ importlib.reload(pantin_utils)
 class Rig:
     def __init__(self, obj, bone_name, params):
         self.obj = obj
-        self.org_bones = [bone_name] + connected_children_names(obj, bone_name)[:3]
+        self.org_bones = [bone_name] + connected_children_names(obj, bone_name)
         self.params = params
 
 
@@ -113,9 +113,9 @@ class Rig:
 
         # Widgets
         pelvis = ctrl_chain[0]
-        abdomen = ctrl_chain[1]
-        torso = ctrl_chain[2]
-        shoulder = ctrl_chain[3]
+        # abdomen = ctrl_chain[1]
+        # torso = ctrl_chain[2]
+        # shoulder = ctrl_chain[3]
 
         create_cube_widget(self.obj, pelvis, radius=1.0)
         ellipse_radius = pb[pelvis].length * 3.0
