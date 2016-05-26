@@ -48,9 +48,9 @@ class Rig:
             # Def bones
             eb = self.obj.data.edit_bones
             if s == '.L':
-                Z_index = self.params.Z_index
-            else:
                 Z_index = -self.params.Z_index
+            else:
+                Z_index = self.params.Z_index
                 
             for i, b in enumerate([elimb_str, flimb_str, ulimb_str]):
                 def_bone_name = b.split('.')[0][4:]
