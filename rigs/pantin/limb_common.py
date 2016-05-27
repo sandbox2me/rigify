@@ -164,7 +164,7 @@ class IKLimb:
             con1.subtarget = pelvis_bone_name
             con1.inverse_matrix = pb[pelvis_bone_name].matrix.inverted()
 
-            self.obj.data.bones[flip_bone_name]["flip"] = 1
+            self.obj.pose.bones[flip_bone_name]["flip"] = 1
 
             con2 = elimb_ik_p.constraints.new('CHILD_OF')
             con2.name = "Child Flipped"
@@ -172,7 +172,7 @@ class IKLimb:
             con2.subtarget = flip_bone_name
             con2.inverse_matrix = pb[flip_bone_name].matrix.inverted()
 
-            self.obj.data.bones[flip_bone_name]["flip"] = 0
+            self.obj.pose.bones[flip_bone_name]["flip"] = 0
 
             # Drivers
             driver = self.obj.driver_add(con1.path_from_id("influence"))

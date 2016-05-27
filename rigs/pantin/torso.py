@@ -96,20 +96,20 @@ class Rig:
         pelvis_e.use_connect = False
         pelvis_e.parent = flip_e
 
-        # Set up custom properties
-        prop = rna_idprop_ui_prop_get(flip_e, "flip", create=True)
-        flip_e["flip"] = 0
-        prop["soft_min"] = 0
-        prop["soft_max"] = 1
-        prop["min"] = 0
-        prop["max"] = 1
-
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
         
         # Pose bone settings
         flip_p = pb[flip]
         flip_p.rotation_mode = 'XZY'
+
+        # Set up custom properties
+        prop = rna_idprop_ui_prop_get(flip_p, "flip", create=True)
+        flip_p["flip"] = 0
+        prop["soft_min"] = 0
+        prop["soft_max"] = 1
+        prop["min"] = 0
+        prop["max"] = 1
 
         # Widgets
         pelvis = ctrl_chain[0]
@@ -132,9 +132,9 @@ class Rig:
 
         var_flip.type = 'SINGLE_PROP'
         var_flip.name = 'flip'
-        var_flip.targets[0].id_type = 'ARMATURE'
-        var_flip.targets[0].id = self.obj.data
-        var_flip.targets[0].data_path = 'bones["{}"]["flip"]'.format(flip)
+        var_flip.targets[0].id_type = 'OBJECT'
+        var_flip.targets[0].id = self.obj
+        var_flip.targets[0].data_path = 'pose.bones["{}"]["flip"]'.format(flip)
 
         # Constraints
         # for pelvis

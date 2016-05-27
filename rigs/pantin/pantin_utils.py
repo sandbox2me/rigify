@@ -42,10 +42,11 @@ def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index
     align_bone_z_axis(obj, def_name, Vector((0, -1, 0)))
     # def_bone_e.tail.z += org_bone_e.length * 0.5
 
-    def_bone_e['member_index'] = member_index
-    def_bone_e['bone_index'] = bone_index
+    bpy.ops.object.mode_set(mode='POSE')
 
-    bpy.ops.object.mode_set(mode='OBJECT')
+    def_bone_p = obj.pose.bones[def_name]
+    def_bone_p['member_index'] = member_index
+    def_bone_p['bone_index'] = bone_index
 
     # bones = obj.pose.bones
 
@@ -60,21 +61,21 @@ def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index
 
     var_mi.type = 'SINGLE_PROP'
     var_mi.name = 'member_index'
-    var_mi.targets[0].id_type = 'ARMATURE'
-    var_mi.targets[0].id = obj.data
-    var_mi.targets[0].data_path = 'bones["{}"]["member_index"]'.format(def_name)
+    var_mi.targets[0].id_type = 'OBJECT'
+    var_mi.targets[0].id = obj
+    var_mi.targets[0].data_path = 'pose.bones["{}"]["member_index"]'.format(def_name)
 
     var_bi.type = 'SINGLE_PROP'
     var_bi.name = 'bone_index'
-    var_bi.targets[0].id_type = 'ARMATURE'
-    var_bi.targets[0].id = obj.data
-    var_bi.targets[0].data_path = 'bones["{}"]["bone_index"]'.format(def_name)
+    var_bi.targets[0].id_type = 'OBJECT'
+    var_bi.targets[0].id = obj
+    var_bi.targets[0].data_path = 'pose.bones["{}"]["bone_index"]'.format(def_name)
 
     var_flip.type = 'SINGLE_PROP'
     var_flip.name = 'flip'
-    var_flip.targets[0].id_type = 'ARMATURE'
-    var_flip.targets[0].id = obj.data
-    var_flip.targets[0].data_path = 'bones["MCH-Flip"]["flip"]'
+    var_flip.targets[0].id_type = 'OBJECT'
+    var_flip.targets[0].id = obj
+    var_flip.targets[0].data_path = 'pose.bones["MCH-Flip"]["flip"]'
 
     bpy.ops.object.mode_set(mode='EDIT')
     return def_bone_e.name

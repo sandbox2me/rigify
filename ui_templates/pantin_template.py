@@ -98,19 +98,19 @@ class Rigify_Fill_Members(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
         
-        obj.data.pantin_members.clear()
+        obj.pantin_members.clear()
         members = {}
-        for bone in obj.data.bones:
+        for pbone in obj.pose.bones:
             # print(bone.name)
-            if not bone.use_deform:
+            if not pbone.bone.use_deform:
                 continue
-            if not bone['member_index'] in members:
-                members[bone['member_index']] = []
-            members[bone['member_index']].append((bone['bone_index'], bone.name))
+            if not pbone['member_index'] in members:
+                members[pbone['member_index']] = []
+            members[pbone['member_index']].append((pbone['bone_index'], pbone.name))
         # print(members)
         
         for member, bones in sorted(members.items(), key=lambda i:i[0], reverse=True):
-            m = obj.data.pantin_members.add()
+            m = obj.pantin_members.add()
             m.index = member
             for bone in sorted(bones, key=lambda i:i[0], reverse=True):
                 b = m.bones.add()
@@ -136,15 +136,15 @@ class Rigify_Reorder_Bones(bpy.types.Operator):
         obj = context.object
         # print(self.direction)
         # print(self.list_member_index)
-        active_member = obj.data.pantin_members[self.list_member_index]
+        active_member = obj.pantin_members[self.list_member_index]
         active_member_index = active_member.index
         list_bone_index = active_member.active_bone
         rig_bone_index = active_member.bones[active_member.active_bone].index
         print('BONE:', rig_bone_index)
         num_bones = len(active_member.bones)
         # get related bones in rig
-        for b in obj.data.bones:
-            if not b.use_deform:
+        for b in obj.pose.bones:
+            if not b.bone.use_deform:
                 continue
             if b['member_index'] == active_member_index and b['bone_index'] == rig_bone_index:
                 active_bone = b
@@ -193,12 +193,10 @@ class Rigify_Reorder_Bones(bpy.types.Operator):
 class PantinBones(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty()
     index = bpy.props.IntProperty()
-#    bone = bpy.props.PointerProperty(type=bpy.types.Bone)
 
 bpy.utils.register_class(PantinBones)
     
 class PantinMembers(bpy.types.PropertyGroup):
-#    name = bpy.props.StringProperty()
     index = bpy.props.FloatProperty()
     bones = bpy.props.CollectionProperty(type=bpy.types.PantinBones)
     active_bone = bpy.props.IntProperty()
@@ -218,7 +216,7 @@ class PANTIN_UL_bones_list(bpy.types.UIList):
     #   Note: as index and flt_flag are optional arguments, you do not have to use/declare them here if you don't
     #         need them.
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
-        arm = data
+        # arm = data
         # draw_item must handle the three layout types... Usually 'DEFAULT' and 'COMPACT' can share the same code.
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
             row = layout.row()
@@ -259,7 +257,7 @@ class DATA_PT_members_panel(bpy.types.Panel):
 
         if obj.mode in {'POSE', 'OBJECT'}:
 
-            id_store = C.object.data
+            id_store = C.object
 
             if id_store.pantin_members and len(id_store.pantin_members):
                 box = layout.box()
@@ -300,7 +298,7 @@ class RigUI(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         pose_bones = context.active_object.pose.bones
-        bones = context.active_object.data.bones
+        # bones = context.active_object.data.bones
         try:
             selected_bones = [bone.name for bone in context.selected_pose_bones]
             selected_bones += [context.active_pose_bone.name]
@@ -320,7 +318,7 @@ class RigUI(bpy.types.Panel):
         layout.operator("pose.rigify_swap_bones_" + rig_id)
         layout.separator()
 
-        layout.prop(bones["MCH-Flip"], '["flip"]', text="Flip", slider=True)
+        layout.prop(pose_bones["MCH-Flip"], '["flip"]', text="Flip", slider=True)
         layout.separator()
 
 '''
@@ -398,7 +396,7 @@ def register():
     bpy.utils.register_class(PantinMembers)
     bpy.utils.register_class(PANTIN_UL_bones_list)
     bpy.utils.register_class(DATA_PT_members_panel)
-    bpy.types.Armature.pantin_members = bpy.props.CollectionProperty(type=PantinMembers)
+    bpy.types.Object.pantin_members = bpy.props.CollectionProperty(type=PantinMembers)
 
 def unregister():
     bpy.utils.unregister_class(Rigify_Swap_Bones)
@@ -408,7 +406,7 @@ def unregister():
     del bpy.app.driver_namespace["z_index"]
     del bpy.app.driver_namespace["z_index_same"]
 
-    del bpy.types.Armature.pantin_members
+    del bpy.types.Object.pantin_members
     bpy.utils.unregister_class(Rigify_Fill_Members)
     bpy.utils.unregister_class(Rigify_Reorder_Bones)
     bpy.utils.unregister_class(PANTIN_UL_bones_list)
