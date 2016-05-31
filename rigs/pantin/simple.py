@@ -52,6 +52,8 @@ class Rig:
                     # The rest
                     ctrl_bone_e.parent = eb[ctrl_chain[-1]]
 
+                ctrl_bone_e.layers = self.params.layers
+
                 # Add to list
                 ctrl_chain += [ctrl_bone_e.name]
 
@@ -70,9 +72,18 @@ class Rig:
                 con.subtarget = ctrl
         
 def add_parameters(params):
-    params.member_Z_index = bpy.props.FloatProperty(name="Indice Z membre", default=0.0, description="Définit l'ordre des membres dans l'espace")
-    params.first_bone_Z_index = bpy.props.FloatProperty(name="Indice Z premier os", default=0.0, description="Définit l'ordre des os dans l'espace")
-    params.mutable_order = bpy.props.BoolProperty(name="Ordre change", default=True, description="Ce membre peut changer de profondeur")
+    params.member_Z_index = bpy.props.FloatProperty(name="Z index",
+                                           default=0.0,
+                                           description="Defines member's Z order")
+    params.first_bone_Z_index = bpy.props.FloatProperty(name="First Bone Z index",
+                                           default=0.0,
+                                           description="Defines bone's Z order")
+    params.mutable_order = bpy.props.BoolProperty(name="Mutable Order",
+                                                  default=True,
+                                                  description="This member may change depth when flipped")
+    # params.member_Z_index = bpy.props.FloatProperty(name="Indice Z membre", default=0.0, description="Définit l'ordre des membres dans l'espace")
+    # params.first_bone_Z_index = bpy.props.FloatProperty(name="Indice Z premier os", default=0.0, description="Définit l'ordre des os dans l'espace")
+    # params.mutable_order = bpy.props.BoolProperty(name="Ordre change", default=True, description="Ce membre peut changer de profondeur")
     # params.duplicate_lr = bpy.props.BoolProperty(name="Duplicate LR",
     #                                              default=True,
     #                                              description="Create two limbs for left and right")
@@ -105,43 +116,43 @@ def parameters_ui(layout, params):
     # r.label("Layers")
     col = r.column(align=True)
     row = col.row(align=True)
-    row.prop(params, "right_layers", index=0, toggle=True, text="")
-    row.prop(params, "right_layers", index=1, toggle=True, text="")
-    row.prop(params, "right_layers", index=2, toggle=True, text="")
-    row.prop(params, "right_layers", index=3, toggle=True, text="")
-    row.prop(params, "right_layers", index=4, toggle=True, text="")
-    row.prop(params, "right_layers", index=5, toggle=True, text="")
-    row.prop(params, "right_layers", index=6, toggle=True, text="")
-    row.prop(params, "right_layers", index=7, toggle=True, text="")
+    row.prop(params, "layers", index=0, toggle=True, text="")
+    row.prop(params, "layers", index=1, toggle=True, text="")
+    row.prop(params, "layers", index=2, toggle=True, text="")
+    row.prop(params, "layers", index=3, toggle=True, text="")
+    row.prop(params, "layers", index=4, toggle=True, text="")
+    row.prop(params, "layers", index=5, toggle=True, text="")
+    row.prop(params, "layers", index=6, toggle=True, text="")
+    row.prop(params, "layers", index=7, toggle=True, text="")
     row = col.row(align=True)
-    row.prop(params, "right_layers", index=16, toggle=True, text="")
-    row.prop(params, "right_layers", index=17, toggle=True, text="")
-    row.prop(params, "right_layers", index=18, toggle=True, text="")
-    row.prop(params, "right_layers", index=19, toggle=True, text="")
-    row.prop(params, "right_layers", index=20, toggle=True, text="")
-    row.prop(params, "right_layers", index=21, toggle=True, text="")
-    row.prop(params, "right_layers", index=22, toggle=True, text="")
-    row.prop(params, "right_layers", index=23, toggle=True, text="")
+    row.prop(params, "layers", index=16, toggle=True, text="")
+    row.prop(params, "layers", index=17, toggle=True, text="")
+    row.prop(params, "layers", index=18, toggle=True, text="")
+    row.prop(params, "layers", index=19, toggle=True, text="")
+    row.prop(params, "layers", index=20, toggle=True, text="")
+    row.prop(params, "layers", index=21, toggle=True, text="")
+    row.prop(params, "layers", index=22, toggle=True, text="")
+    row.prop(params, "layers", index=23, toggle=True, text="")
     
     col = r.column(align=True)
     row = col.row(align=True)
-    row.prop(params, "right_layers", index=8, toggle=True, text="")
-    row.prop(params, "right_layers", index=9, toggle=True, text="")
-    row.prop(params, "right_layers", index=10, toggle=True, text="")
-    row.prop(params, "right_layers", index=11, toggle=True, text="")
-    row.prop(params, "right_layers", index=12, toggle=True, text="")
-    row.prop(params, "right_layers", index=13, toggle=True, text="")
-    row.prop(params, "right_layers", index=14, toggle=True, text="")
-    row.prop(params, "right_layers", index=15, toggle=True, text="")
+    row.prop(params, "layers", index=8, toggle=True, text="")
+    row.prop(params, "layers", index=9, toggle=True, text="")
+    row.prop(params, "layers", index=10, toggle=True, text="")
+    row.prop(params, "layers", index=11, toggle=True, text="")
+    row.prop(params, "layers", index=12, toggle=True, text="")
+    row.prop(params, "layers", index=13, toggle=True, text="")
+    row.prop(params, "layers", index=14, toggle=True, text="")
+    row.prop(params, "layers", index=15, toggle=True, text="")
     row = col.row(align=True)
-    row.prop(params, "right_layers", index=24, toggle=True, text="")
-    row.prop(params, "right_layers", index=25, toggle=True, text="")
-    row.prop(params, "right_layers", index=26, toggle=True, text="")
-    row.prop(params, "right_layers", index=27, toggle=True, text="")
-    row.prop(params, "right_layers", index=28, toggle=True, text="")
-    row.prop(params, "right_layers", index=29, toggle=True, text="")
-    row.prop(params, "right_layers", index=30, toggle=True, text="")
-    row.prop(params, "right_layers", index=31, toggle=True, text="")
+    row.prop(params, "layers", index=24, toggle=True, text="")
+    row.prop(params, "layers", index=25, toggle=True, text="")
+    row.prop(params, "layers", index=26, toggle=True, text="")
+    row.prop(params, "layers", index=27, toggle=True, text="")
+    row.prop(params, "layers", index=28, toggle=True, text="")
+    row.prop(params, "layers", index=29, toggle=True, text="")
+    row.prop(params, "layers", index=30, toggle=True, text="")
+    row.prop(params, "layers", index=31, toggle=True, text="")
 
 def create_sample(obj):
     # generated by rigify.utils.write_metarig
