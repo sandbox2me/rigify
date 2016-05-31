@@ -40,9 +40,9 @@ class IKLimb:
         eb = self.obj.data.edit_bones
 
         # Create the control bones
-        ulimb_ik = copy_bone(self.obj, self.org_bones[0], pantin_utils.strip_numbers(strip_org(self.org_bones[0])) + ".ik" + self.side_suffix)
-        flimb_ik = copy_bone(self.obj, self.org_bones[1], make_mechanism_name(pantin_utils.strip_numbers(strip_org(self.org_bones[1])) + ".ik" + self.side_suffix))
-        elimb_ik = copy_bone(self.obj, self.org_bones[2], pantin_utils.strip_numbers(strip_org(self.org_bones[2])) + ".ik" + self.side_suffix)
+        ulimb_ik = copy_bone(self.obj, self.org_bones[0], pantin_utils.strip_numbers(strip_org(self.org_bones[0])) + self.side_suffix)
+        flimb_ik = copy_bone(self.obj, self.org_bones[1], make_mechanism_name(pantin_utils.strip_numbers(strip_org(self.org_bones[1])) + self.side_suffix))
+        elimb_ik = copy_bone(self.obj, self.org_bones[2], pantin_utils.strip_numbers(strip_org(self.org_bones[2])) + self.side_suffix)
 
         # elimb_mch = copy_bone(self.obj, self.org_bones[2], make_mechanism_name(strip_org(self.org_bones[2])))
 
