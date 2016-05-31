@@ -23,7 +23,7 @@ import bpy
 from mathutils import Matrix, Vector
 from math import acos, pi
 
-rig_id = "%s"
+# rig_id = "%s"
 
 
 #######################
@@ -52,7 +52,7 @@ def z_index_same(member_index, flip, bone_index):
 class Rigify_Swap_Bones(bpy.types.Operator):
     """ Swap left and right bones
     """
-    bl_idname = "pose.rigify_swap_bones_" + rig_id
+    bl_idname = "pose.rigify_swap_bones"# + rig_id
     bl_label = "Rigify Swap left and right selected bones"
     bl_options = {'UNDO'}
 
@@ -87,7 +87,7 @@ class Rigify_Swap_Bones(bpy.types.Operator):
 
 class Rigify_Fill_Members(bpy.types.Operator):
     """ Construct member and bone structure"""
-    bl_idname = "pose.rigify_fill_members" + rig_id
+    bl_idname = "pose.rigify_fill_members"# + rig_id
     bl_label = "Construct member and bone structure"
 
 
@@ -121,7 +121,7 @@ class Rigify_Fill_Members(bpy.types.Operator):
 
 class Rigify_Reorder_Bones(bpy.types.Operator):
     """ Change bones' order"""
-    bl_idname = "pose.rigify_reorder_bones_" + rig_id
+    bl_idname = "pose.rigify_reorder_bones"# + rig_id
     bl_label = "Change bones' order"
     bl_options = {'UNDO'}
 
@@ -239,14 +239,15 @@ class DATA_PT_members_panel(bpy.types.Panel):
     bl_region_type = 'UI'
     # bl_context = "object"
     bl_options = {'DEFAULT_CLOSED'}
-    bl_idname = rig_id + "_PT_members"
+    bl_idname = "PT_members"
 
     @classmethod
     def poll(self, context):
         if context.mode not in ('POSE', 'OBJECT'):
             return False
         try:
-            return (context.active_object.data.get("rig_id") == rig_id)
+            return ("rig_id" in context.active_object.data)
+            # return (context.active_object.data.get("rig_id") == rig_id)
         except (AttributeError, KeyError, TypeError):
             return False
 
@@ -271,27 +272,28 @@ class DATA_PT_members_panel(bpy.types.Panel):
                     row.template_list("PANTIN_UL_bones_list", "bones", id_store.pantin_members[i], "bones", id_store.pantin_members[i], "active_bone")
 
                     sub = row.column(align=True)
-                    op = sub.operator("pose.rigify_reorder_bones_" + rig_id, icon='TRIA_UP', text="")
+                    op = sub.operator("pose.rigify_reorder_bones", icon='TRIA_UP', text="")
                     op.list_member_index = i
                     op.direction = 'UP'
-                    op = sub.operator("pose.rigify_reorder_bones_" + rig_id, icon='TRIA_DOWN', text="")
+                    op = sub.operator("pose.rigify_reorder_bones", icon='TRIA_DOWN', text="")
                     op.list_member_index = i
                     op.direction = 'DOWN'
     #                col.separator()
-            layout.operator("pose.rigify_fill_members" + rig_id)
+            layout.operator("pose.rigify_fill_members")
 
 class RigUI(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_label = "Rig Main Properties"
-    bl_idname = rig_id + "_PT_rig_ui"
+    bl_idname = "PT_rig_ui"
 
     @classmethod
     def poll(self, context):
         if context.mode != 'POSE':
             return False
         try:
-            return (context.active_object.data.get("rig_id") == rig_id)
+            return ("rig_id" in context.active_object.data)
+            # return (context.active_object.data.get("rig_id") == rig_id)
         except (AttributeError, KeyError, TypeError):
             return False
 
@@ -315,7 +317,7 @@ class RigUI(bpy.types.Panel):
                 return True
             return False
 
-        layout.operator("pose.rigify_swap_bones_" + rig_id)
+        layout.operator("pose.rigify_swap_bones")
         layout.separator()
 
         layout.prop(pose_bones["MCH-Flip"], '["flip"]', text="Flip", slider=True)
@@ -333,12 +335,13 @@ class RigLayers(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_label = "Rig Layers"
-    bl_idname = rig_id + "_PT_rig_layers"
+    bl_idname = "PT_rig_layers"
 
     @classmethod
     def poll(self, context):
         try:
-            return (context.active_object.data.get("rig_id") == rig_id)
+            return ("rig_id" in context.active_object.data)
+            # return (context.active_object.data.get("rig_id") == rig_id)
         except (AttributeError, KeyError, TypeError):
             return False
 
