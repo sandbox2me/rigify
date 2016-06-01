@@ -1,5 +1,6 @@
 import bpy
 
+from ...utils import MetarigError
 from ...utils import copy_bone
 from ...utils import make_deformer_name, strip_org
 from ...utils import create_bone_widget, create_widget, create_cube_widget
@@ -21,6 +22,10 @@ class Rig:
             bpy.ops.object.mode_set(mode='OBJECT')
             pb = self.obj.pose.bones
             def_parent_name = make_deformer_name(strip_org(self.org_parent))
+            if self.params.object_side != ".C":
+                def_parent_name += self.params.object_side
+            if not def_parent_name in pb:
+                raise MetarigError("RIGIFY ERROR: Bone %s does not have a %s side" % (strip_org(self.org_parent), self.params.object_side))
             parent_p = pb[def_parent_name]
             member_Z_index = parent_p['member_index']
             bone_Z_index = 0
@@ -49,7 +54,7 @@ class Rig:
         # if self.params.duplicate_lr:
         #     sides = ['.L', '.R']
         # else:
-        sides = [self.params.side]
+        sides = [self.params.object_side]
         if sides[0] == '.C':
             sides[0] = ''
         for s in sides:
@@ -66,9 +71,11 @@ class Rig:
                 if i == 0:
                     # First bone
                     # TODO Check if parent still exists, else check if .L / .R exists, else do nothing
-                    # TODO Choose Parent's side in UI(L/R)
                     if eb[b].parent is not None:
-                        bone_parent_name = strip_org(eb[b].parent.name) + s
+                        bone_parent_name = eb[b].parent.name 
+                        print("PARENT NAME:", bone_parent_name)
+                        if not bone_parent_name in eb:
+                            raise MetarigError("RIGIFY ERROR: Bone %s does not have a %s side" % (strip_org(eb[b].parent.name), s))
                         ctrl_bone_e.parent = eb[bone_parent_name]
                     else:
                         ctrl_bone_e.parent = eb['MCH-Flip']
@@ -114,7 +121,7 @@ def add_parameters(params):
     # params.duplicate_lr = bpy.props.BoolProperty(name="Duplicate LR",
     #                                              default=True,
     #                                              description="Create two limbs for left and right")
-    params.side = bpy.props.EnumProperty(name="Side",
+    params.object_side = bpy.props.EnumProperty(name="Side",
                                          default='.C',
                                          description="If the limb is not to be duplicated, choose its side",
                                          items=(('.L', 'Left', ""),
@@ -146,7 +153,7 @@ def parameters_ui(layout, params):
     r = col.row()
     r.label("Side:")
     r = col.row()
-    r.prop(params, "side", expand=True)
+    r.prop(params, "object_side", expand=True)
 
     # Layers
     col = layout.column(align=True)
