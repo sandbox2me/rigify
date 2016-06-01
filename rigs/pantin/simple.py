@@ -13,9 +13,29 @@ class Rig:
         self.params = params
 
         self.org_bones = [bone_name] + connected_children_names(self.obj, bone_name)
+        self.org_parent = self.obj.data.edit_bones[bone_name].parent.name
 
     def generate(self):
-        bpy.ops.object.mode_set(mode='EDIT')
+        if self.params.use_parent_Z_index:
+            # Get parent's Z indices
+            bpy.ops.object.mode_set(mode='OBJECT')
+            pb = self.obj.pose.bones
+            def_parent_name = make_deformer_name(strip_org(self.org_parent))
+            parent_p = pb[def_parent_name]
+            member_Z_index = parent_p['member_index']
+            bone_Z_index = 0
+            for b in pb:
+                if b.bone.use_deform and b.name.startswith('DEF-'):  
+                    if b['member_index'] == member_Z_index and b['bone_index'] > bone_Z_index:
+                        bone_Z_index = b['bone_index']
+            bone_Z_index += 1
+
+            bpy.ops.object.mode_set(mode='EDIT')
+        else:
+            member_Z_index = self.params.member_Z_index
+            bone_Z_index = self.params.first_bone_Z_index
+        print(member_Z_index, bone_Z_index)
+
         
         ctrl_chain = []
         # def_chain = []
@@ -28,7 +48,6 @@ class Rig:
         sides = [self.params.side]
         if sides[0] == '.C':
             sides[0] = ''
-
         for s in sides:
             for i, b in enumerate(self.org_bones):
                 # Control bones
@@ -58,7 +77,7 @@ class Rig:
                 ctrl_chain += [ctrl_bone_e.name]
 
                 # Def bones
-                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, self.params.member_Z_index, self.params.first_bone_Z_index + i)
+                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, member_Z_index, bone_Z_index + i)
                 # def_chain.append(def_bone)
 
             bpy.ops.object.mode_set(mode='OBJECT')
@@ -72,6 +91,9 @@ class Rig:
                 con.subtarget = ctrl
         
 def add_parameters(params):
+    params.use_parent_Z_index = bpy.props.BoolProperty(name="Use parent's Z Index",
+                                                  default=True,
+                                                  description="The object will use its parent's Z index")
     params.member_Z_index = bpy.props.FloatProperty(name="Z index",
                                            default=0.0,
                                            description="Defines member's Z order")
@@ -101,8 +123,12 @@ def parameters_ui(layout, params):
     """ Create the ui for the rig parameters.
     """
     r = layout.row()
-    r.prop(params, "member_Z_index")
-    r.prop(params, "first_bone_Z_index")
+    r.prop(params, "use_parent_Z_index")
+
+    if not params.use_parent_Z_index:
+        r = layout.row()
+        r.prop(params, "member_Z_index")
+        r.prop(params, "first_bone_Z_index")
     r = layout.row()
     r.prop(params, "mutable_order")
     # r = layout.row()
