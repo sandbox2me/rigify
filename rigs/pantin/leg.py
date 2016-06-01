@@ -33,7 +33,6 @@ class Rig:
                 heel = b.name
             else:
                 foot = b.name
-        print(heel, foot)
         toe = bones[foot].children[0].name
         # roll = bones[toe].children[0].name
 

@@ -34,13 +34,17 @@ class Rig:
         else:
             member_Z_index = self.params.member_Z_index
             bone_Z_index = self.params.first_bone_Z_index
-        print(member_Z_index, bone_Z_index)
-
-        
-        ctrl_chain = []
-        # def_chain = []
 
         eb = self.obj.data.edit_bones
+        
+        # Get parent's layers
+        if self.params.use_parent_layers:
+            layers = eb[self.org_parent].layers
+        else:
+            layers = self.params.layers
+            
+        ctrl_chain = []
+        # def_chain = []
 
         # if self.params.duplicate_lr:
         #     sides = ['.L', '.R']
@@ -50,6 +54,7 @@ class Rig:
             sides[0] = ''
         for s in sides:
             for i, b in enumerate(self.org_bones):
+                print(i, b)
                 # Control bones
                 ctrl_bone = copy_bone(self.obj, b)
                 ctrl_bone_e = eb[ctrl_bone]
@@ -71,7 +76,7 @@ class Rig:
                     # The rest
                     ctrl_bone_e.parent = eb[ctrl_chain[-1]]
 
-                ctrl_bone_e.layers = self.params.layers
+                ctrl_bone_e.layers = layers
 
                 # Add to list
                 ctrl_chain += [ctrl_bone_e.name]
@@ -101,7 +106,7 @@ def add_parameters(params):
                                            default=0.0,
                                            description="Defines bone's Z order")
     params.mutable_order = bpy.props.BoolProperty(name="Mutable Order",
-                                                  default=True,
+                                                  default=False,
                                                   description="This member may change depth when flipped")
     # params.member_Z_index = bpy.props.FloatProperty(name="Indice Z membre", default=0.0, description="Définit l'ordre des membres dans l'espace")
     # params.first_bone_Z_index = bpy.props.FloatProperty(name="Indice Z premier os", default=0.0, description="Définit l'ordre des os dans l'espace")
@@ -116,6 +121,9 @@ def add_parameters(params):
                                                 ('.C', 'Center', ""),
                                                 ('.R', 'Right', ""),
                                                 ))
+    params.use_parent_layers = bpy.props.BoolProperty(name="Use parent's layers",
+                                                  default=True,
+                                                  description="The object will use its parent's layers")
     params.layers = bpy.props.BoolVectorProperty(size=32,
                                                        description="Layers for the object")
 
@@ -134,51 +142,58 @@ def parameters_ui(layout, params):
     # r = layout.row()
     # r.prop(params, "duplicate_lr")
     # if not params.duplicate_lr:
-    r = layout.row()
+    col = layout.column(align=True)
+    r = col.row()
+    r.label("Side:")
+    r = col.row()
     r.prop(params, "side", expand=True)
 
     # Layers
-    r = layout.row()
-    # r.label("Layers")
-    col = r.column(align=True)
-    row = col.row(align=True)
-    row.prop(params, "layers", index=0, toggle=True, text="")
-    row.prop(params, "layers", index=1, toggle=True, text="")
-    row.prop(params, "layers", index=2, toggle=True, text="")
-    row.prop(params, "layers", index=3, toggle=True, text="")
-    row.prop(params, "layers", index=4, toggle=True, text="")
-    row.prop(params, "layers", index=5, toggle=True, text="")
-    row.prop(params, "layers", index=6, toggle=True, text="")
-    row.prop(params, "layers", index=7, toggle=True, text="")
-    row = col.row(align=True)
-    row.prop(params, "layers", index=16, toggle=True, text="")
-    row.prop(params, "layers", index=17, toggle=True, text="")
-    row.prop(params, "layers", index=18, toggle=True, text="")
-    row.prop(params, "layers", index=19, toggle=True, text="")
-    row.prop(params, "layers", index=20, toggle=True, text="")
-    row.prop(params, "layers", index=21, toggle=True, text="")
-    row.prop(params, "layers", index=22, toggle=True, text="")
-    row.prop(params, "layers", index=23, toggle=True, text="")
-    
-    col = r.column(align=True)
-    row = col.row(align=True)
-    row.prop(params, "layers", index=8, toggle=True, text="")
-    row.prop(params, "layers", index=9, toggle=True, text="")
-    row.prop(params, "layers", index=10, toggle=True, text="")
-    row.prop(params, "layers", index=11, toggle=True, text="")
-    row.prop(params, "layers", index=12, toggle=True, text="")
-    row.prop(params, "layers", index=13, toggle=True, text="")
-    row.prop(params, "layers", index=14, toggle=True, text="")
-    row.prop(params, "layers", index=15, toggle=True, text="")
-    row = col.row(align=True)
-    row.prop(params, "layers", index=24, toggle=True, text="")
-    row.prop(params, "layers", index=25, toggle=True, text="")
-    row.prop(params, "layers", index=26, toggle=True, text="")
-    row.prop(params, "layers", index=27, toggle=True, text="")
-    row.prop(params, "layers", index=28, toggle=True, text="")
-    row.prop(params, "layers", index=29, toggle=True, text="")
-    row.prop(params, "layers", index=30, toggle=True, text="")
-    row.prop(params, "layers", index=31, toggle=True, text="")
+    col = layout.column(align=True)
+    col.prop(params, "use_parent_layers")
+    if not params.use_parent_layers:
+        col = layout.column(align=True)
+        col.label("Layers:")
+        r = col.row()
+        col = r.column(align=True)
+        row = col.row(align=True)
+        row.prop(params, "layers", index=0, toggle=True, text="")
+        row.prop(params, "layers", index=1, toggle=True, text="")
+        row.prop(params, "layers", index=2, toggle=True, text="")
+        row.prop(params, "layers", index=3, toggle=True, text="")
+        row.prop(params, "layers", index=4, toggle=True, text="")
+        row.prop(params, "layers", index=5, toggle=True, text="")
+        row.prop(params, "layers", index=6, toggle=True, text="")
+        row.prop(params, "layers", index=7, toggle=True, text="")
+        row = col.row(align=True)
+        row.prop(params, "layers", index=16, toggle=True, text="")
+        row.prop(params, "layers", index=17, toggle=True, text="")
+        row.prop(params, "layers", index=18, toggle=True, text="")
+        row.prop(params, "layers", index=19, toggle=True, text="")
+        row.prop(params, "layers", index=20, toggle=True, text="")
+        row.prop(params, "layers", index=21, toggle=True, text="")
+        row.prop(params, "layers", index=22, toggle=True, text="")
+        row.prop(params, "layers", index=23, toggle=True, text="")
+        
+        col = r.column(align=True)
+        row = col.row(align=True)
+        row.prop(params, "layers", index=8, toggle=True, text="")
+        row.prop(params, "layers", index=9, toggle=True, text="")
+        row.prop(params, "layers", index=10, toggle=True, text="")
+        row.prop(params, "layers", index=11, toggle=True, text="")
+        row.prop(params, "layers", index=12, toggle=True, text="")
+        row.prop(params, "layers", index=13, toggle=True, text="")
+        row.prop(params, "layers", index=14, toggle=True, text="")
+        row.prop(params, "layers", index=15, toggle=True, text="")
+        row = col.row(align=True)
+        row.prop(params, "layers", index=24, toggle=True, text="")
+        row.prop(params, "layers", index=25, toggle=True, text="")
+        row.prop(params, "layers", index=26, toggle=True, text="")
+        row.prop(params, "layers", index=27, toggle=True, text="")
+        row.prop(params, "layers", index=28, toggle=True, text="")
+        row.prop(params, "layers", index=29, toggle=True, text="")
+        row.prop(params, "layers", index=30, toggle=True, text="")
+        row.prop(params, "layers", index=31, toggle=True, text="")
 
 def create_sample(obj):
     # generated by rigify.utils.write_metarig
