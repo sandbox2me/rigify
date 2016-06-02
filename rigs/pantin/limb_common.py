@@ -115,6 +115,14 @@ class IKLimb:
         prop["max"] = 1
 
         # Constraints
+        # Bend hint, ripped off from Rigify' biped
+        con = flimb_ik_p.constraints.new('LIMIT_ROTATION')
+        con.name = "bend_hint"
+        con.use_limit_z = True
+        con.min_z = radians(45)
+        con.max_z = radians(45)
+        con.owner_space = 'LOCAL'
+
         con = flimb_ik_p.constraints.new('IK')
         con.name = "ik"
         con.target = self.obj

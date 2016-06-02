@@ -270,9 +270,9 @@ class Rig:
             con.owner_space = 'LOCAL'
 
             # Edit IK to follow the rolled foot instead of ik control
-            con = pb[flimb_ik].constraints[0]
+            con = pb[flimb_ik].constraints["ik"]
             con.subtarget = foot_tgt
-            con = pb[elimb_str].constraints[0]
+            con = pb[elimb_str].constraints["copy rotation"]
             con.subtarget = foot_tgt
 
             con = pb[toe_pos].constraints.new('COPY_ROTATION')
