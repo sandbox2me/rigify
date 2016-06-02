@@ -189,7 +189,7 @@ def create_aligned_circle_widget(rig, bone_name, number_verts=32, radius=1.0, he
         # print(pbone.matrix.translation)
         pos = pbone.matrix.translation
         
-        verts, edges = create_circle_polygon(number_verts, 'Y', radius, head_tail)
+        verts, edges = create_circle_polygon(number_verts, 'Y', radius)
         head_tail_vector = pbone.vector * head_tail
         verts = [(pbone.matrix * pbone.length).inverted() * (pos + Vector(v) + head_tail_vector) for v in verts]
 

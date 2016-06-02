@@ -26,7 +26,6 @@ class Rig:
         bpy.ops.object.mode_set(mode='EDIT')
         
         ctrl_chain = []
-        def_chain = []
 
         eb = self.obj.data.edit_bones
         for i, b in enumerate(self.org_bones):
@@ -54,12 +53,10 @@ class Rig:
             ctrl_chain += [ctrl_bone_e.name]
 
             # Def bones
+            def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, member_index=self.params.Z_index, bone_index=i)
             if b == self.eyelid:
-                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, member_index=self.params.Z_index, bone_index=i, extra_offset=0.0)
                 eyelid_def_bone = def_bone
-            else:
-                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, member_index=self.params.Z_index, bone_index=i)
-            def_chain.append(def_bone)
+                print(eyelid_def_bone)
 
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
@@ -74,9 +71,9 @@ class Rig:
         jaw = ctrl_chain[2]
         eyelid = ctrl_chain[3]
 
-#        create_cube_widget(self.obj, pelvis, radius=1.0)
-
         pantin_utils.create_capsule_widget(self.obj, neck, width=widget_size, height=widget_size*0.1)
+        pantin_utils.create_aligned_circle_widget(self.obj, head, radius=widget_size, head_tail=0.5)
+        pantin_utils.create_aligned_circle_widget(self.obj, jaw, radius=widget_size * 0.3, head_tail=0.5)
 
         # Constraints
         for org, ctrl in zip(self.org_bones, ctrl_chain):
@@ -114,6 +111,7 @@ class Rig:
         con.owner_space = 'LOCAL'
 
         # Driver for hiding the eyelid behind the head, using the extra_offset
+        # When the eyelid is open (rotation < 0.25...), the def bone goes behind the head
         driver = self.obj.driver_add('pose.bones["{}"].["extra_offset"]'.format(eyelid_def_bone))
         driver.driver.expression = '-2 * (eyelid_offset < -0.25)'
         var = driver.driver.variables.new()      

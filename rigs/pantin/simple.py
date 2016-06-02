@@ -59,7 +59,6 @@ class Rig:
             sides[0] = ''
         for s in sides:
             for i, b in enumerate(self.org_bones):
-                print(i, b)
                 # Control bones
                 ctrl_bone = copy_bone(self.obj, b)
                 ctrl_bone_e = eb[ctrl_bone]
@@ -73,7 +72,6 @@ class Rig:
                     # TODO Check if parent still exists, else check if .L / .R exists, else do nothing
                     if eb[b].parent is not None:
                         bone_parent_name = eb[b].parent.name 
-                        print("PARENT NAME:", bone_parent_name)
                         if not bone_parent_name in eb:
                             raise MetarigError("RIGIFY ERROR: Bone %s does not have a %s side" % (strip_org(eb[b].parent.name), s))
                         ctrl_bone_e.parent = eb[bone_parent_name]
