@@ -54,7 +54,11 @@ class Rig:
             ctrl_chain += [ctrl_bone_e.name]
 
             # Def bones
-            def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, self.params.Z_index, i)
+            if b == self.eyelid:
+                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, member_index=self.params.Z_index, bone_index=i, extra_offset=0.0)
+                eyelid_def_bone = def_bone
+            else:
+                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, member_index=self.params.Z_index, bone_index=i)
             def_chain.append(def_bone)
 
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -108,6 +112,21 @@ class Rig:
         con.min_z = -0.39
         con.max_z = 0.0
         con.owner_space = 'LOCAL'
+
+        # Driver for hiding the eyelid behind the head, using the extra_offset
+        driver = self.obj.driver_add('pose.bones["{}"].["extra_offset"]'.format(eyelid_def_bone))
+        driver.driver.expression = '-2 * (eyelid_offset < -0.25)'
+        var = driver.driver.variables.new()      
+
+        var.type = 'SINGLE_PROP'
+        var.name = 'eyelid_offset'
+        var.type = 'TRANSFORMS'
+        # var.targets[0].id_type = 'OBJECT'
+        var.targets[0].id = self.obj
+        var.targets[0].bone_target = eyelid
+        var.targets[0].transform_type = 'ROT_Z'
+        var.targets[0].transform_space = 'LOCAL_SPACE'
+        # var.targets[0].data_path = 'pose.bones["{}"]'.format(eyelid)
 
 def add_parameters(params):
     params.Z_index = bpy.props.FloatProperty(name="Indice Z", default=0.0, description="Définit l'ordre des membres dans l'espace")

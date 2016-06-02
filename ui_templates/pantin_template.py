@@ -29,20 +29,26 @@ from math import acos, pi
 #######################
 ## Driver namespace  ##
 #######################
-member_offset = 0.01
-bone_offset = 0.001
+MEMBER_OFFSET = 0.01
+BONE_OFFSET = 0.001
 
-def z_index(member_index, flip, bone_index):
-    if flip:
-        return member_index * member_offset - bone_index * bone_offset
-    else:
-        return member_index * member_offset + bone_index * bone_offset
+# Members are a group of bones moving together (eg. Hand, Forearm, Arm)
+# Bones are individual pieces inside this group
+# They can have an extra offset, per bone (eg. eyelid hiding behind the head)
 
-def z_index_same(member_index, flip, bone_index):
+def z_index(member_index, flip, bone_index, extra_offset=0.0):
+    """This bone changes sides when the rig is flipped (eg. limbs)"""
     if flip:
-        return -member_index * member_offset - bone_index * bone_offset
+        return member_index * MEMBER_OFFSET - bone_index * BONE_OFFSET - extra_offset * MEMBER_OFFSET
     else:
-        return member_index * member_offset + bone_index * bone_offset
+        return member_index * MEMBER_OFFSET + bone_index * BONE_OFFSET + extra_offset * MEMBER_OFFSET
+
+def z_index_same(member_index, flip, bone_index, extra_offset=0.0):
+    """This bone does not change sides when the rig is flipped (eg. head)"""
+    if flip:
+        return -member_index * MEMBER_OFFSET - bone_index * BONE_OFFSET - extra_offset * MEMBER_OFFSET
+    else:
+        return member_index * MEMBER_OFFSET + bone_index * BONE_OFFSET + extra_offset * MEMBER_OFFSET
 
 
 #######################

@@ -18,7 +18,7 @@ def strip_numbers(name):
     else:
         return name
 
-def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index=0, new_name=''):
+def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index=0, extra_offset=0.0, new_name=''):
     bpy.ops.object.mode_set(mode='EDIT')
     eb = obj.data.edit_bones
 
@@ -47,17 +47,18 @@ def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index
     def_bone_p = obj.pose.bones[def_name]
     def_bone_p['member_index'] = member_index
     def_bone_p['bone_index'] = bone_index
+    def_bone_p['extra_offset'] = extra_offset
 
-    # bones = obj.pose.bones
-
+    # Driver
     driver = obj.driver_add('pose.bones["{}"].location'.format(def_name), 2)
     if mutable_order:
-        driver.driver.expression = 'z_index(member_index, flip, bone_index)'
+        driver.driver.expression = 'z_index(member_index, flip, bone_index, extra_offset)'
     else:
-        driver.driver.expression = 'z_index_same(member_index, flip, bone_index)'
+        driver.driver.expression = 'z_index_same(member_index, flip, bone_index, extra_offset)'
     var_mi = driver.driver.variables.new()
     var_bi = driver.driver.variables.new()
     var_flip = driver.driver.variables.new()        
+    var_eo = driver.driver.variables.new()        
 
     var_mi.type = 'SINGLE_PROP'
     var_mi.name = 'member_index'
@@ -71,6 +72,12 @@ def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index
     var_bi.targets[0].id = obj
     var_bi.targets[0].data_path = 'pose.bones["{}"]["bone_index"]'.format(def_name)
 
+    var_eo.type = 'SINGLE_PROP'
+    var_eo.name = 'extra_offset'
+    var_eo.targets[0].id_type = 'OBJECT'
+    var_eo.targets[0].id = obj
+    var_eo.targets[0].data_path = 'pose.bones["{}"]["extra_offset"]'.format(def_name)
+
     var_flip.type = 'SINGLE_PROP'
     var_flip.name = 'flip'
     var_flip.targets[0].id_type = 'OBJECT'
@@ -78,7 +85,7 @@ def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index
     var_flip.targets[0].data_path = 'pose.bones["MCH-Flip"]["flip"]'
 
     bpy.ops.object.mode_set(mode='EDIT')
-    return def_bone_e.name
+    return def_name
 
 def create_axis_line_widget(rig, bone_name, length=1, axis='X', bone_transform_name=None):
     """ Creates a basic line widget which remains horizontal.
