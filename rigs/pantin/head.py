@@ -15,7 +15,8 @@ class Rig:
         self.neck = bone_name
         self.head = connected_children_names(self.obj, bone_name)[0]
         #sort jaw and eyelid based on their height. ok, that's dirty
-        head_children = sorted(self.obj.data.bones[self.head].children, key=lambda b:b.tail.z)
+        head_children = self.obj.pose.bones[self.head].children
+        head_children = sorted(head_children, key=lambda b: b.tail.z)
 
         self.jaw = head_children[0].name
         self.eyelid = head_children[1].name
