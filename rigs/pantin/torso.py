@@ -112,17 +112,19 @@ class Rig:
         prop["max"] = 1
 
         # Widgets
+        global_scale = self.obj.dimensions[2]
+        member_factor = 0.1
+        widget_size = global_scale *  member_factor
         pelvis = ctrl_chain[0]
         # abdomen = ctrl_chain[1]
         # torso = ctrl_chain[2]
         # shoulder = ctrl_chain[3]
 
-        create_cube_widget(self.obj, pelvis, radius=1.0)
-        ellipse_radius = pb[pelvis].length * 3.0
-        pantin_utils.create_aligned_half_ellipse_widget(self.obj, root, width=ellipse_radius, height=ellipse_radius*0.7)
+        create_cube_widget(self.obj, pelvis, radius=widget_size*4)
+        pantin_utils.create_aligned_half_ellipse_widget(self.obj, root, width=widget_size, height=widget_size*0.7)
 
         for bone in ctrl_chain[1:]:
-            pantin_utils.create_capsule_widget(self.obj, bone, head_tail=0.5)
+            pantin_utils.create_capsule_widget(self.obj, bone, width=widget_size, height=widget_size*0.1, head_tail=0.5)
             # create_widget(self.obj, bone)
 
         # Drivers

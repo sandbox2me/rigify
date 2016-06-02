@@ -66,11 +66,13 @@ class Rig:
             pb = self.obj.pose.bones
 
             # Widgets
+            global_scale = self.obj.dimensions[2]
+            member_factor = 0.06
             if s == '.R':
                 side_factor = 1.2
             else:
                 side_factor = 1.0
-            widget_size = pb[elimb_ik].length * side_factor
+            widget_size = global_scale *  member_factor * side_factor
             pantin_utils.create_aligned_circle_widget(self.obj, ulimb_ik, number_verts=3, radius=widget_size)
             #pantin_utils.create_aligned_polygon_widget(self.obj, ulimb_ik, [[-1,-1], [-1,1], [1,1], [1,-1]])
             pantin_utils.create_aligned_circle_widget(self.obj, joint_str, radius=widget_size * 0.7)

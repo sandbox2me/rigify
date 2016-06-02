@@ -61,6 +61,10 @@ class Rig:
         pb = self.obj.pose.bones
 
         # Widgets
+        global_scale = self.obj.dimensions[2]
+        member_factor = 0.08
+        widget_size = global_scale *  member_factor
+
         neck = ctrl_chain[0]
         head = ctrl_chain[1]
         jaw = ctrl_chain[2]
@@ -68,7 +72,7 @@ class Rig:
 
 #        create_cube_widget(self.obj, pelvis, radius=1.0)
 
-        pantin_utils.create_capsule_widget(self.obj, neck)
+        pantin_utils.create_capsule_widget(self.obj, neck, width=widget_size, height=widget_size*0.1)
 
         # Constraints
         for org, ctrl in zip(self.org_bones, ctrl_chain):

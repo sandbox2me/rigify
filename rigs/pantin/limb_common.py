@@ -6,7 +6,6 @@ import importlib
 
 from ...utils import copy_bone, new_bone, put_bone
 from ...utils import make_mechanism_name, make_deformer_name, strip_org
-from ...utils import create_bone_widget, create_widget, create_cube_widget
 from ...utils import connected_children_names, has_connected_children
 from ...utils import align_bone_x_axis
 
