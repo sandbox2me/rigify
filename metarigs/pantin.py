@@ -193,7 +193,7 @@ def create(obj):
     bone = arm.edit_bones.new('Chapeau')
     bone.head[:] = 0.0432, -0.0000, 1.6260
     bone.tail[:] = 0.0432, -0.0000, 1.7549
-    bone.roll = 0.0000
+    bone.roll = 3.1416
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['Tete']]
     bones['Chapeau'] = bone.name
@@ -207,7 +207,7 @@ def create(obj):
     bone = arm.edit_bones.new('Accessoire')
     bone.head[:] = -0.1701, 0.0000, 0.7032
     bone.tail[:] = -0.4989, 0.0000, 0.0176
-    bone.roll = 3.5888
+    bone.roll = 0.4472
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['Main']]
     bones['Accessoire'] = bone.name
@@ -395,11 +395,11 @@ def create(obj):
     pbone.bone.layers = [True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     pbone = obj.pose.bones[bones['Chapeau']]
     pbone.rigify_type = 'pantin.simple'
-    pbone.lock_location = (False, False, False)
-    pbone.lock_rotation = (False, False, False)
+    pbone.lock_location = (False, False, True)
+    pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
-    pbone.rotation_mode = 'QUATERNION'
+    pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     pbone = obj.pose.bones[bones['Main']]
     pbone.rigify_type = ''
@@ -411,11 +411,11 @@ def create(obj):
     pbone.bone.layers = [False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     pbone = obj.pose.bones[bones['Accessoire']]
     pbone.rigify_type = 'pantin.simple'
-    pbone.lock_location = (False, False, False)
-    pbone.lock_rotation = (False, False, False)
+    pbone.lock_location = (False, False, True)
+    pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
-    pbone.rotation_mode = 'QUATERNION'
+    pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     try:
         pbone.rigify_parameters.object_side = ".R"
