@@ -80,12 +80,12 @@ class Rig:
             eb = self.obj.data.edit_bones
 
             # Foot rig
-            foot_fr = copy_bone(self.obj, self.org_bones[2], pantin_utils.strip_numbers(make_mechanism_name(strip_org(self.org_bones[2]))) + '.fr' + s)
-            foot_tgt = copy_bone(self.obj, self.org_bones[2], pantin_utils.strip_numbers(make_mechanism_name(strip_org(self.org_bones[2]))) + '.tgt' + s)
-            heel_fr = copy_bone(self.obj, self.org_bones[3], pantin_utils.strip_numbers(make_mechanism_name(strip_org(self.org_bones[3]))) + '.fr' + s)
-            toe_fr = copy_bone(self.obj, self.org_bones[4], pantin_utils.strip_numbers(make_mechanism_name(strip_org(self.org_bones[4]))) + '.fr' + s)
-            toe_ctl = copy_bone(self.obj, self.org_bones[4], pantin_utils.strip_numbers(strip_org(self.org_bones[4])) + s)
-            toe_pos = copy_bone(self.obj, self.org_bones[4], pantin_utils.strip_numbers(make_mechanism_name(strip_org(self.org_bones[4]))) + '.pos' + s)
+            foot_fr = copy_bone(self.obj, self.org_bones[2], pantin_utils.strip_LR_numbers(make_mechanism_name(strip_org(self.org_bones[2]))) + '.fr' + s)
+            foot_tgt = copy_bone(self.obj, self.org_bones[2], pantin_utils.strip_LR_numbers(make_mechanism_name(strip_org(self.org_bones[2]))) + '.tgt' + s)
+            heel_fr = copy_bone(self.obj, self.org_bones[3], pantin_utils.strip_LR_numbers(make_mechanism_name(strip_org(self.org_bones[3]))) + '.fr' + s)
+            toe_fr = copy_bone(self.obj, self.org_bones[4], pantin_utils.strip_LR_numbers(make_mechanism_name(strip_org(self.org_bones[4]))) + '.fr' + s)
+            toe_ctl = copy_bone(self.obj, self.org_bones[4], pantin_utils.strip_LR_numbers(strip_org(self.org_bones[4])) + s)
+            toe_pos = copy_bone(self.obj, self.org_bones[4], pantin_utils.strip_LR_numbers(make_mechanism_name(strip_org(self.org_bones[4]))) + '.pos' + s)
             roll_fr = new_bone(self.obj, "Foot roll" + s)
 
             # Position
