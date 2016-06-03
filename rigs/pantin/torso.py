@@ -147,7 +147,7 @@ class Rig:
         # shoulder = ctrl_chain[3]
 
         create_cube_widget(self.obj, pelvis, radius=widget_size*4)
-        pantin_utils.create_aligned_half_ellipse_widget(self.obj, root, width=widget_size, height=widget_size*0.7)
+        pantin_utils.create_aligned_half_ellipse_widget(self.obj, root, width=widget_size*1.5, height=widget_size)
 
         for bone in ctrl_chain[1:]:
             pantin_utils.create_capsule_widget(self.obj, bone, width=widget_size, height=widget_size*0.1, head_tail=0.5)
