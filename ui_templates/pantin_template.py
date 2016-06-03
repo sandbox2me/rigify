@@ -16,8 +16,6 @@
 #
 #======================= END GPL LICENSE BLOCK ========================
 
-# <pep8 compliant>
-
 UI_SLIDERS = '''
 import bpy
 from mathutils import Matrix, Vector
