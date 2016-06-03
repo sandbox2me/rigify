@@ -123,6 +123,12 @@ class IKLimb:
         elimb_str_p = pb[elimb_str]
 
         joint_str_p = pb[joint_str]
+        
+        joint_str_p.lock_location = (False, False, True)
+        joint_str_p.lock_rotation = (True, True, False)
+        joint_str_p.lock_rotation_w = False
+        joint_str_p.lock_scale = (False, False, False)
+        joint_str_p.rotation_mode = 'XZY'
 
         # Set up custom properties
         prop = rna_idprop_ui_prop_get(elimb_ik_p, "pelvis_follow", create=True)

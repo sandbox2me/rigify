@@ -229,6 +229,10 @@ def create(obj):
         pbone.rigify_parameters.mutable_order = False
     except AttributeError:
         pass
+    try:
+        pbone.rigify_parameters.root_name = "Racine"
+    except AttributeError:
+        pass
     pbone = obj.pose.bones[bones['Jambe haut']]
     pbone.rigify_type = 'pantin.leg'
     pbone.lock_location = (False, False, True)
