@@ -224,3 +224,31 @@ def create_sample(obj):
     arm = obj.data
 
     bones = {}
+
+    bone = arm.edit_bones.new('Chapeau')
+    bone.head[:] = 0.0432, -0.0000, 1.6260
+    bone.tail[:] = 0.0432, -0.0000, 1.7549
+    bone.roll = 3.1416
+    bone.use_connect = False
+    bones['Chapeau'] = bone.name
+
+    bpy.ops.object.mode_set(mode='OBJECT')
+    pbone = obj.pose.bones[bones['Chapeau']]
+    pbone.rigify_type = 'pantin.simple'
+    pbone.lock_location = (False, False, True)
+    pbone.lock_rotation = (True, True, False)
+    pbone.lock_rotation_w = False
+    pbone.lock_scale = (False, False, False)
+    pbone.rotation_mode = 'XZY'
+
+    bpy.ops.object.mode_set(mode='EDIT')
+    for bone in arm.edit_bones:
+        bone.select = False
+        bone.select_head = False
+        bone.select_tail = False
+    for b in bones:
+        bone = arm.edit_bones[bones[b]]
+        bone.select = True
+        bone.select_head = True
+        bone.select_tail = True
+        arm.edit_bones.active = bone

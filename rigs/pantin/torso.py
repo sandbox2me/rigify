@@ -236,10 +236,10 @@ def create_sample(obj):
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
-    pbone.lock_scale = (False, False, False)
+    pbone.lock_scale = (True, True, True)
     pbone.rotation_mode = 'XZY'
     try:
-        pbone.rigify_parameters.Z_index = 3
+        pbone.rigify_parameters.Z_index = 1.0
     except AttributeError:
         pass
     try:
@@ -247,7 +247,7 @@ def create_sample(obj):
     except AttributeError:
         pass
     try:
-        pbone.rigify_parameters.members_number = 5
+        pbone.rigify_parameters.root_name = "Racine"
     except AttributeError:
         pass
     pbone = obj.pose.bones[bones['Abdomen']]
@@ -255,7 +255,7 @@ def create_sample(obj):
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
-    pbone.lock_scale = (False, False, False)
+    pbone.lock_scale = (True, True, True)
     pbone.rotation_mode = 'XZY'
     pbone = obj.pose.bones[bones['Thorax']]
     pbone.rigify_type = ''

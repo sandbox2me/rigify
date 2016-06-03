@@ -454,7 +454,7 @@ def create_sample(obj):
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
     try:
-        pbone.rigify_parameters.Z_index = 1
+        pbone.rigify_parameters.Z_index = 2.0
     except AttributeError:
         pass
     try:
@@ -513,4 +513,3 @@ def create_sample(obj):
         bone.select_head = True
         bone.select_tail = True
         arm.edit_bones.active = bone
-

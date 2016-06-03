@@ -184,17 +184,24 @@ def create_sample(obj):
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['Tete']]
     bones['Machoire'] = bone.name
+    bone = arm.edit_bones.new('Paupiere')
+    bone.head[:] = 0.0713, -0.0000, 1.5667
+    bone.tail[:] = 0.1014, 0.0000, 1.5618
+    bone.roll = -1.4091
+    bone.use_connect = False
+    bone.parent = arm.edit_bones[bones['Tete']]
+    bones['Paupiere'] = bone.name
 
     bpy.ops.object.mode_set(mode='OBJECT')
     pbone = obj.pose.bones[bones['Cou']]
     pbone.rigify_type = 'pantin.head'
-    pbone.lock_location = (False, False, True)
+    pbone.lock_location = (True, True, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (True, True, True)
     pbone.rotation_mode = 'XZY'
     try:
-        pbone.rigify_parameters.Z_index = 2
+        pbone.rigify_parameters.Z_index = 0.0
     except AttributeError:
         pass
     try:
@@ -214,6 +221,13 @@ def create_sample(obj):
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (True, True, True)
+    pbone.rotation_mode = 'XZY'
+    pbone = obj.pose.bones[bones['Paupiere']]
+    pbone.rigify_type = ''
+    pbone.lock_location = (True, True, True)
+    pbone.lock_rotation = (True, True, False)
+    pbone.lock_rotation_w = False
+    pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
 
     bpy.ops.object.mode_set(mode='EDIT')
