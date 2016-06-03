@@ -239,6 +239,13 @@ def create(obj):
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['Tete']]
     bones['Paupiere'] = bone.name
+    bone = arm.edit_bones.new('Chapeau')
+    bone.head[:] = 0.0841, -0.0000, 1.6888
+    bone.tail[:] = 0.0841, -0.0000, 1.8177
+    bone.roll = 3.1416
+    bone.use_connect = False
+    bone.parent = arm.edit_bones[bones['Tete']]
+    bones['Chapeau'] = bone.name
     bone = arm.edit_bones.new('Main.L')
     bone.head[:] = 0.2565, -0.0000, 0.9915
     bone.tail[:] = 0.3366, -0.0000, 0.8363
@@ -253,6 +260,13 @@ def create(obj):
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Bras bas.R']]
     bones['Main.R'] = bone.name
+    bone = arm.edit_bones.new('Accessoire')
+    bone.head[:] = 0.3599, -0.0000, 0.9073
+    bone.tail[:] = 0.6984, -0.0000, 1.0624
+    bone.roll = -2.0004
+    bone.use_connect = False
+    bone.parent = arm.edit_bones[bones['Main.L']]
+    bones['Accessoire'] = bone.name
 
     bpy.ops.object.mode_set(mode='OBJECT')
     pbone = obj.pose.bones[bones['Bassin']]
@@ -539,6 +553,14 @@ def create(obj):
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+    pbone = obj.pose.bones[bones['Chapeau']]
+    pbone.rigify_type = 'pantin.simple'
+    pbone.lock_location = (False, False, True)
+    pbone.lock_rotation = (True, True, False)
+    pbone.lock_rotation_w = False
+    pbone.lock_scale = (False, False, False)
+    pbone.rotation_mode = 'XZY'
+    pbone.bone.layers = [True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     pbone = obj.pose.bones[bones['Main.L']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
@@ -555,6 +577,18 @@ def create(obj):
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+    pbone = obj.pose.bones[bones['Accessoire']]
+    pbone.rigify_type = 'pantin.simple'
+    pbone.lock_location = (False, False, True)
+    pbone.lock_rotation = (True, True, False)
+    pbone.lock_rotation_w = False
+    pbone.lock_scale = (False, False, False)
+    pbone.rotation_mode = 'XZY'
+    pbone.bone.layers = [True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+    try:
+        pbone.rigify_parameters.object_side = ".R"
+    except AttributeError:
+        pass
 
     bpy.ops.object.mode_set(mode='EDIT')
     for bone in arm.edit_bones:

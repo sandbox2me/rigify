@@ -229,10 +229,10 @@ class IKLimb:
         # IK Limits
         ulimb_ik_p.lock_ik_x = True
         ulimb_ik_p.lock_ik_y = True
-        ulimb_ik_p.use_ik_limit_z = True
+        # ulimb_ik_p.use_ik_limit_z = True
         
-        ulimb_ik_p.ik_min_z = radians(self.ik_limits[0]) #radians(-150.0)
-        ulimb_ik_p.ik_max_z = radians(self.ik_limits[1]) #radians(150.0)
+        # ulimb_ik_p.ik_min_z = radians(self.ik_limits[0]) #radians(-150.0)
+        # ulimb_ik_p.ik_max_z = radians(self.ik_limits[1]) #radians(150.0)
 
         flimb_ik_p.lock_ik_x = True
         flimb_ik_p.lock_ik_y = True
