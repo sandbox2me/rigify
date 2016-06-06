@@ -123,6 +123,76 @@ class Rigify_Fill_Members(bpy.types.Operator):
             
         return {'FINISHED'}
 
+class Rigify_Reorder_Members(bpy.types.Operator):
+    """ Change members' order"""
+    bl_idname = "pose.rigify_reorder_members"# + rig_id
+    bl_label = "Change members' order"
+    bl_options = {'UNDO'}
+
+    direction = bpy.props.StringProperty()
+    list_member_index = bpy.props.IntProperty()
+
+    @classmethod
+    def poll(cls, context):
+        return (context.active_object != None and context.active_object.type == 'ARMATURE')
+
+    def execute(self, context):
+        obj = context.object
+        # print(self.direction)
+        # print(self.list_member_index)
+        active_member = obj.pantin_members[self.list_member_index]
+        active_member_index = active_member.index
+
+        print('MEMBER:', active_member_index)
+        num_members = len(obj.pantin_members)
+
+        tmp = active_member_index
+        other_member = None
+        if self.direction == 'UP':
+            if self.list_member_index > 0:
+                other_member = obj.pantin_members[self.list_member_index-1]
+                other_member_index = other_member.index
+
+        elif self.direction == 'DOWN':
+            if self.list_member_index < num_members-1:
+                other_member = obj.pantin_members[self.list_member_index+1]
+                other_member_index = other_member.index
+
+        if other_member is not None:
+            for b in obj.pose.bones:
+                if not b.bone.use_deform:
+                    continue
+                if b['member_index'] == active_member_index:
+                    b['member_index'] = other_member_index
+                elif b['member_index'] == other_member_index :
+                    b['member_index'] = active_member_index
+
+            # move in UI
+            active_member.index = other_member_index
+            other_member.index = active_member_index
+            if self.direction == 'UP':
+                obj.pantin_members.move(self.list_member_index, self.list_member_index-1)
+            elif self.direction == 'DOWN':
+                obj.pantin_members.move(self.list_member_index, self.list_member_index+1)
+
+                # # move for real
+                # active_bone['bone_index'] = next_bone['bone_index']
+                # next_bone['bone_index'] = tmp
+
+                # # # move in UI
+                # # bone0 = active_member.bones[list_bone_index]
+                # # bone1 = active_member.bones[list_bone_index+1]
+                # # active_member.bones.move(list_bone_index, list_bone_index + 1)
+                # # active_member.active_bone += 1
+                # # bone0.index += 1
+                # # bone1.index -= 1
+            
+        mode = bpy.context.mode
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.object.mode_set(mode=mode)
+        
+        return {'FINISHED'}
+
 class Rigify_Reorder_Bones(bpy.types.Operator):
     """ Change bones' order"""
     bl_idname = "pose.rigify_reorder_bones"# + rig_id
@@ -199,9 +269,19 @@ class PantinBones(bpy.types.PropertyGroup):
     index = bpy.props.IntProperty()
 
 bpy.utils.register_class(PantinBones)
-    
+
+def member_index_update(self, context):
+    """TODODODOD"""
+    print(self.id_data.pose.bones)
+    for b in self.id_data.pose.bones:
+        if not b.bone.use_deform:
+            continue
+        # if b['member_index'] == active_member_index:
+        #     b['member_index'] = other_member_index
+
+
 class PantinMembers(bpy.types.PropertyGroup):
-    index = bpy.props.FloatProperty()
+    index = bpy.props.FloatProperty(update=member_index_update)
     bones = bpy.props.CollectionProperty(type=bpy.types.PantinBones)
     active_bone = bpy.props.IntProperty()
 
@@ -267,12 +347,18 @@ class DATA_PT_members_panel(bpy.types.Panel):
             if id_store.pantin_members and len(id_store.pantin_members):
                 box = layout.box()
                 col = box.column()
-    #            col.template_list("UI_UL_list", "pantin_members", armature_id_store, "pantin_members", armature_id_store, "pantin_active_member")
                 
                 for i, m in enumerate(id_store.pantin_members):
-                    col.label(str(m.index))#name.title()+':')
+                    row = col.row(align=True)
+                    row.alignment = 'LEFT'
+                    row.prop(m, 'index', text="Member")# name.title()+':')
+                    op = row.operator("pose.rigify_reorder_members", icon='TRIA_UP', text="")
+                    op.list_member_index = i
+                    op.direction = 'UP'
+                    op = row.operator("pose.rigify_reorder_members", icon='TRIA_DOWN', text="")
+                    op.list_member_index = i
+                    op.direction = 'DOWN'
                     row = col.row()
-#                    sub = row.column()
                     row.template_list("PANTIN_UL_bones_list", "bones", id_store.pantin_members[i], "bones", id_store.pantin_members[i], "active_bone")
 
                     sub = row.column(align=True)
@@ -282,7 +368,8 @@ class DATA_PT_members_panel(bpy.types.Panel):
                     op = sub.operator("pose.rigify_reorder_bones", icon='TRIA_DOWN', text="")
                     op.list_member_index = i
                     op.direction = 'DOWN'
-    #                col.separator()
+
+                    col.separator()
             layout.operator("pose.rigify_fill_members")
 
 class RigUI(bpy.types.Panel):
@@ -399,6 +486,7 @@ def register():
     bpy.app.driver_namespace["z_index_same"] = z_index_same
 
     bpy.utils.register_class(Rigify_Fill_Members)
+    bpy.utils.register_class(Rigify_Reorder_Members)
     bpy.utils.register_class(Rigify_Reorder_Bones)
     bpy.utils.register_class(PantinMembers)
     bpy.utils.register_class(PANTIN_UL_bones_list)
@@ -415,6 +503,7 @@ def unregister():
 
     del bpy.types.Object.pantin_members
     bpy.utils.unregister_class(Rigify_Fill_Members)
+    bpy.utils.unregister_class(Rigify_Reorder_Members)
     bpy.utils.unregister_class(Rigify_Reorder_Bones)
     bpy.utils.unregister_class(PANTIN_UL_bones_list)
     bpy.utils.unregister_class(DATA_PT_members_panel)
