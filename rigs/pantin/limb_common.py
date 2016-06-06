@@ -19,7 +19,7 @@
 import bpy
 from rna_prop_ui import rna_idprop_ui_prop_get
 from mathutils import Vector
-from math import radians
+from math import radians, degrees
 import importlib
 
 from ...utils import copy_bone, new_bone, put_bone
@@ -229,16 +229,22 @@ class IKLimb:
         # IK Limits
         ulimb_ik_p.lock_ik_x = True
         ulimb_ik_p.lock_ik_y = True
-        # ulimb_ik_p.use_ik_limit_z = True
-        
-        # ulimb_ik_p.ik_min_z = radians(self.ik_limits[0]) #radians(-150.0)
-        # ulimb_ik_p.ik_max_z = radians(self.ik_limits[1]) #radians(150.0)
 
         flimb_ik_p.lock_ik_x = True
         flimb_ik_p.lock_ik_y = True
         flimb_ik_p.use_ik_limit_z = True
-        flimb_ik_p.ik_min_z = radians(self.ik_limits[2]) #0.0
-        flimb_ik_p.ik_max_z = radians(self.ik_limits[3]) #radians(160.0)
+        flimb_ik_p.ik_min_z = radians(self.ik_limits[0]) #0.0
+        flimb_ik_p.ik_max_z = radians(self.ik_limits[1]) #radians(160.0)
         
+        # Arm ik angle fix
+        limb_angle = ulimb_ik_p.vector.xz.angle_signed(flimb_ik_p.vector.xz)
+        print(ulimb_ik, degrees(limb_angle))
+        print("counter" if self.ik_limits[0] < 0 else "clockwise")
+        if self.ik_limits[0] < 0: # folds counterclockwise (arms)
+            # if limb_angle < -radians(45):
+            flimb_ik_p.ik_max_z = -limb_angle -.02 #has to be slightly less than the original angle
+        else:
+            # if limb_angle > radians(45):
+            flimb_ik_p.ik_min_z = -limb_angle +.02 #has to be slightly more than the original angle
 
         return [ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str, elimb_ik, elimb_str]

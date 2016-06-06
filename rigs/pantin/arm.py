@@ -54,7 +54,7 @@ class Rig:
         
         self.ik_limbs = {}
         for s in sides:
-            self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones, joint_name, params.do_flip, True, params.pelvis_name, s, ik_limits=[-150.0, 150.0, -160.0, 0.0])
+            self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones, joint_name, params.do_flip, True, params.pelvis_name, s, ik_limits=[-160.0, 0.0])
 
     def generate(self):
         ui_script = ""
