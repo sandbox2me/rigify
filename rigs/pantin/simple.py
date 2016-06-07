@@ -105,7 +105,7 @@ class Rig:
                 ctrl_chain += [ctrl_bone_e.name]
 
                 # Def bones
-                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, member_Z_index, bone_Z_index + i, b+s)
+                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.flip_switch, member_Z_index, bone_Z_index + i, b+s)
                 # def_chain.append(def_bone)
 
             bpy.ops.object.mode_set(mode='OBJECT')
@@ -128,12 +128,12 @@ def add_parameters(params):
     params.first_bone_Z_index = bpy.props.FloatProperty(name="First Bone Z index",
                                            default=0.0,
                                            description="Defines bone's Z order")
-    params.mutable_order = bpy.props.BoolProperty(name="Mutable Order",
+    params.flip_switch = bpy.props.BoolProperty(name="Flip Switch",
                                                   default=False,
                                                   description="This member may change depth when flipped")
     # params.member_Z_index = bpy.props.FloatProperty(name="Indice Z membre", default=0.0, description="Définit l'ordre des membres dans l'espace")
     # params.first_bone_Z_index = bpy.props.FloatProperty(name="Indice Z premier os", default=0.0, description="Définit l'ordre des os dans l'espace")
-    # params.mutable_order = bpy.props.BoolProperty(name="Ordre change", default=True, description="Ce membre peut changer de profondeur")
+    # params.flip_switch = bpy.props.BoolProperty(name="Ordre change", default=True, description="Ce membre peut changer de profondeur")
     # params.duplicate_lr = bpy.props.BoolProperty(name="Duplicate LR",
     #                                              default=True,
     #                                              description="Create two limbs for left and right")
@@ -161,7 +161,7 @@ def parameters_ui(layout, params):
         r.prop(params, "member_Z_index")
         r.prop(params, "first_bone_Z_index")
     r = layout.row()
-    r.prop(params, "mutable_order")
+    r.prop(params, "flip_switch")
     # r = layout.row()
     # r.prop(params, "duplicate_lr")
     # if not params.duplicate_lr:

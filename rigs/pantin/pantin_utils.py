@@ -49,7 +49,7 @@ def strip_LR_numbers(name):
     return strip_LR(strip_numbers(name))
 
 
-def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index=0, extra_offset=0.0, new_name=''):
+def create_deformation(obj, bone_name, flip_switch, member_index=0, bone_index=0, extra_offset=0.0, new_name=''):
     bpy.ops.object.mode_set(mode='EDIT')
     eb = obj.data.edit_bones
 
@@ -82,7 +82,7 @@ def create_deformation(obj, bone_name, mutable_order, member_index=0, bone_index
 
     # Driver
     driver = obj.driver_add('pose.bones["{}"].location'.format(def_name), 2)
-    if mutable_order:
+    if flip_switch:
         driver.driver.expression = 'z_index(member_index, flip, bone_index, extra_offset)'
     else:
         driver.driver.expression = 'z_index_same(member_index, flip, bone_index, extra_offset)'

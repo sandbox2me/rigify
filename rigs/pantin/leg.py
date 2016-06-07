@@ -141,12 +141,12 @@ class Rig:
                 
             for i, b in enumerate([flimb_str, ulimb_str]):
                 def_bone_name = b.split('.')[0][4:]
-                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.mutable_order, member_index=Z_index, bone_index=i, new_name=def_bone_name+s)
+                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.flip_switch, member_index=Z_index, bone_index=i, new_name=def_bone_name+s)
 
             def_bone_name = elimb_str.split('.')[0][4:]
-            def_bone = pantin_utils.create_deformation(self.obj, elimb_str, self.params.mutable_order, member_index=Z_index, bone_index=2, new_name=def_bone_name + s)
+            def_bone = pantin_utils.create_deformation(self.obj, elimb_str, self.params.flip_switch, member_index=Z_index, bone_index=2, new_name=def_bone_name + s)
             def_bone_name = toe_ctl.split('.')[0]
-            def_bone = pantin_utils.create_deformation(self.obj, toe_pos, self.params.mutable_order, member_index=Z_index, bone_index=3, new_name=def_bone_name + s)
+            def_bone = pantin_utils.create_deformation(self.obj, toe_pos, self.params.flip_switch, member_index=Z_index, bone_index=3, new_name=def_bone_name + s)
 
             # Set layers if specified
             if s == '.R' and self.right_layers:
@@ -317,7 +317,7 @@ def add_parameters(params):
     params.Z_index = bpy.props.FloatProperty(name="Z index",
                                            default=0.0,
                                            description="Defines member's Z order")
-    params.mutable_order = bpy.props.BoolProperty(name="Mutable Order",
+    params.flip_switch = bpy.props.BoolProperty(name="Flip Switch",
                                                   default=True,
                                                   description="This member may change depth when flipped")
     params.duplicate_lr = bpy.props.BoolProperty(name="Duplicate LR",
@@ -345,7 +345,7 @@ def parameters_ui(layout, params):
     """
     r = layout.row()
     r.prop(params, "Z_index")
-    r.prop(params, "mutable_order")
+    r.prop(params, "flip_switch")
     c = layout.column()
     c.prop(params, "joint_name")
     c = layout.column()

@@ -226,7 +226,7 @@ def create(obj):
     except AttributeError:
         pass
     try:
-        pbone.rigify_parameters.mutable_order = False
+        pbone.rigify_parameters.flip_switch = False
     except AttributeError:
         pass
     try:
@@ -330,7 +330,7 @@ def create(obj):
     except AttributeError:
         pass
     try:
-        pbone.rigify_parameters.mutable_order = False
+        pbone.rigify_parameters.flip_switch = False
     except AttributeError:
         pass
     pbone = obj.pose.bones[bones['Bras haut']]
