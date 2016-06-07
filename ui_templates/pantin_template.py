@@ -90,7 +90,7 @@ class Rigify_Swap_Bones(bpy.types.Operator):
 ###################################
 
 class Rigify_Fill_Members(bpy.types.Operator):
-    """ Construct member and bone structure"""
+    """Construct member and bone structure"""
     bl_idname = "pose.rigify_fill_members"# + rig_id
     bl_label = "Construct member and bone structure"
 
@@ -272,16 +272,20 @@ bpy.utils.register_class(PantinBones)
 
 def member_index_update(self, context):
     """TODODODOD"""
-    print(self.id_data.pose.bones)
+    for m in self.id_data.pantin_members:
+        for bone in m.bones:
+            self.id_data.pose.bones[bone.name]['member_index'] = m.index
+
     for b in self.id_data.pose.bones:
         if not b.bone.use_deform:
             continue
+
         # if b['member_index'] == active_member_index:
         #     b['member_index'] = other_member_index
 
 
 class PantinMembers(bpy.types.PropertyGroup):
-    index = bpy.props.FloatProperty(update=member_index_update)
+    index = bpy.props.FloatProperty(precision=1, update=member_index_update)
     bones = bpy.props.CollectionProperty(type=bpy.types.PantinBones)
     active_bone = bpy.props.IntProperty()
 
@@ -350,7 +354,7 @@ class DATA_PT_members_panel(bpy.types.Panel):
                 
                 for i, m in enumerate(id_store.pantin_members):
                     row = col.row(align=True)
-                    row.alignment = 'LEFT'
+                    row.alignment = 'EXPAND'
                     row.prop(m, 'index', text="Member")# name.title()+':')
                     op = row.operator("pose.rigify_reorder_members", icon='TRIA_UP', text="")
                     op.list_member_index = i
@@ -358,8 +362,9 @@ class DATA_PT_members_panel(bpy.types.Panel):
                     op = row.operator("pose.rigify_reorder_members", icon='TRIA_DOWN', text="")
                     op.list_member_index = i
                     op.direction = 'DOWN'
+                    op = row.operator("pose.rigify_fill_members", icon='FILE_REFRESH', text="")
                     row = col.row()
-                    row.template_list("PANTIN_UL_bones_list", "bones", id_store.pantin_members[i], "bones", id_store.pantin_members[i], "active_bone")
+                    row.template_list("PANTIN_UL_bones_list", "bones", id_store.pantin_members[i], "bones", id_store.pantin_members[i], "active_bone", rows=3)
 
                     sub = row.column(align=True)
                     op = sub.operator("pose.rigify_reorder_bones", icon='TRIA_UP', text="")

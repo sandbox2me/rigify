@@ -238,8 +238,6 @@ class IKLimb:
         
         # Arm ik angle fix
         limb_angle = ulimb_ik_p.vector.xz.angle_signed(flimb_ik_p.vector.xz)
-        print(ulimb_ik, degrees(limb_angle))
-        print("counter" if self.ik_limits[0] < 0 else "clockwise")
         if self.ik_limits[0] < 0: # folds counterclockwise (arms)
             # if limb_angle < -radians(45):
             flimb_ik_p.ik_max_z = -limb_angle -.02 #has to be slightly less than the original angle
