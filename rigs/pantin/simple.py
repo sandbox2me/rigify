@@ -32,16 +32,20 @@ class Rig:
         self.params = params
 
         self.org_bones = [bone_name] + connected_children_names(self.obj, bone_name)
-        self.org_parent = self.obj.data.edit_bones[bone_name].parent.name
+        if self.obj.data.edit_bones[bone_name].parent is not None:
+            self.org_parent = self.obj.data.edit_bones[bone_name].parent.name
+        else:
+            self.org_parent = None
 
     def generate(self):
-        if self.params.use_parent_Z_index:
+        if self.params.use_parent_Z_index and self.org_parent is not None:
             # Get parent's Z indices
             bpy.ops.object.mode_set(mode='OBJECT')
             pb = self.obj.pose.bones
             def_parent_name = make_deformer_name(strip_org(self.org_parent))
-            if self.params.object_side != ".C":
+            if self.params.object_side != ".C" and def_parent_name[-2:] not in ['.L', '.R']:
                 def_parent_name += self.params.object_side
+            print("DEF PARENT", def_parent_name)
             if not def_parent_name in pb:
                 raise MetarigError("RIGIFY ERROR: Bone %s does not have a %s side" % (strip_org(self.org_parent), self.params.object_side))
             parent_p = pb[def_parent_name]
@@ -61,7 +65,7 @@ class Rig:
         eb = self.obj.data.edit_bones
         
         # Get parent's layers
-        if self.params.use_parent_layers:
+        if self.params.use_parent_layers and self.org_parent is not None:
             layers = eb[self.org_parent].layers
         else:
             layers = self.params.layers
@@ -89,10 +93,14 @@ class Rig:
                     # First bone
                     # TODO Check if parent still exists, else check if .L / .R exists, else do nothing
                     if eb[b].parent is not None:
-                        bone_parent_name = eb[b].parent.name 
-                        if not bone_parent_name in eb:
+                        bone_parent_name = eb[b].parent.name
+                        if bone_parent_name + self.params.object_side in eb:
+                            print(bone_parent_name + self.params.object_side + ' WAS THERE')
+                            ctrl_bone_e.parent = eb[bone_parent_name + self.params.object_side]
+                        elif bone_parent_name in eb:
+                            ctrl_bone_e.parent = eb[bone_parent_name]
+                        else:
                             raise MetarigError("RIGIFY ERROR: Bone %s does not have a %s side" % (strip_org(eb[b].parent.name), s))
-                        ctrl_bone_e.parent = eb[bone_parent_name]
                     else:
                         ctrl_bone_e.parent = eb['MCH-Flip']
                 else:

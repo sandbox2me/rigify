@@ -69,12 +69,12 @@ class Rig:
         
         self.ik_limbs = {}
         for s in sides:
-            self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones[:3], joint_name, params.do_flip, False, params.pelvis_name, s, ik_limits=[0.0, 160.0])
+            self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones[:3], joint_name, params.do_flip, False, params.pelvis_name, params.duplicate_lr, s, ik_limits=[0.0, 160.0])
 
     def generate(self):
         ui_script = ""
         for s, ik_limb in self.ik_limbs.items():
-            ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str, elimb_ik, elimb_str = ik_limb.generate()
+            ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str, elimb_ik, elimb_str, side_org_bones = ik_limb.generate()
 
             bpy.ops.object.mode_set(mode='EDIT')
             eb = self.obj.data.edit_bones
@@ -302,12 +302,11 @@ class Rig:
             con.owner_space = 'POSE'
 
 
-            if s == '.R':
-                for org, ctrl in zip(self.org_bones, [ulimb_str, flimb_str, elimb_str]):
-                    con = pb[org].constraints.new('COPY_TRANSFORMS')
-                    con.name = "copy_transforms"
-                    con.target = self.obj
-                    con.subtarget = ctrl
+            for org, ctrl in zip(side_org_bones, [ulimb_str, flimb_str, elimb_str]):
+                con = pb[org].constraints.new('COPY_TRANSFORMS')
+                con.name = "copy_transforms"
+                con.target = self.obj
+                con.subtarget = ctrl
 
             ui_script += script % (ulimb_ik, joint_str, elimb_ik)
 

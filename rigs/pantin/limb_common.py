@@ -32,7 +32,7 @@ from . import pantin_utils
 importlib.reload(pantin_utils)
 
 class IKLimb:
-    def __init__(self, obj, org_bones, stretch_joint_name, do_flip, pelvis_follow, pelvis_name, side_suffix='', follow_org=False, ik_limits=[-150.0, 150.0, 0.0, 160.0]):
+    def __init__(self, obj, org_bones, stretch_joint_name, do_flip, pelvis_follow, pelvis_name, duplicate=False, side_suffix='', follow_org=False, ik_limits=[-150.0, 150.0, 0.0, 160.0]):
         self.obj = obj
 
         # Get the chain of 3 connected bones
@@ -50,11 +50,22 @@ class IKLimb:
         self.do_flip = do_flip
         self.pelvis_follow = pelvis_follow
         self.pelvis_name = pelvis_name
+        self.duplicate = duplicate
 
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
 
         eb = self.obj.data.edit_bones
+
+        # Copy originals with side suffix
+        side_org_bones = []
+        if self.duplicate:
+            for b in self.org_bones:
+                side_org_bone = copy_bone(self.obj, b, pantin_utils.strip_LR_numbers(b) + self.side_suffix)
+                side_org_bones.append(side_org_bone)
+                eb[side_org_bone].layers = [False if i != 31 else True for i in range(32)]
+        else:
+            side_org_bones = self.org_bones
 
         # Create the control bones
         ulimb_ik = copy_bone(self.obj, self.org_bones[0], pantin_utils.strip_LR_numbers(strip_org(self.org_bones[0])) + self.side_suffix)
@@ -85,6 +96,11 @@ class IKLimb:
         joint_str_e = eb[joint_str]
 
         # Parenting
+
+        # Side org chain
+        for b, o_b in zip(side_org_bones[1:], self.org_bones[1:]):
+            eb[b].parent = eb[pantin_utils.strip_LR_numbers(eb[o_b].parent.name) + self.side_suffix]
+
         if self.org_parent is not None:
             ulimb_ik_e.use_connect = False
             ulimb_ik_e.parent = eb[self.org_parent]
@@ -245,4 +261,4 @@ class IKLimb:
             # if limb_angle > radians(45):
             flimb_ik_p.ik_min_z = -limb_angle +.02 #has to be slightly more than the original angle
 
-        return [ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str, elimb_ik, elimb_str]
+        return [ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str, elimb_ik, elimb_str, side_org_bones]
