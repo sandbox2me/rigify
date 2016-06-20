@@ -146,7 +146,11 @@ class Rig:
         # torso = ctrl_chain[2]
         # shoulder = ctrl_chain[3]
 
-        create_cube_widget(self.obj, pelvis, radius=widget_size*4)
+        # create_cube_widget(self.obj, pelvis, radius=widget_size*4)
+        radius = widget_size
+        pelvis_center = pb[pelvis].center
+        vp = ((-radius*2.0+pelvis_center.x, -radius+pelvis_center.z), (-radius*2.0+pelvis_center.x, radius+pelvis_center.z), (radius*2.0+pelvis_center.x, radius+pelvis_center.z), (radius*2.0+pelvis_center.x, -radius+pelvis_center.z))
+        pantin_utils.create_aligned_polygon_widget(self.obj, pelvis, vertex_points=vp)
         pantin_utils.create_aligned_half_ellipse_widget(self.obj, root, width=widget_size*1.5, height=widget_size)
 
         for bone in ctrl_chain[1:]:
