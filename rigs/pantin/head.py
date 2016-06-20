@@ -115,12 +115,12 @@ class Rig:
         con.max_z = 0.68
         con.owner_space = 'LOCAL'
 
-        con = pb[jaw].constraints.new('LIMIT_ROTATION')
-        con.name = "limit_rotation"
-        con.use_limit_z = True
-        con.min_z = 0.0
-        con.max_z = 0.39
-        con.owner_space = 'LOCAL'
+        # con = pb[jaw].constraints.new('LIMIT_ROTATION')
+        # con.name = "limit_rotation"
+        # con.use_limit_z = True
+        # con.min_z = 0.0
+        # con.max_z = 0.39
+        # con.owner_space = 'LOCAL'
 
         con = pb[eyelid].constraints.new('LIMIT_ROTATION')
         con.name = "limit_rotation"
