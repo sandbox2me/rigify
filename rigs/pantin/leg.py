@@ -139,7 +139,7 @@ class Rig:
             else:
                 Z_index = self.params.Z_index
                 
-            for i, b in enumerate([flimb_str, ulimb_str]):
+            for i, b in enumerate(side_org_bones[:2]): #([flimb_str, ulimb_str]):
                 def_bone_name = b.split('.')[0][4:]
                 def_bone = pantin_utils.create_deformation(self.obj, b, self.params.flip_switch, member_index=Z_index, bone_index=i, new_name=def_bone_name+s)
 

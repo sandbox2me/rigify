@@ -17,12 +17,14 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+from mathutils import Vector
 
 from ...utils import MetarigError
-from ...utils import copy_bone
-from ...utils import make_deformer_name, strip_org
+from ...utils import new_bone, copy_bone
+from ...utils import make_deformer_name, make_mechanism_name, strip_org
 from ...utils import create_bone_widget, create_widget, create_cube_widget
 from ...utils import connected_children_names, has_connected_children
+from ...utils import align_bone_z_axis
 
 from . import pantin_utils
 
@@ -45,7 +47,7 @@ class Rig:
             def_parent_name = make_deformer_name(strip_org(self.org_parent))
             if self.params.object_side != ".C" and def_parent_name[-2:] not in ['.L', '.R']:
                 def_parent_name += self.params.object_side
-            print("DEF PARENT", def_parent_name)
+            # print("DEF PARENT", def_parent_name)
             if not def_parent_name in pb:
                 raise MetarigError("RIGIFY ERROR: Bone %s does not have a %s side" % (strip_org(self.org_parent), self.params.object_side))
             parent_p = pb[def_parent_name]
@@ -66,9 +68,12 @@ class Rig:
         
         # Get parent's layers
         if self.params.use_parent_layers and self.org_parent is not None:
-            layers = eb[self.org_parent].layers
+            layers = list(eb[self.org_parent].layers)
         else:
             layers = self.params.layers
+
+        # layers = [i == 1 for i in range(32)]
+        print('LAYERS:', list(layers))
             
         ctrl_chain = []
         # def_chain = []
@@ -86,7 +91,10 @@ class Rig:
                 ctrl_bone_e = eb[ctrl_bone]
 
                 # Name
-                ctrl_bone_e.name = strip_org(b) + s
+                ctrl_bone_name = strip_org(b) + s
+                if self.params.create_ik:
+                    ctrl_bone_name = make_mechanism_name(ctrl_bone_name)
+                ctrl_bone_e.name = ctrl_bone_name
 
                 # Parenting
                 if i == 0:
@@ -95,7 +103,7 @@ class Rig:
                     if eb[b].parent is not None:
                         bone_parent_name = eb[b].parent.name
                         if bone_parent_name + self.params.object_side in eb:
-                            print(bone_parent_name + self.params.object_side + ' WAS THERE')
+                            # print(bone_parent_name + self.params.object_side + ' WAS THERE')
                             ctrl_bone_e.parent = eb[bone_parent_name + self.params.object_side]
                         elif bone_parent_name in eb:
                             ctrl_bone_e.parent = eb[bone_parent_name]
@@ -116,6 +124,14 @@ class Rig:
                 def_bone = pantin_utils.create_deformation(self.obj, b, self.params.flip_switch, member_Z_index, bone_Z_index + i, b+s)
                 # def_chain.append(def_bone)
 
+            if self.params.create_ik:
+                last_bone = self.org_bones[-1]
+                ik_ctrl = new_bone(self.obj, strip_org(last_bone) + ".ik" + s)
+                ik_ctrl_e = eb[ik_ctrl]
+                ik_ctrl_e.head = eb[last_bone].tail
+                ik_ctrl_e.tail = eb[last_bone].tail + Vector((0.3, 0, 0))
+                align_bone_z_axis(self.obj, ik_ctrl, Vector((0, 1, 0)))
+                ik_ctrl_e.layers = layers
             bpy.ops.object.mode_set(mode='OBJECT')
             pb = self.obj.pose.bones
 
@@ -125,6 +141,18 @@ class Rig:
                 con.name = "copy_transforms"
                 con.target = self.obj
                 con.subtarget = ctrl
+
+            if self.params.create_ik:
+                last_bone = ctrl_chain[-1]
+                con = pb[last_bone].constraints.new('IK')
+                # con.name = "copy_transforms"
+                con.target = self.obj
+                con.subtarget = ik_ctrl
+                con.chain_count =len(self.org_bones) + 1
+        
+                # Pelvis follow
+                if self.params.do_flip:
+                    pantin_utils.create_ik_child_of(self.obj, ik_ctrl, self.params.pelvis_name)
         
 def add_parameters(params):
     params.use_parent_Z_index = bpy.props.BoolProperty(name="Use parent's Z Index",
@@ -152,9 +180,18 @@ def add_parameters(params):
                                                 ('.C', 'Center', ""),
                                                 ('.R', 'Right', ""),
                                                 ))
+    params.do_flip = bpy.props.BoolProperty(name="Do Flip",
+                                            default=True,
+                                            description="True if the rig has a torso with flip system")
+    params.pelvis_name = bpy.props.StringProperty(name="Pelvis Name",
+                                                  default="Pelvis",
+                                                  description="Name of the pelvis bone in whole rig")
     params.use_parent_layers = bpy.props.BoolProperty(name="Use parent's layers",
                                                   default=True,
                                                   description="The object will use its parent's layers")
+    params.create_ik = bpy.props.BoolProperty(name="Create IK",
+                                                  default=False,
+                                                  description="Create an IK constraint on the last bone")
     params.layers = bpy.props.BoolVectorProperty(size=32,
                                                        description="Layers for the object")
 
@@ -178,6 +215,13 @@ def parameters_ui(layout, params):
     r.label("Side:")
     r = col.row()
     r.prop(params, "object_side", expand=True)
+    c = layout.column()
+    c.prop(params, "do_flip")
+    c.prop(params, "pelvis_name")
+
+    col = layout.column()
+    r = col.row()
+    r.prop(params, "create_ik")
 
     # Layers
     col = layout.column(align=True)

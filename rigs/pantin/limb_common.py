@@ -200,47 +200,8 @@ class IKLimb:
         con.keep_axis = 'PLANE_Z'
         
         # Pelvis follow
-        # TODO get real bone name. From UI?
         if self.do_flip:
-            pelvis_bone_name = self.pelvis_name
-            flip_bone_name = 'MCH-Flip'
-
-            con1 = elimb_ik_p.constraints.new('CHILD_OF')
-            con1.name = "Child Normal"
-            con1.target = self.obj
-            con1.subtarget = pelvis_bone_name
-            con1.inverse_matrix = pb[pelvis_bone_name].matrix.inverted()
-
-            self.obj.pose.bones[flip_bone_name]["flip"] = 1
-
-            con2 = elimb_ik_p.constraints.new('CHILD_OF')
-            con2.name = "Child Flipped"
-            con2.target = self.obj
-            con2.subtarget = flip_bone_name
-            con2.inverse_matrix = pb[flip_bone_name].matrix.inverted()
-
-            self.obj.pose.bones[flip_bone_name]["flip"] = 0
-
-            # Drivers
-            driver = self.obj.driver_add(con1.path_from_id("influence"))
-            driver.driver.expression = 'pelvis_follow'
-            var_pf = driver.driver.variables.new()
-
-            var_pf.type = 'SINGLE_PROP'
-            var_pf.name = 'pelvis_follow'
-            var_pf.targets[0].id_type = 'OBJECT'
-            var_pf.targets[0].id = self.obj
-            var_pf.targets[0].data_path = elimb_ik_p.path_from_id() + '["pelvis_follow"]'# 'bones["{}"]["pelvis_follow"]'.format(elimb_ik)
-            
-            driver = self.obj.driver_add(con2.path_from_id("influence"))
-            driver.driver.expression = '1-pelvis_follow'
-            var_pf = driver.driver.variables.new()
-
-            var_pf.type = 'SINGLE_PROP'
-            var_pf.name = 'pelvis_follow'
-            var_pf.targets[0].id_type = 'OBJECT'
-            var_pf.targets[0].id = self.obj
-            var_pf.targets[0].data_path = elimb_ik_p.path_from_id() + '["pelvis_follow"]'# 'bones["{}"]["pelvis_follow"]'.format(elimb_ik)
+            pantin_utils.create_ik_child_of(self.obj, elimb_ik, self.pelvis_name)
 
         # IK Limits
         ulimb_ik_p.lock_ik_x = True

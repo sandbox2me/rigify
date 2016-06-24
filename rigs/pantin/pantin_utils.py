@@ -118,6 +118,49 @@ def create_deformation(obj, bone_name, flip_switch, member_index=0, bone_index=0
     bpy.ops.object.mode_set(mode='EDIT')
     return def_name
 
+def create_ik_child_of(obj, bone, pelvis_name):
+    # TODO get real bone name. From UI?
+    flip_bone_name = 'MCH-Flip'
+    pb = obj.pose.bones
+    bone_p = pb[bone]
+
+    con1 = bone_p.constraints.new('CHILD_OF')
+    con1.name = "Child Normal"
+    con1.target = obj
+    con1.subtarget = pelvis_name
+    con1.inverse_matrix = pb[pelvis_name].matrix.inverted()
+
+    obj.pose.bones[flip_bone_name]["flip"] = 1
+
+    con2 = bone_p.constraints.new('CHILD_OF')
+    con2.name = "Child Flipped"
+    con2.target = obj
+    con2.subtarget = flip_bone_name
+    con2.inverse_matrix = pb[flip_bone_name].matrix.inverted()
+
+    pb[flip_bone_name]["flip"] = 0
+
+    # Drivers
+    driver = obj.driver_add(con1.path_from_id("influence"))
+    driver.driver.expression = 'pelvis_follow'
+    var_pf = driver.driver.variables.new()
+
+    var_pf.type = 'SINGLE_PROP'
+    var_pf.name = 'pelvis_follow'
+    var_pf.targets[0].id_type = 'OBJECT'
+    var_pf.targets[0].id = obj
+    var_pf.targets[0].data_path = bone_p.path_from_id() + '["pelvis_follow"]'# 'bones["{}"]["pelvis_follow"]'.format(elimb_ik)
+    
+    driver = obj.driver_add(con2.path_from_id("influence"))
+    driver.driver.expression = '1-pelvis_follow'
+    var_pf = driver.driver.variables.new()
+
+    var_pf.type = 'SINGLE_PROP'
+    var_pf.name = 'pelvis_follow'
+    var_pf.targets[0].id_type = 'OBJECT'
+    var_pf.targets[0].id = obj
+    var_pf.targets[0].data_path = bone_p.path_from_id() + '["pelvis_follow"]'# 'bones["{}"]["pelvis_follow"]'.format(elimb_ik)
+
 def create_axis_line_widget(rig, bone_name, length=1, axis='X', bone_transform_name=None):
     """ Creates a basic line widget which remains horizontal.
     """
