@@ -134,6 +134,13 @@ class Rig:
                 ik_ctrl_e.layers = layers
             bpy.ops.object.mode_set(mode='OBJECT')
             pb = self.obj.pose.bones
+            
+            # Widgets
+            if self.params.create_ik:
+                global_scale = self.obj.dimensions[2]
+                member_factor = 0.06
+                widget_size = global_scale *  member_factor
+                pantin_utils.create_aligned_circle_widget(self.obj, ik_ctrl, radius=widget_size)
 
             # Constraints
             for org, ctrl in zip(self.org_bones, ctrl_chain):
