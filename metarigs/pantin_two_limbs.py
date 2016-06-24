@@ -589,6 +589,10 @@ def create(obj):
         pbone.rigify_parameters.object_side = ".R"
     except AttributeError:
         pass
+    try:
+        pbone.rigify_parameters.pelvis_name = "Bassin"
+    except AttributeError:
+        pass
 
     bpy.ops.object.mode_set(mode='EDIT')
     for bone in arm.edit_bones:

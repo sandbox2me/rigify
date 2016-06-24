@@ -206,8 +206,8 @@ def create(obj):
     bones['Main'] = bone.name
     bone = arm.edit_bones.new('Accessoire')
     bone.head[:] = -0.1701, 0.0000, 0.7032
-    bone.tail[:] = -0.4989, 0.0000, 0.0176
-    bone.roll = 0.4472
+    bone.tail[:] = -0.3672, 0.0000, 0.0000
+    bone.roll = 0.2706
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['Main']]
     bones['Accessoire'] = bone.name
@@ -419,6 +419,30 @@ def create(obj):
     pbone.bone.layers = [True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     try:
         pbone.rigify_parameters.object_side = ".R"
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.use_parent_layers = True
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.use_parent_Z_index = True
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.create_ik = False
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.flip_switch = False
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False]
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.pelvis_name = "Bassin"
     except AttributeError:
         pass
 

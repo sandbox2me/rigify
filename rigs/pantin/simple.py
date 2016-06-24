@@ -277,21 +277,49 @@ def create_sample(obj):
 
     bones = {}
 
-    bone = arm.edit_bones.new('Chapeau')
-    bone.head[:] = 0.0432, -0.0000, 1.6260
-    bone.tail[:] = 0.0432, -0.0000, 1.7549
-    bone.roll = 3.1416
+    bone = arm.edit_bones.new('Accessoire')
+    bone.head[:] = -0.1701, 0.0000, 0.7032
+    bone.tail[:] = -0.3672, 0.0000, 0.0000
+    bone.roll = 0.2706
     bone.use_connect = False
-    bones['Chapeau'] = bone.name
+    bones['Accessoire'] = bone.name
 
     bpy.ops.object.mode_set(mode='OBJECT')
-    pbone = obj.pose.bones[bones['Chapeau']]
+    pbone = obj.pose.bones[bones['Accessoire']]
     pbone.rigify_type = 'pantin.simple'
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
+    try:
+        pbone.rigify_parameters.object_side = ".R"
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.use_parent_layers = True
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.use_parent_Z_index = True
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.create_ik = False
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.flip_switch = False
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False]
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.pelvis_name = "Bassin"
+    except AttributeError:
+        pass
 
     bpy.ops.object.mode_set(mode='EDIT')
     for bone in arm.edit_bones:
