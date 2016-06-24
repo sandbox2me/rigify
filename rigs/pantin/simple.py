@@ -148,7 +148,7 @@ class Rig:
                 # con.name = "copy_transforms"
                 con.target = self.obj
                 con.subtarget = ik_ctrl
-                con.chain_count =len(self.org_bones) + 1
+                con.chain_count =len(self.org_bones)
         
                 # Pelvis follow
                 if self.params.do_flip:
