@@ -114,7 +114,7 @@ class Rig:
                 con.target = self.obj
                 con.subtarget = ctrl
 
-                print(org, ctrl, con)
+                # print(org, ctrl, con)
 
             ui_script += script % (ulimb_ik, joint_str, elimb_ik)
 

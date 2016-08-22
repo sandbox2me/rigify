@@ -73,7 +73,7 @@ class Rig:
             layers = self.params.layers
 
         # layers = [i == 1 for i in range(32)]
-        print('LAYERS:', list(layers))
+        # print('LAYERS:', list(layers))
             
         ctrl_chain = []
         # def_chain = []

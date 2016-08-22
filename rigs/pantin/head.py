@@ -33,7 +33,8 @@ class Rig:
         self.neck = bone_name
         self.head = connected_children_names(self.obj, bone_name)[0]
         #sort jaw and eyelid based on their height. ok, that's dirty
-        head_children = self.obj.pose.bones[self.head].children
+        head_children = list(self.obj.pose.bones[self.head].children)
+        head_children = [c for c in head_children if not c['rigify_type']] # remove bones which have a type, hence do not belong
         head_children = sorted(head_children, key=lambda b: b.tail.z)
 
         self.jaw = head_children[0].name
@@ -75,7 +76,6 @@ class Rig:
             def_bone = pantin_utils.create_deformation(self.obj, b, self.params.flip_switch, member_index=self.params.Z_index, bone_index=i)
             if b == self.eyelid:
                 eyelid_def_bone = def_bone
-                print(eyelid_def_bone)
 
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
