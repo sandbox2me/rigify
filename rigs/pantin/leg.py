@@ -324,11 +324,11 @@ class Rig:
 
                 # Set up custom properties
                 prop = rna_idprop_ui_prop_get(pb[elimb_ik], "foot_stretch", create=True)
-                pb[elimb_ik]["foot_stretch"] = 1.0 #int(self.foot_stretch)
-                prop["soft_min"] = 0.0
-                prop["soft_max"] = 1.0
-                prop["min"] = 0.0
-                prop["max"] = 1.0
+                pb[elimb_ik]["foot_stretch"] = 1 #int(self.foot_stretch)
+                prop["soft_min"] = 0
+                prop["soft_max"] = 1
+                prop["min"] = 0
+                prop["max"] = 1
 
                 # Drivers
                 for c in (con1, con2):
