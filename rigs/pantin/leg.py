@@ -342,10 +342,6 @@ class Rig:
                     var_fs.targets[0].id = self.obj
                     var_fs.targets[0].data_path = pb[elimb_ik].path_from_id() + '["foot_stretch"]'# 'bones["{}"]["pelvis_follow"]'.format(elimb_ik)
                 
-                # UI
-                global script
-                script += """
-    layout.prop(pose_bones[ik_leg[2]], '["foot_stretch"]', text="Foot stretch (" + ik_leg[2] + ")", slider=True)"""
 
             for org, ctrl in zip(side_org_bones, [ulimb_str, flimb_str, elimb_str]):
                 con = pb[org].constraints.new('COPY_TRANSFORMS')
@@ -354,6 +350,9 @@ class Rig:
                 con.subtarget = ctrl
 
             ui_script += script % (ulimb_ik, joint_str, elimb_ik)
+            if self.params.do_stretch:
+                ui_script += """    layout.prop(pose_bones[ik_leg[2]], '["foot_stretch"]', text="Foot stretch (" + ik_leg[2] + ")", slider=True)
+    """
 
         return [ui_script]
                     
