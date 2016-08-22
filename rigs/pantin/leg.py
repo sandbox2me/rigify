@@ -17,6 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+from rna_prop_ui import rna_idprop_ui_prop_get
 from math import pi, radians
 from mathutils import Vector
 import importlib
@@ -132,6 +133,9 @@ class Rig:
 
             eb[roll_fr].use_connect = False
             eb[roll_fr].parent = eb[elimb_ik]
+
+            if self.params.do_stretch:
+                eb[elimb_str].use_connect = False
 
             # Def bones
             if s == '.L':
@@ -301,6 +305,47 @@ class Rig:
             con.target_space = 'POSE'
             con.owner_space = 'POSE'
 
+            # Optional stretch to the foot
+            if self.params.do_stretch:
+                con1 = pb[flimb_str].constraints.new('STRETCH_TO')
+                con1.name = "stretch to foot"
+                con1.target = self.obj
+                con1.subtarget = foot_tgt
+                con1.volume = 'NO_VOLUME'
+                con1.rest_length = pb[flimb_str].length
+                con1.keep_axis = 'PLANE_Z'
+
+                con2 = pb[elimb_str].constraints.new('COPY_LOCATION')
+                con2.name = "copy foot location"
+                con2.target = self.obj
+                con2.subtarget = foot_tgt
+                con2.target_space = 'POSE'
+                con2.owner_space = 'POSE'
+
+                # Set up custom properties
+                prop = rna_idprop_ui_prop_get(pb[elimb_ik], "foot_stretch", create=True)
+                pb[elimb_ik]["foot_stretch"] = 1.0 #int(self.foot_stretch)
+                prop["soft_min"] = 0.0
+                prop["soft_max"] = 1.0
+                prop["min"] = 0.0
+                prop["max"] = 1.0
+
+                # Drivers
+                for c in (con1, con2):
+                    driver = self.obj.driver_add(c.path_from_id("influence"))
+                    driver.driver.expression = 'foot_stretch'
+                    var_fs = driver.driver.variables.new()
+
+                    var_fs.type = 'SINGLE_PROP'
+                    var_fs.name = 'foot_stretch'
+                    var_fs.targets[0].id_type = 'OBJECT'
+                    var_fs.targets[0].id = self.obj
+                    var_fs.targets[0].data_path = pb[elimb_ik].path_from_id() + '["foot_stretch"]'# 'bones["{}"]["pelvis_follow"]'.format(elimb_ik)
+                
+                # UI
+                global script
+                script += """
+    layout.prop(pose_bones[ik_leg[2]], '["foot_stretch"]', text="Foot stretch (" + ik_leg[2] + ")", slider=True)"""
 
             for org, ctrl in zip(side_org_bones, [ulimb_str, flimb_str, elimb_str]):
                 con = pb[org].constraints.new('COPY_TRANSFORMS')
@@ -338,6 +383,9 @@ def add_parameters(params):
                                                  description="Name of the middle joint")
     params.right_layers = bpy.props.BoolVectorProperty(size=32,
                                                        description="Layers for the duplicated limb to be on")
+    params.do_stretch = bpy.props.BoolProperty(name="Do Stretch",
+                                                 default=False,
+                                                 description="Create stretch constraint on lower leg")
 
 def parameters_ui(layout, params):
     """ Create the ui for the rig parameters.
@@ -345,8 +393,9 @@ def parameters_ui(layout, params):
     r = layout.row()
     r.prop(params, "Z_index")
     r.prop(params, "flip_switch")
-    c = layout.column()
-    c.prop(params, "joint_name")
+    r = layout.row()
+    r.prop(params, "joint_name")
+    r.prop(params, "do_stretch")
     c = layout.column()
     c.prop(params, "do_flip")
     c.prop(params, "pelvis_name")

@@ -130,15 +130,11 @@ def create_ik_child_of(obj, bone, pelvis_name):
     con1.subtarget = pelvis_name
     con1.inverse_matrix = pb[pelvis_name].matrix.inverted()
 
-    obj.pose.bones[flip_bone_name]["flip"] = 1
-
     con2 = bone_p.constraints.new('CHILD_OF')
     con2.name = "Child Flipped"
     con2.target = obj
     con2.subtarget = flip_bone_name
     con2.inverse_matrix = pb[flip_bone_name].matrix.inverted()
-
-    pb[flip_bone_name]["flip"] = 0
 
     # Drivers
     driver = obj.driver_add(con1.path_from_id("influence"))
