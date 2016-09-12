@@ -48,11 +48,17 @@ class Rig:
         leg = bone_name
         shin = bones[leg].children[0].name
         for b in bones[shin].children:
-            if not len(b.children):
-                heel = b.name
-            else:
+            if not b.use_connect:
+                continue
+            print(b.name)
+            if b.children:
                 foot = b.name
-        toe = bones[foot].children[0].name
+            else:
+                heel = b.name
+        for b in bones[foot].children:
+            if b.use_connect:
+                toe = b.name
+        # toe = bones[foot].children[0].name
         # roll = bones[toe].children[0].name
 
         self.org_bones = [leg, shin, foot, heel, toe]# + connected_children_names(obj, bone_name)[:2]
