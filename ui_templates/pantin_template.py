@@ -123,6 +123,31 @@ class Rigify_Fill_Members(bpy.types.Operator):
             
         return {'FINISHED'}
 
+class Rigify_Reapply_Members(bpy.types.Operator):
+    """ Change members' order"""
+    bl_idname = "pose.rigify_reapply_order_members"# + rig_id
+    bl_label = "Reapply previous members' order"
+    bl_options = {'UNDO'}
+
+
+    @classmethod
+    def poll(cls, context):
+        return (context.active_object != None and context.active_object.type == 'ARMATURE')
+
+    def execute(self, context):
+        obj = context.object
+        
+        for member in obj.pantin_members:
+            for bone in member.bones:
+                try:
+                    pb = obj.pose.bones[bone.name]
+                except KeyError:
+                    self.report({'WARNING'}, 'Bone {} not found'.format(bone.name))
+                    continue
+                pb['member_index'] = bone.index
+            
+        return {'FINISHED'}
+
 class Rigify_Reorder_Members(bpy.types.Operator):
     """ Change members' order"""
     bl_idname = "pose.rigify_reorder_members"# + rig_id
@@ -375,7 +400,9 @@ class DATA_PT_members_panel(bpy.types.Panel):
                     op.direction = 'DOWN'
 
                     col.separator()
-            layout.operator("pose.rigify_fill_members")
+            col = layout.column(align=True)
+            col.operator("pose.rigify_fill_members")
+            col.operator("pose.rigify_reapply_order_members")
 
 class RigUI(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
@@ -491,6 +518,7 @@ def register():
     bpy.app.driver_namespace["z_index_same"] = z_index_same
 
     bpy.utils.register_class(Rigify_Fill_Members)
+    bpy.utils.register_class(Rigify_Reapply_Members)
     bpy.utils.register_class(Rigify_Reorder_Members)
     bpy.utils.register_class(Rigify_Reorder_Bones)
     bpy.utils.register_class(PantinMembers)
@@ -508,6 +536,7 @@ def unregister():
 
     del bpy.types.Object.pantin_members
     bpy.utils.unregister_class(Rigify_Fill_Members)
+    bpy.utils.unregister_class(Rigify_Reapply_Members)
     bpy.utils.unregister_class(Rigify_Reorder_Members)
     bpy.utils.unregister_class(Rigify_Reorder_Bones)
     bpy.utils.unregister_class(PANTIN_UL_bones_list)
