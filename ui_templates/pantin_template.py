@@ -144,7 +144,8 @@ class Rigify_Reapply_Members(bpy.types.Operator):
                 except KeyError:
                     self.report({'WARNING'}, 'Bone {} not found'.format(bone.name))
                     continue
-                pb['member_index'] = bone.index
+                pb['member_index'] = member.index
+                pb['bone_index'] = bone.index
             
         return {'FINISHED'}
 
