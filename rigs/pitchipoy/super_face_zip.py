@@ -119,8 +119,7 @@ class Rig:
         
         distance = ( eyeL_e.head - eyeR_e.head ) * 3
         distance = distance.cross( (0, 0, 1) )
-        eye_length = eyeL_e.length
-
+        
         eyeL_ctrl_name = strip_org( bones['eyes'][0] )
         eyeR_ctrl_name = strip_org( bones['eyes'][1] )
         
@@ -137,8 +136,8 @@ class Rig:
         eyes_ctrl_e.head[:] =  ( eyeL_ctrl_e.head + eyeR_ctrl_e.head ) / 2
         
         for bone in [ eyeL_ctrl_e, eyeR_ctrl_e, eyes_ctrl_e ]:
-            bone.tail[:] = bone.head + Vector( [ 0, 0, eye_length * 0.75 ] )
-
+            bone.tail[:] = bone.head + Vector( [ 0, 0, eyeL_e.length * 0.75 ] )
+        
         ## Widget for transforming the both eyes
         eye_master_names = []
         for bone in bones['eyes']:
@@ -244,6 +243,8 @@ class Rig:
         for bone in bones + list( uniques.keys() ):
 
             tweak_name = strip_org( bone )
+            tweak_name_1=''
+            tweak_name_2=''
 
             # pick name for unique bone from the uniques dictionary
             if bone in list( uniques.keys() ):
@@ -262,8 +263,12 @@ class Rig:
             if bone in tails:
                 if 'lip.T.L.001' in bone:
                     tweak_name = copy_bone( self.obj, bone,  'lips.L' )
+                    tweak_name_1 = copy_bone( self.obj, bone, 'lip_zip.T.L')
+                    tweak_name_2 = copy_bone( self.obj, bone, 'lip_zip.B.L')
                 elif 'lip.T.R.001' in bone:
                     tweak_name = copy_bone( self.obj, bone,  'lips.R' )
+                    tweak_name_1 = copy_bone( self.obj, bone, 'lip_zip.T.R')
+                    tweak_name_2 = copy_bone( self.obj, bone, 'lip_zip.B.R')
                 else:
                     tweak_name = copy_bone( self.obj, bone,  tweak_name )
 
@@ -275,6 +280,25 @@ class Rig:
                     eb[ tweak_name ].head + Vector(( 0, 0, self.face_length / 7 ))
                 
                 tweaks.append( tweak_name )
+
+                if tweak_name_1 != '':
+                    eb[ tweak_name_1 ].use_connect = False
+                    eb[ tweak_name_1 ].parent      = None
+
+                    eb[ tweak_name_1 ].head    = eb[ bone ].tail
+                    eb[ tweak_name_1 ].tail[:] = \
+                        eb[ tweak_name_1 ].head + Vector(( 0, 0, self.face_length / 7 ))
+
+                    tweaks.append( tweak_name_1 )
+                if tweak_name_2 != '':
+                    eb[ tweak_name_2 ].use_connect = False
+                    eb[ tweak_name_2 ].parent      = None
+
+                    eb[ tweak_name_2 ].head    = eb[ bone ].tail
+                    eb[ tweak_name_2 ].tail[:] = \
+                        eb[ tweak_name_2 ].head + Vector(( 0, 0, self.face_length / 7 ))
+
+                    tweaks.append( tweak_name_2 )
             
         bpy.ops.object.mode_set(mode ='OBJECT')
         pb = self.obj.pose.bones
@@ -296,7 +320,10 @@ class Rig:
             else:
                 if self.secondary_layers:
                     pb[bone].bone.layers = self.secondary_layers
-                create_face_widget( self.obj, bone )
+                if bone in ['lip_zip.B.L', 'lip_zip.B.R', 'lip_zip.T.L', 'lip_zip.T.R']:
+                    create_zip_widget( self.obj, bone, size=0.5 )
+                else:
+                    create_face_widget( self.obj, bone )
                     
         return { 'all' : tweaks }
 
@@ -615,6 +642,10 @@ class Rig:
         eb[ 'tongue'     ].parent = eb[ 'tongue_master'  ]
         eb[ 'tongue.001' ].parent = eb[ 'MCH-tongue.001' ]
         eb[ 'tongue.002' ].parent = eb[ 'MCH-tongue.002' ]
+        eb[ 'lip_zip.B.L'].parent = eb[ 'lips.L'         ]
+        eb[ 'lip_zip.B.R'].parent = eb[ 'lips.R'         ]
+        eb[ 'lip_zip.T.L'].parent = eb[ 'lips.L'         ]
+        eb[ 'lip_zip.T.R'].parent = eb[ 'lips.R'         ]
 
         for bone in [ 'ear.L.002', 'ear.L.003', 'ear.L.004' ]:
             eb[ bone                       ].parent = eb[ 'ear.L' ]
@@ -738,12 +769,12 @@ class Rig:
             'DEF-ear.L.004'         : 'ear.L',
             'DEF-ear.R.003'         : 'ear.R.004',
             'DEF-ear.R.004'         : 'ear.R',
-            'DEF-lip.B.L.001'       : 'lips.L',
-            'DEF-lip.B.R.001'       : 'lips.R',
+            'DEF-lip.B.L.001'       : 'lip_zip.B.L',
+            'DEF-lip.B.R.001'       : 'lip_zip.B.R',
             'DEF-cheek.B.L.001'     : 'brow.T.L',
             'DEF-cheek.B.R.001'     : 'brow.T.R',
-            'DEF-lip.T.L.001'       : 'lips.L',
-            'DEF-lip.T.R.001'       : 'lips.R',
+            'DEF-lip.T.L.001'       : 'lip_zip.T.L',
+            'DEF-lip.T.R.001'       : 'lip_zip.T.R',
             'DEF-cheek.T.L.001'     : 'nose.L',
             'DEF-nose.L.001'        : 'nose.002',
             'DEF-cheek.T.R.001'     : 'nose.R',
@@ -1071,8 +1102,8 @@ def create_sample(obj):
     bone.use_connect = False
     bones['face'] = bone.name
     bone = arm.edit_bones.new('nose')
-    bone.head[:] = 0.0000, -0.0905, 0.1125
-    bone.tail[:] = 0.0000, -0.1105, 0.0864
+    bone.head[:] = 0.0004, -0.0905, 0.1125
+    bone.tail[:] = 0.0004, -0.1105, 0.0864
     bone.roll = 0.0000
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['face']]
@@ -1092,8 +1123,8 @@ def create_sample(obj):
     bone.parent = arm.edit_bones[bones['face']]
     bones['lip.B.L'] = bone.name
     bone = arm.edit_bones.new('jaw')
-    bone.head[:] = 0.0000, -0.0389, 0.0222
-    bone.tail[:] = 0.0000, -0.0923, 0.0044
+    bone.head[:] = 0.0004, -0.0389, 0.0222
+    bone.tail[:] = 0.0004, -0.0923, 0.0044
     bone.roll = 0.0000
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['face']]
@@ -1197,29 +1228,29 @@ def create_sample(obj):
     bone.parent = arm.edit_bones[bones['face']]
     bones['cheek.T.R'] = bone.name
     bone = arm.edit_bones.new('teeth.T')
-    bone.head[:] = 0.0000, -0.0927, 0.0613
-    bone.tail[:] = 0.0000, -0.0621, 0.0613
+    bone.head[:] = 0.0004, -0.0927, 0.0613
+    bone.tail[:] = 0.0004, -0.0621, 0.0613
     bone.roll = 0.0000
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['face']]
     bones['teeth.T'] = bone.name
     bone = arm.edit_bones.new('teeth.B')
-    bone.head[:] = 0.0000, -0.0881, 0.0397
-    bone.tail[:] = 0.0000, -0.0575, 0.0397
+    bone.head[:] = 0.0004, -0.0881, 0.0397
+    bone.tail[:] = 0.0004, -0.0575, 0.0397
     bone.roll = 0.0000
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['face']]
     bones['teeth.B'] = bone.name
     bone = arm.edit_bones.new('tongue')
-    bone.head[:] = 0.0000, -0.0781, 0.0493
-    bone.tail[:] = 0.0000, -0.0620, 0.0567
+    bone.head[:] = 0.0004, -0.0781, 0.0493
+    bone.tail[:] = 0.0004, -0.0620, 0.0567
     bone.roll = 0.0000
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['face']]
     bones['tongue'] = bone.name
     bone = arm.edit_bones.new('nose.001')
-    bone.head[:] = 0.0000, -0.1105, 0.0864
-    bone.tail[:] = 0.0000, -0.1193, 0.0771
+    bone.head[:] = 0.0004, -0.1105, 0.0864
+    bone.tail[:] = 0.0004, -0.1193, 0.0771
     bone.roll = 0.0000
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['nose']]
@@ -1239,8 +1270,8 @@ def create_sample(obj):
     bone.parent = arm.edit_bones[bones['lip.B.L']]
     bones['lip.B.L.001'] = bone.name
     bone = arm.edit_bones.new('chin')
-    bone.head[:] = 0.0000, -0.0923, 0.0044
-    bone.tail[:] = 0.0000, -0.0921, 0.0158
+    bone.head[:] = 0.0004, -0.0923, 0.0044
+    bone.tail[:] = 0.0004, -0.0921, 0.0158
     bone.roll = 0.0000
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['jaw']]
@@ -1330,22 +1361,22 @@ def create_sample(obj):
     bone.parent = arm.edit_bones[bones['cheek.T.R']]
     bones['cheek.T.R.001'] = bone.name
     bone = arm.edit_bones.new('tongue.001')
-    bone.head[:] = 0.0000, -0.0620, 0.0567
-    bone.tail[:] = 0.0000, -0.0406, 0.0584
+    bone.head[:] = 0.0004, -0.0620, 0.0567
+    bone.tail[:] = 0.0004, -0.0406, 0.0584
     bone.roll = 0.0000
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['tongue']]
     bones['tongue.001'] = bone.name
     bone = arm.edit_bones.new('nose.002')
-    bone.head[:] = 0.0000, -0.1193, 0.0771
-    bone.tail[:] = 0.0000, -0.1118, 0.0739
+    bone.head[:] = 0.0004, -0.1193, 0.0771
+    bone.tail[:] = 0.0004, -0.1118, 0.0739
     bone.roll = 0.0000
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['nose.001']]
     bones['nose.002'] = bone.name
     bone = arm.edit_bones.new('chin.001')
-    bone.head[:] = 0.0000, -0.0921, 0.0158
-    bone.tail[:] = 0.0000, -0.0914, 0.0404
+    bone.head[:] = 0.0004, -0.0921, 0.0158
+    bone.tail[:] = 0.0004, -0.0914, 0.0404
     bone.roll = 0.0000
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['chin']]
@@ -1421,15 +1452,15 @@ def create_sample(obj):
     bone.parent = arm.edit_bones[bones['cheek.T.R.001']]
     bones['nose.R'] = bone.name
     bone = arm.edit_bones.new('tongue.002')
-    bone.head[:] = 0.0000, -0.0406, 0.0584
-    bone.tail[:] = 0.0000, -0.0178, 0.0464
+    bone.head[:] = 0.0004, -0.0406, 0.0584
+    bone.tail[:] = 0.0004, -0.0178, 0.0464
     bone.roll = 0.0000
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['tongue.001']]
     bones['tongue.002'] = bone.name
     bone = arm.edit_bones.new('nose.003')
-    bone.head[:] = 0.0000, -0.1118, 0.0739
-    bone.tail[:] = 0.0000, -0.1019, 0.0733
+    bone.head[:] = 0.0004, -0.1118, 0.0739
+    bone.tail[:] = 0.0004, -0.1019, 0.0733
     bone.roll = 0.0000
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['nose.002']]
@@ -1492,21 +1523,21 @@ def create_sample(obj):
     bones['temple.R'] = bone.name
     bone = arm.edit_bones.new('nose.L.001')
     bone.head[:] = 0.0118, -0.0966, 0.0757
-    bone.tail[:] = 0.0000, -0.1193, 0.0771
+    bone.tail[:] = 0.0004, -0.1193, 0.0771
     bone.roll = 0.1070
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['nose.L']]
     bones['nose.L.001'] = bone.name
     bone = arm.edit_bones.new('nose.R.001')
     bone.head[:] = -0.0118, -0.0966, 0.0757
-    bone.tail[:] = -0.0000, -0.1193, 0.0771
+    bone.tail[:] = -0.0004, -0.1193, 0.0771
     bone.roll = -0.1070
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['nose.R']]
     bones['nose.R.001'] = bone.name
     bone = arm.edit_bones.new('nose.004')
-    bone.head[:] = 0.0000, -0.1019, 0.0733
-    bone.tail[:] = 0.0000, -0.1014, 0.0633
+    bone.head[:] = 0.0004, -0.1019, 0.0733
+    bone.tail[:] = 0.0004, -0.1014, 0.0633
     bone.roll = 0.0000
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['nose.003']]
@@ -1710,7 +1741,7 @@ def create_sample(obj):
 
     bpy.ops.object.mode_set(mode='OBJECT')
     pbone = obj.pose.bones[bones['face']]
-    pbone.rigify_type = 'pitchipoy.super_face'
+    pbone.rigify_type = 'pitchipoy.super_face_zip'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False
@@ -2366,10 +2397,9 @@ def create_sample(obj):
         bone.select_tail = True
         arm.edit_bones.active = bone
 
-
 def create_square_widget(rig, bone_name, size=1.0, bone_transform_name=None):
     obj = create_widget(rig, bone_name, bone_transform_name)
-    if obj is not None:
+    if obj != None:
         verts = [
             (  0.5 * size, -2.9802322387695312e-08 * size,  0.5 * size ), 
             ( -0.5 * size, -2.9802322387695312e-08 * size,  0.5 * size ), 
@@ -2388,3 +2418,28 @@ def create_square_widget(rig, bone_name, size=1.0, bone_transform_name=None):
     else:
         return None
 
+
+def create_zip_widget(rig, bone_name, size=1.0, bone_transform_name=None):
+    obj = create_widget(rig, bone_name, bone_transform_name)
+    if obj is not None:
+
+        if (bone_name == 'lip_zip.T.L')or(bone_name == 'lip_zip.T.R'):
+            verts = [(-0.25*size, -0.00*size, 0.07499998807907104*size), (-0.25*size, 0.50*size, 0.07499998807907104*size), (0.25*size, 0.50*size, 0.07499998807907104*size), (0.25*size, -0.00*size, 0.07499998807907104*size), (-0.25*size, -0.00*size, -0.07499998807907104*size), (-0.25*size, 0.50*size, -0.07499998807907104*size), (0.25*size, 0.50*size, -0.07499998807907104*size), (0.25*size, -0.00*size, -0.07499998807907104*size), ]
+            edges = [(4, 5), (5, 1), (1, 0), (0, 4), (5, 6), (6, 2), (2, 1), (6, 7), (7, 3), (3, 2), (7, 4), (0, 3), ]
+            faces = []
+
+            mesh = obj.data
+            mesh.from_pydata(verts, edges, faces)
+            mesh.update()
+            return obj
+        elif (bone_name == 'lip_zip.B.L')or(bone_name == 'lip_zip.B.R'):
+            verts = [(-0.25*size, -0.50*size, 0.07499998807907104*size), (-0.25*size, 0.00*size, 0.07499998807907104*size), (0.25*size, 0.00*size, 0.07499998807907104*size), (0.25*size, -0.50*size, 0.07499998807907104*size), (-0.25*size, -0.50*size, -0.07499998807907104*size), (-0.25*size, 0.00*size, -0.07499998807907104*size), (0.25*size, 0.00*size, -0.07499998807907104*size), (0.25*size, -0.50*size, -0.07499998807907104*size), ]
+            edges = [(4, 5), (5, 1), (1, 0), (0, 4), (5, 6), (6, 2), (2, 1), (6, 7), (7, 3), (3, 2), (7, 4), (0, 3), ]
+            faces = []
+
+            mesh = obj.data
+            mesh.from_pydata(verts, edges, faces)
+            mesh.update()
+            return obj
+    else:
+        return None

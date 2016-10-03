@@ -357,7 +357,7 @@ def obj_to_bone(obj, rig, bone_name):
 def create_widget(rig, bone_name, bone_transform_name=None):
     """ Creates an empty widget object for a bone, and returns the object.
     """
-    if bone_transform_name == None:
+    if bone_transform_name is None:
         bone_transform_name = bone_name
 
     obj_name = WGT_PREFIX + bone_name
@@ -396,7 +396,7 @@ def create_line_widget(rig, bone_name, bone_transform_name=None):
     """ Creates a basic line widget, a line that spans the length of the bone.
     """
     obj = create_widget(rig, bone_name, bone_transform_name)
-    if obj != None:
+    if obj is not None:
         mesh = obj.data
         mesh.from_pydata([(0, 0, 0), (0, 1, 0)], [(0, 1)], [])
         mesh.update()
@@ -427,7 +427,7 @@ def create_cube_widget(rig, bone_name, radius=0.5, bone_transform_name=None):
     """ Creates a basic cube widget.
     """
     obj = create_widget(rig, bone_name, bone_transform_name)
-    if obj != None:
+    if obj is not None:
         r = radius
         verts = [(r, r, r), (r, -r, r), (-r, -r, r), (-r, r, r), (r, r, -r), (r, -r, -r), (-r, -r, -r), (-r, r, -r)]
         edges = [(0, 1), (1, 2), (2, 3), (3, 0), (4, 5), (5, 6), (6, 7), (7, 4), (0, 4), (1, 5), (2, 6), (3, 7)]
@@ -435,6 +435,21 @@ def create_cube_widget(rig, bone_name, radius=0.5, bone_transform_name=None):
         mesh.from_pydata(verts, edges, [])
         mesh.update()
 
+def create_chain_widget(rig, bone_name, radius=0.5, invert=False, bone_transform_name=None):
+    """Creates a basic chain widget
+    """
+    obj = create_widget(rig, bone_name, bone_transform_name)
+    if obj != None:
+        r = radius
+        rh = radius/2
+        if invert:
+            verts = [(rh, rh, rh), (r, -r, r), (-r, -r, r), (-rh, rh, rh), (rh, rh, -rh), (r, -r, -r), (-r, -r, -r), (-rh, rh, -rh)]
+        else:
+            verts = [(r, r, r), (rh, -rh, rh), (-rh, -rh, rh), (-r, r, r), (r, r, -r), (rh, -rh, -rh), (-rh, -rh, -rh), (-r, r, -r)]
+        edges = [(0, 1), (1, 2), (2, 3), (3, 0), (4, 5), (5, 6), (6, 7), (7, 4), (0, 4), (1, 5), (2, 6), (3, 7)]
+        mesh = obj.data
+        mesh.from_pydata(verts, edges, [])
+        mesh.update()
 
 def create_sphere_widget(rig, bone_name, bone_transform_name=None):
     """ Creates a basic sphere widget, three pependicular overlapping circles.
@@ -621,6 +636,19 @@ def align_bone_z_axis(obj, bone, vec):
 
     if dot1 > dot2:
         bone_e.roll += angle * 2
+
+
+def align_bone_y_axis(obj, bone, vec):
+    """ Matches the bone y-axis to
+        the given vector.
+        Must be in edit mode.
+    """
+
+    bone_e = obj.data.edit_bones[bone]
+    vec.normalize()
+    vec = vec * bone_e.length
+
+    bone_e.tail = bone_e.head + vec
 
 
 #=============================================
