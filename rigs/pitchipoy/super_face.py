@@ -119,7 +119,6 @@ class Rig:
         
         distance = ( eyeL_e.head - eyeR_e.head ) * 3
         distance = distance.cross( (0, 0, 1) )
-        eye_length = eyeL_e.length
 
         eyeL_ctrl_name = strip_org( bones['eyes'][0] )
         eyeR_ctrl_name = strip_org( bones['eyes'][1] )
@@ -137,7 +136,7 @@ class Rig:
         eyes_ctrl_e.head[:] =  ( eyeL_ctrl_e.head + eyeR_ctrl_e.head ) / 2
         
         for bone in [ eyeL_ctrl_e, eyeR_ctrl_e, eyes_ctrl_e ]:
-            bone.tail[:] = bone.head + Vector( [ 0, 0, eye_length * 0.75 ] )
+            bone.tail[:] = bone.head + Vector( [ 0, 0, eyeL_e.length * 0.75 ] )
 
         ## Widget for transforming the both eyes
         eye_master_names = []
@@ -675,7 +674,14 @@ class Rig:
             const.target    = self.obj
             const.subtarget = subtarget
             const.influence = influence
-        
+
+        elif constraint_type == 'teeth':
+
+            const = owner_pb.constraints.new( 'COPY_TRANSFORMS' )
+            const.target    = self.obj
+            const.subtarget = subtarget
+            const.influence = influence
+
         elif constraint_type == 'tweak_copyloc':
         
             const = owner_pb.constraints.new( 'COPY_LOCATION' )
@@ -816,7 +822,10 @@ class Rig:
         self.make_constraits( 'mch_jaw_master', 'MCH-jaw_master.002', 'jaw_master', 0.35  )
         self.make_constraits( 'mch_jaw_master', 'MCH-jaw_master.003', 'jaw_master', 0.10  )
         self.make_constraits( 'mch_jaw_master', 'MCH-jaw_master.004', 'jaw_master', 0.025 )
-        
+
+        self.make_constraits( 'teeth', 'ORG-teeth.T', 'teeth.T', 1.00 )
+        self.make_constraits( 'teeth', 'ORG-teeth.B', 'teeth.B', 1.00 )
+
         for bone in all_bones['mch']['jaw'][1:-1]:
             self.make_constraits( 'mch_jaw_master', bone, 'MCH-mouth_lock' )
             
@@ -2365,7 +2374,6 @@ def create_sample(obj):
         bone.select_head = True
         bone.select_tail = True
         arm.edit_bones.active = bone
-
 
 def create_square_widget(rig, bone_name, size=1.0, bone_transform_name=None):
     obj = create_widget(rig, bone_name, bone_transform_name)

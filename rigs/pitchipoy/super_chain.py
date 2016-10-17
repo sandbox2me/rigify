@@ -121,7 +121,7 @@ class Rig:
             eb.tail[:] = eb.head + tail_vec
 
 
-    def create_pivot( self, pivot = None):
+    def create_pivot( self, bones = None, pivot = None):
         """ Create the pivot control and mechanism bones """
 
         org_bones  = self.org_bones
@@ -161,15 +161,27 @@ class Rig:
         if self.params.tweak_axis == 'auto':
             align_bone_y_axis(self.obj, ctrl_name, v)
             align_bone_z_axis(self.obj, ctrl_name, -v_point)
-        elif self.params.tweak_axis == 'x':
-            align_bone_y_axis(self.obj, ctrl_name, Vector((1,0,0)))
-            align_bone_x_axis(self.obj, ctrl_name, Vector((0,0,1)))
-        elif self.params.tweak_axis == 'y':
-            align_bone_y_axis(self.obj, ctrl_name, Vector((0,1,0)))
-            align_bone_x_axis(self.obj, ctrl_name, Vector((1,0,0)))
-        elif self.params.tweak_axis == 'z':
-            align_bone_y_axis(self.obj, ctrl_name, Vector((0,0,1)))
-            align_bone_x_axis(self.obj, ctrl_name, Vector((1,0,0)))
+        elif self.params.tweak_axis == 'world':
+            align_bone_y_axis(self.obj, ctrl_name, Vector((0, 1, 0)))
+            align_bone_z_axis(self.obj, ctrl_name, Vector((0, 0, 1)))
+        elif self.params.tweak_axis == 'parent':
+            if bones['parent']:
+                parent = bones['parent']
+                align_bone_y_axis(self.obj, ctrl_name, eb[parent].y_axis)
+                align_bone_z_axis(self.obj, ctrl_name, eb[parent].z_axis)
+            else:
+                align_bone_y_axis(self.obj, ctrl_name, Vector((0, 1, 0)))
+                align_bone_z_axis(self.obj, ctrl_name, Vector((0, 0, 1)))
+
+        # elif self.params.tweak_axis == 'x':
+        #     align_bone_y_axis(self.obj, ctrl_name, Vector((1, 0, 0)))
+        #     align_bone_z_axis(self.obj, ctrl_name, Vector((0, 0, 1)))
+        # elif self.params.tweak_axis == 'y':
+        #     align_bone_y_axis(self.obj, ctrl_name, Vector((0, 1, 0)))
+        #     align_bone_z_axis(self.obj, ctrl_name, Vector((0, 0, 1)))
+        # elif self.params.tweak_axis == 'z':
+        #     align_bone_y_axis(self.obj, ctrl_name, Vector((0, 0, 1)))
+        #     align_bone_z_axis(self.obj, ctrl_name, Vector((0, 1, 0)))
 
         return {
             'ctrl' : ctrl_name
@@ -377,7 +389,7 @@ class Rig:
         pass
 
 
-    def create_chain(self):
+    def create_chain(self, bones=None):
         org_bones = self.org_bones
 
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -434,7 +446,6 @@ class Rig:
                 name = get_bone_name(b.split('.')[0] + suffix, 'ctrl', 'ctrl')
                 name = copy_bone( self.obj, org(b), name )
                 ctrl += [ name ]
-
             else:
                 name = get_bone_name(b, 'ctrl', 'tweak')
                 name = copy_bone( self.obj, org(b), name )
@@ -445,15 +456,27 @@ class Rig:
             if self.params.tweak_axis == 'auto':
                 align_bone_y_axis(self.obj, name, v)
                 align_bone_z_axis(self.obj, name, -v_point)  # invert?
-            elif self.params.tweak_axis == 'x':
-                align_bone_y_axis(self.obj, name, Vector((1,0,0)))
-                align_bone_x_axis(self.obj, name, Vector((0,0,1)))
-            elif self.params.tweak_axis == 'y':
-                align_bone_y_axis(self.obj, name, Vector((0,1,0)))
-                align_bone_x_axis(self.obj, name, Vector((1,0,0)))
-            elif self.params.tweak_axis == 'z':
-                align_bone_y_axis(self.obj, name, Vector((0,0,1)))
-                align_bone_x_axis(self.obj, name, Vector((1,0,0)))
+            elif self.params.tweak_axis == 'world':
+                align_bone_y_axis(self.obj, name, Vector((0, 1, 0)))
+                align_bone_z_axis(self.obj, name, Vector((0, 0, 1)))
+            elif self.params.tweak_axis == 'parent':
+                if bones['parent']:
+                    parent = bones['parent']
+                    align_bone_y_axis(self.obj, name, eb[parent].y_axis)
+                    align_bone_z_axis(self.obj, name, eb[parent].z_axis)
+                else:
+                    align_bone_y_axis(self.obj, name, Vector((0, 1, 0)))
+                    align_bone_z_axis(self.obj, name, Vector((0, 0, 1)))
+
+            # elif self.params.tweak_axis == 'x':
+            #     align_bone_y_axis(self.obj, name, Vector((1, 0, 0)))
+            #     align_bone_z_axis(self.obj, name, Vector((0, 0, 1)))
+            # elif self.params.tweak_axis == 'y':
+            #     align_bone_y_axis(self.obj, name, Vector((0, 1, 0)))
+            #     align_bone_z_axis(self.obj, name, Vector((0, 0, 1)))
+            # elif self.params.tweak_axis == 'z':
+            #     align_bone_y_axis(self.obj, name, Vector((0, 0, 1)))
+            #     align_bone_z_axis(self.obj, name, Vector((0, 1, 0)))
 
             if b == org_bones[-1]: #Add extra
                 ctrl_name = get_bone_name(b.split('.')[0] + suffix, 'ctrl', 'ctrl')
@@ -488,13 +511,15 @@ class Rig:
 
         # Mch controls
 
-        suffix = ''
-        if '.L' in b:
-            suffix = '.L'
-        elif '.R' in b:
-            suffix = '.R'
 
         for b in org_bones:
+
+            suffix = ''
+            if '.L' in b:
+                suffix = '.L'
+            elif '.R' in b:
+                suffix = '.R'
+
             mch_ctrl_name = "MCH-CTRL-" + strip_org(b).split('.')[0] + suffix
             mch_ctrl_name = copy_bone( self.obj, org(b), mch_ctrl_name )
 
@@ -583,7 +608,7 @@ class Rig:
             eb[ bones['pivot']['ctrl'] ].parent = eb[ bones['chain']['mch_auto'] ]
 
         if bones['chain']['conv']:
-            eb[ bones['chain']['ctrl'][-1] ].parent = eb[ bones['chain']['conv'] ]
+            eb[ bones['chain']['tweak'][-1] ].parent = eb[ bones['chain']['conv'] ]
 
         return  #TODO modify what follows
 
@@ -1117,8 +1142,8 @@ class Rig:
 
         bones['def'] = self.create_deform()
         if len(self.org_bones) > 2:
-            bones['pivot'] = self.create_pivot()
-        bones['chain'] = self.create_chain()
+            bones['pivot'] = self.create_pivot(bones=bones)
+        bones['chain'] = self.create_chain(bones=bones)
 
         #Todo create pivot-like controls
 
@@ -1169,10 +1194,10 @@ def add_parameters( params ):
 
     items = [
         ('auto', 'Auto', ''),
-        ('x', 'X', ''),
-        ('y', 'Y', ''),
-        ('z', 'Z', '')
+        ('world', 'World', ''),
+        ('parent', 'parent', '')
     ]
+
     params.tweak_axis = bpy.props.EnumProperty(
         items   = items,
         name    = "Tweak Axis",
@@ -1222,17 +1247,27 @@ def add_parameters( params ):
 def parameters_ui(layout, params):
     """ Create the ui for the rig parameters."""
 
+    # r = layout.row()
+    # r.prop(params, "neck_pos")
+    #
+    # r = layout.row()
+    # r.prop(params, "pivot_pos")
+    #
+    # r = layout.row()
+    # r.prop(params, "tail_pos")
+
+    # r = layout.row()
+    # r.prop(params, "control_num")
+
     pb = bpy.context.object.pose
 
-
-    # Todo this was commented because align axes different from Auto cause problems
-    # r = layout.row()
-    # col = r.column(align=True)
-    # row = col.row(align=True)
-    # row.prop(params, "tweak_axis", expand=True)
+    r = layout.row()
+    col = r.column(align=True)
+    row = col.row(align=True)
+    row.prop(params, "tweak_axis", expand=True)
 
     r = layout.row()
-    r.prop_search(params, 'conv_bone', pb, "bones", text = "Convergence Bone")
+    r.prop_search(params, 'conv_bone', pb, "bones", text="Convergence Bone")
 
     r = layout.row()
     r.prop(params, "tweak_extra_layers")
