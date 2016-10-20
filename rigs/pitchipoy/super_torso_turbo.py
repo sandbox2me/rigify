@@ -61,8 +61,7 @@ class Rig:
                 "RIGIFY ERROR: invalid rig structure" % (strip_org(bone_name))
             )            
 
-
-    def build_bone_structure( self ):
+    def build_bone_structure(self):
         """ Divide meta-rig into lists of bones according to torso rig anatomy:
             Neck --> Upper torso --> Lower torso --> Tail (optional) """
 
@@ -93,7 +92,7 @@ class Rig:
         else:
             return 'ERROR'
 
-    def orient_bone( self, eb, axis, scale, reverse = False ):
+    def orient_bone(self, eb, axis, scale, reverse=False):
         v = Vector((0,0,0))
        
         setattr(v,axis,scale)
@@ -106,8 +105,7 @@ class Rig:
             tail_vec = v * self.obj.matrix_world
             eb.tail[:] = eb.head + tail_vec
 
-
-    def create_pivot( self, pivot ):
+    def create_pivot(self, pivot):
         """ Create the pivot control and mechanism bones """
         org_bones  = self.org_bones
         pivot_name = org_bones[pivot-1]
@@ -142,8 +140,7 @@ class Rig:
             'mch'  : mch_name
         }
 
-        
-    def create_deform( self ):
+    def create_deform(self):
         org_bones = self.org_bones
         
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -157,8 +154,7 @@ class Rig:
         
         return def_bones
 
-        
-    def create_neck( self, neck_bones ):
+    def create_neck(self, neck_bones):
         org_bones = self.org_bones
         
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -220,8 +216,7 @@ class Rig:
             'tweak'     : twk
         }
 
-
-    def create_chest( self, chest_bones ):
+    def create_chest(self, chest_bones):
         org_bones = self.org_bones
         
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -260,8 +255,7 @@ class Rig:
             'mch_wgt' : mch_wgt
         }
 
-
-    def create_hips( self, hip_bones ):
+    def create_hips(self, hip_bones):
         org_bones = self.org_bones
         
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -305,12 +299,10 @@ class Rig:
             'mch_wgt' : mch_wgt
         }
 
-
-    def create_tail( self, tail_bones ):
+    def create_tail(self, tail_bones):
         pass
 
-
-    def parent_bones( self, bones ):
+    def parent_bones(self, bones):
         org_bones = self.org_bones
 
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -399,8 +391,7 @@ class Rig:
         for org, twk in zip( org_bones, tweaks ):
             eb[ org ].parent = eb[ twk ]
 
-
-    def make_constraint( self, bone, constraint ):
+    def make_constraint(self, bone, constraint ):
         bpy.ops.object.mode_set(mode = 'OBJECT')
         pb = self.obj.pose.bones
 
@@ -413,8 +404,7 @@ class Rig:
         for p in [ k for k in constraint.keys() if k in dir(const) ]:
             setattr( const, p, constraint[p] )
 
-
-    def constrain_bones( self, bones ):
+    def constrain_bones(self, bones):
         # MCH bones
 
         # head and neck MCH bones
@@ -505,8 +495,7 @@ class Rig:
             if t != bones['neck']['ctrl']:
                 pb[t].rotation_mode = 'ZXY'
 
-
-    def create_drivers( self, bones ):
+    def create_drivers(self, bones):
         bpy.ops.object.mode_set(mode ='OBJECT')
         pb = self.obj.pose.bones
         
@@ -549,8 +538,7 @@ class Rig:
             drv_modifier.coefficients[0] = 1.0
             drv_modifier.coefficients[1] = -1.0
 
-    
-    def locks_and_widgets( self, bones ):
+    def locks_and_widgets(self, bones):
         bpy.ops.object.mode_set(mode ='OBJECT')
         pb = self.obj.pose.bones
 
@@ -630,8 +618,41 @@ class Rig:
             if self.tweak_layers:
                 pb[bone].bone.layers = self.tweak_layers        
 
+    def bone_grouping(self, bones):
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        rig = self.obj
+        pb = rig.pose.bones
+        groups = {'Tweaks': 'THEME08', 'Torso': 'THEME03', 'Upper Body': 'THEME09'}
 
-    def generate( self ):
+        for g in groups:
+            if g not in rig.pose.bone_groups.keys():
+                bg = rig.pose.bone_groups.new(g)
+                bg.color_set = groups[g]
+
+        # tweaks group
+        controls =  [ bones['neck']['ctrl'],  bones['neck']['ctrl_neck'] ]
+        controls += [ bones['chest']['ctrl'], bones['hips']['ctrl']      ]
+        #controls += [ bones['pivot']['ctrl'] ]
+
+        if 'tail' in bones.keys():
+            controls += [ bones['tail']['ctrl'] ]
+
+        for ctrl in controls:
+            pb[ctrl].bone_group = rig.pose.bone_groups['Torso']
+
+        pb[bones['pivot']['ctrl']].bone_group = rig.pose.bone_groups['Upper Body']
+
+        tweaks = bones['neck']['tweak']
+        tweaks += bones['chest']['tweak']
+        tweaks += bones['hips']['tweak']
+
+        if 'tail' in bones.keys():
+            tweaks += bones['tail']['tweak']
+
+        for twk in tweaks:
+            pb[twk].bone_group = rig.pose.bone_groups['Tweaks']
+
+    def generate(self):
     
         # Torso Rig Anatomy:
         # Neck: all bones above neck point, last bone is head
@@ -657,13 +678,14 @@ class Rig:
             lower_torso_bones = [ strip_org(b) for b in bone_chains['lower'] ]
             tail_bones        = [ strip_org(b) for b in bone_chains['tail' ] ]
 
-            bones = {}
+            bones={}
 
-            bones['def']   = self.create_deform() # Gets org bones from self
-            bones['pivot'] = self.create_pivot( self.pivot_pos )
-            bones['neck']  = self.create_neck( neck_bones )
-            bones['chest'] = self.create_chest( upper_torso_bones )
-            bones['hips']  = self.create_hips( lower_torso_bones )
+            bones['def'] = self.create_deform() # Gets org bones from self
+            bones['pivot'] = self.create_pivot(self.pivot_pos)
+            bones['neck'] = self.create_neck(neck_bones)
+            bones['chest'] = self.create_chest(upper_torso_bones)
+            bones['hips'] = self.create_hips(lower_torso_bones)
+
             # TODO: Add create tail
 
             if tail_bones:
@@ -686,6 +708,8 @@ class Rig:
         if 'tail' in bones.keys():
             controls += [ bones['tail']['ctrl'] ]
 
+        self.bone_grouping(bones)
+
         # Create UI
         controls_string = ", ".join(["'" + x + "'" for x in controls])
         return [script % (
@@ -694,6 +718,7 @@ class Rig:
             'head_follow',
             'neck_follow'
             )]
+
 
 def add_parameters( params ):
     """ Add the parameters of this rig type to the
@@ -771,6 +796,7 @@ def parameters_ui(layout, params):
 
     for i in range(24,32):
         row.prop(params, "tweak_layers", index=i, toggle=True, text="")
+
 
 def create_sample(obj):
     # generated by rigify.utils.write_metarig

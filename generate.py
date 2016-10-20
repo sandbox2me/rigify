@@ -258,6 +258,9 @@ def generate_rig(context, metarig):
     obj.data.edit_bones[root_bone].roll = 0
     bpy.ops.object.mode_set(mode='OBJECT')
     obj.data.bones[root_bone].layers = ROOT_LAYER
+    root_group = obj.pose.bone_groups.new('Root')
+    root_group.color_set = 'THEME11'
+    obj.pose.bones[root_bone].bone_group = root_group
     # Put the rig_name in the armature custom properties
     rna_idprop_ui_prop_get(obj.data, "rig_id", create=True)
     obj.data["rig_id"] = rig_id

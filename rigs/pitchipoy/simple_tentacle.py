@@ -25,8 +25,7 @@ class Rig:
                 "RIGIFY ERROR: invalid rig structure" % (strip_org(bone_name))
             )
 
-     
-    def make_controls( self ):
+    def make_controls(self):
         
         bpy.ops.object.mode_set(mode ='EDIT')
         org_bones = self.org_bones
@@ -51,8 +50,7 @@ class Rig:
             
         return ctrl_chain
 
-
-    def make_tweaks( self ):
+    def make_tweaks(self):
         
         bpy.ops.object.mode_set(mode ='EDIT')
         eb = self.obj.data.edit_bones
@@ -105,8 +103,7 @@ class Rig:
             
         return tweak_chain   
 
-
-    def make_deform( self ):
+    def make_deform(self):
         
         bpy.ops.object.mode_set(mode ='EDIT')
         org_bones = self.org_bones
@@ -125,8 +122,7 @@ class Rig:
             
         return def_chain
 
-
-    def parent_bones( self, all_bones ):
+    def parent_bones(self, all_bones):
         
         bpy.ops.object.mode_set(mode ='EDIT')
         org_bones = self.org_bones
@@ -158,9 +154,8 @@ class Rig:
         # Parent org bones ( to tweaks by default, or to the controls )
         for org, tweak in zip( org_bones, all_bones['tweak'] ):
             eb[ org ].parent = eb[ tweak ]                
-        
-    
-    def make_constraints( self, all_bones ):
+
+    def make_constraints(self, all_bones):
         
         bpy.ops.object.mode_set(mode ='OBJECT')
         org_bones = self.org_bones
@@ -198,7 +193,23 @@ class Rig:
                 con.target_space = 'LOCAL'
                 con.owner_space  = 'LOCAL'
 
-            
+    def bone_grouping(self, bones):
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        rig = self.obj
+        pb = rig.pose.bones
+        groups = {'Tweaks': 'THEME08', 'FK': 'THEME04'}
+
+        for g in groups:
+            if g not in rig.pose.bone_groups.keys():
+                bg = rig.pose.bone_groups.new(g)
+                bg.color_set = groups[g]
+
+        # tweaks group
+        for twk in bones['tweak']:
+            pb[twk].bone_group = rig.pose.bone_groups['Tweaks']
+
+        for ctrl in bones['control']:
+            pb[ctrl].bone_group = rig.pose.bone_groups['FK']
 
     def generate(self):
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -220,9 +231,10 @@ class Rig:
             'deform'  : def_chain
         }
             
-        self.make_constraints( all_bones )
-        self.parent_bones( all_bones )
+        self.make_constraints(all_bones)
+        self.parent_bones(all_bones)
 
+        self.bone_grouping(all_bones)
 
 def add_parameters(params):
     """ Add the parameters of this rig type to the

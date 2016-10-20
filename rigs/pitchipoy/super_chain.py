@@ -120,7 +120,6 @@ class Rig:
             tail_vec = v * self.obj.matrix_world
             eb.tail[:] = eb.head + tail_vec
 
-
     def create_pivot( self, bones = None, pivot = None):
         """ Create the pivot control and mechanism bones """
 
@@ -221,7 +220,6 @@ class Rig:
             'mch'  : mch_name
         }
 
-
     def create_deform( self ):
         org_bones = self.org_bones
 
@@ -235,7 +233,6 @@ class Rig:
             def_bones.append( def_name )
 
         return def_bones
-
 
     def create_neck( self, neck_bones ):
         org_bones = self.org_bones
@@ -299,7 +296,6 @@ class Rig:
             'tweak'     : twk
         }
 
-
     def create_chest( self, chest_bones ):
         org_bones = self.org_bones
 
@@ -338,7 +334,6 @@ class Rig:
             'tweak'   : twk,
             'mch_wgt' : mch_wgt
         }
-
 
     def create_hips( self, hip_bones ):
         org_bones = self.org_bones
@@ -384,10 +379,8 @@ class Rig:
             'mch_wgt' : mch_wgt
         }
 
-
     def create_tail( self, tail_bones ):
         pass
-
 
     def create_chain(self, bones=None):
         org_bones = self.org_bones
@@ -562,7 +555,6 @@ class Rig:
             'conv'      : conv_twk
         }
 
-
     def parent_bones( self, bones ):
         org_bones = self.org_bones
 
@@ -689,7 +681,6 @@ class Rig:
         for org, twk in zip( org_bones, tweaks ):
             eb[ org ].parent = eb[ twk ]
 
-
     def make_constraint( self, bone, constraint ):
         bpy.ops.object.mode_set(mode = 'OBJECT')
         pb = self.obj.pose.bones
@@ -702,7 +693,6 @@ class Rig:
         # type of constraint, then assign values to each
         for p in [ k for k in constraint.keys() if k in dir(const) ]:
             setattr( const, p, constraint[p] )
-
 
     def constrain_bones( self, bones ):
         # DEF bones
@@ -889,7 +879,6 @@ class Rig:
                     'subtarget'   : tweaks[ tidx + 1 ],
                 })
 
-
     def create_drivers( self, bones ):
         bpy.ops.object.mode_set(mode ='OBJECT')
         pb = self.obj.pose.bones
@@ -932,7 +921,6 @@ class Rig:
             drv_modifier.poly_order      = 1
             drv_modifier.coefficients[0] = 1.0
             drv_modifier.coefficients[1] = -1.0
-
 
     def locks_and_widgets( self, bones ):
         bpy.ops.object.mode_set(mode ='OBJECT')
@@ -1093,6 +1081,33 @@ class Rig:
             if self.tweak_layers:
                 pb[bone].bone.layers = self.tweak_layers
 
+    def bone_grouping(self, bones):
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        rig = self.obj
+        pb = rig.pose.bones
+        groups = {'Tweaks': 'THEME08', 'FK': 'THEME04'}
+
+        for g in groups:
+            if g not in rig.pose.bone_groups.keys():
+                bg = rig.pose.bone_groups.new(g)
+                bg.color_set = groups[g]
+
+
+        # tweaks group
+        tweaks = bones['chain']['tweak']
+
+        for twk in tweaks:
+            pb[twk].bone_group = rig.pose.bone_groups['Tweaks']
+
+
+        controls =  bones['chain']['ctrl']
+        controls += [bones['pivot']['ctrl']]
+        #
+        # if 'tail' in bones.keys():
+        #     controls += [ bones['tail']['ctrl'] ]
+
+        for ctrl in controls:
+            pb[ctrl].bone_group = rig.pose.bone_groups['FK']
 
     def generate( self ):
 
@@ -1168,6 +1183,8 @@ class Rig:
 
         # if 'tail' in bones.keys():
         #     controls += [ bones['tail']['ctrl'] ]
+
+        self.bone_grouping(bones)
 
         return  #TODO modify what follows
 

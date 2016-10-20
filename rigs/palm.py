@@ -81,6 +81,19 @@ class Rig:
         # Get rig parameters
         self.palm_rotation_axis = params.palm_rotation_axis
 
+    def bone_grouping(self, bone):
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        rig = self.obj
+        pb = rig.pose.bones
+        groups = {'FK': 'THEME04'}
+
+        for g in groups:
+            if g not in rig.pose.bone_groups.keys():
+                bg = rig.pose.bone_groups.new(g)
+                bg.color_set = groups[g]
+
+        pb[bone].bone_group = rig.pose.bone_groups['FK']
+
     def generate(self):
         """ Generate the rig.
             Do NOT modify any of the original bones, except for adding constraints.
@@ -95,6 +108,8 @@ class Rig:
 
         # Make control bone
         ctrl = copy_bone(self.obj, last_bone, ctrl_name)
+
+        self.bone_grouping(ctrl)
 
         # Make deformation bones
         def_bones = []

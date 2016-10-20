@@ -55,7 +55,7 @@ class Rig:
         else:
             self.secondary_layers = None
 
-    def symmetrical_split( self, bones ):
+    def symmetrical_split(self, bones):
 
         # RE pattern match right or left parts
         # match the letter "L" (or "R"), followed by an optional dot (".") 
@@ -68,7 +68,7 @@ class Rig:
 
         return left, right
         
-    def create_deformation( self ):
+    def create_deformation(self):
         org_bones = self.org_bones
         
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -105,8 +105,7 @@ class Rig:
         
         return { 'all' : def_bones }
 
-
-    def create_ctrl( self, bones ):
+    def create_ctrl(self, bones):
         org_bones = self.org_bones
 
         ## create control bones
@@ -229,9 +228,8 @@ class Rig:
             'tongue' : [ tongue_ctrl_name                   ],
             'nose'   : [ master_nose                        ]
             }
-            
 
-    def create_tweak( self, bones, uniques, tails ):
+    def create_tweak(self, bones, uniques, tails):
         org_bones = self.org_bones
 
         ## create tweak bones
@@ -299,8 +297,7 @@ class Rig:
                     
         return { 'all' : tweaks }
 
-
-    def all_controls( self ):
+    def all_controls(self):
         org_bones = self.org_bones
 
         org_tongue_bones  = sorted([ bone for bone in org_bones if 'tongue' in bone ])
@@ -345,7 +342,7 @@ class Rig:
         
         return { 'ctrls' : ctrls, 'tweaks' : tweaks }, tweak_unique
 
-    def create_mch( self, jaw_ctrl, tongue_ctrl ):
+    def create_mch(self, jaw_ctrl, tongue_ctrl):
         org_bones = self.org_bones
         bpy.ops.object.mode_set(mode ='EDIT')
         eb = self.obj.data.edit_bones
@@ -440,7 +437,7 @@ class Rig:
         
         return mch_bones
         
-    def parent_bones( self, all_bones, tweak_unique ):
+    def parent_bones(self, all_bones, tweak_unique):
         org_bones = self.org_bones
         bpy.ops.object.mode_set(mode ='EDIT')
         eb = self.obj.data.edit_bones
@@ -619,8 +616,7 @@ class Rig:
             eb[ bone                       ].parent = eb[ 'ear.L' ]
             eb[ bone.replace( '.L', '.R' ) ].parent = eb[ 'ear.R' ]
 
-        
-    def make_constraits( self, constraint_type, bone, subtarget, influence = 1 ):
+    def make_constraits(self, constraint_type, bone, subtarget, influence = 1):
         org_bones = self.org_bones
         bpy.ops.object.mode_set(mode ='OBJECT')
         pb = self.obj.pose.bones
@@ -728,7 +724,6 @@ class Rig:
             const.subtarget = subtarget
             const.influence = influence
 
-    
     def constraints( self, all_bones ):
         ## Def bone constraints
       
@@ -902,7 +897,6 @@ class Rig:
             self.make_constraits( 'mch_tongue_copy_trans', owner, 'tongue_master', ( 1 / divider ) * factor )
             factor -= 1
 
-
     def drivers_and_props( self, all_bones ):
         
         bpy.ops.object.mode_set(mode ='OBJECT')
@@ -980,13 +974,34 @@ class Rig:
             'mch'    : mchs 
             }, tweak_unique
 
+    def bone_grouping(self, bones):
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        rig = self.obj
+        pb = rig.pose.bones
+        groups = {'Face Primary': 'THEME03', 'Face Secondary': 'THEME04'}
+
+        for g in groups:
+            if g not in rig.pose.bone_groups.keys():
+                bg = rig.pose.bone_groups.new(g)
+                bg.color_set = groups[g]
+
+        # Face Primary
+        ctrls=[]
+        for group in bones['ctrls']:
+            ctrls += bones['ctrls'][group]
+        for ctrl in ctrls:
+            pb[ctrl].bone_group = rig.pose.bone_groups['Face Primary']
+        # Face Secondary
+        tweaks = bones['tweaks']['all']
+        for twk in tweaks:
+            pb[twk].bone_group = rig.pose.bone_groups['Face Secondary']
 
     def generate(self):
         
         all_bones, tweak_unique = self.create_bones()
-        self.parent_bones( all_bones, tweak_unique )
-        self.constraints( all_bones )
-        jaw_prop, eyes_prop = self.drivers_and_props( all_bones )
+        self.parent_bones(all_bones, tweak_unique)
+        self.constraints(all_bones)
+        jaw_prop, eyes_prop = self.drivers_and_props(all_bones)
 
         
         # Create UI
@@ -998,7 +1013,9 @@ class Rig:
         for group in all_controls:
             for bone in group:
                 all_ctrls.append( bone )
-        
+
+        self.bone_grouping(all_bones)
+
         controls_string = ", ".join(["'" + x + "'" for x in all_ctrls])
         return [ script % (
             controls_string, 

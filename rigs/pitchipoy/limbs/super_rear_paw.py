@@ -811,6 +811,27 @@ class Rig:
                 var.targets[0].data_path = \
                 ctrl.path_from_id() + '['+ '"' + prop + '"' + ']'
 
+    def bone_grouping(self, bones):
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        rig = self.obj
+        pb = rig.pose.bones
+        groups = {'Tweaks': 'THEME08', 'IK': 'THEME01', 'FK': 'THEME04'}
+
+        for g in groups:
+            if g not in rig.pose.bone_groups.keys():
+                bg = rig.pose.bone_groups.new(g)
+                bg.color_set = groups[g]
+
+        # tweaks group
+        for twk in bones['tweak']['ctrl']:
+            pb[twk].bone_group = rig.pose.bone_groups['Tweaks']
+
+        for ik_bone in [bones['ik']['ctrl']['limb']] + bones['ik']['ctrl']['terminal']:
+            pb[ik_bone].bone_group = rig.pose.bone_groups['IK']
+
+        for fk_bone in bones['fk']['ctrl']:
+            pb[fk_bone].bone_group = rig.pose.bone_groups['FK']
+
     def generate(self):
         bpy.ops.object.mode_set(mode ='EDIT')
         eb = self.obj.data.edit_bones
@@ -844,7 +865,9 @@ class Rig:
         script = create_script( bones, 'paw' )
         script += extra_script % (controls_string, bones['ik']['mch_foot'][0], 'IK_follow', 'root/parent','root/parent')
 
-        return [ script ]
+        self.bone_grouping(bones)
+
+        return [script]
 
 
 def add_parameters( params ):

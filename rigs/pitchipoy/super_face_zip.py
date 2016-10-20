@@ -105,7 +105,6 @@ class Rig:
         
         return { 'all' : def_bones }
 
-
     def create_ctrl( self, bones ):
         org_bones = self.org_bones
 
@@ -229,7 +228,6 @@ class Rig:
             'tongue' : [ tongue_ctrl_name                   ],
             'nose'   : [ master_nose                        ]
             }
-            
 
     def create_tweak( self, bones, uniques, tails ):
         org_bones = self.org_bones
@@ -326,7 +324,6 @@ class Rig:
                     create_face_widget( self.obj, bone )
                     
         return { 'all' : tweaks }
-
 
     def all_controls( self ):
         org_bones = self.org_bones
@@ -651,7 +648,6 @@ class Rig:
             eb[ bone                       ].parent = eb[ 'ear.L' ]
             eb[ bone.replace( '.L', '.R' ) ].parent = eb[ 'ear.R' ]
 
-        
     def make_constraits( self, constraint_type, bone, subtarget, influence = 1 ):
         org_bones = self.org_bones
         bpy.ops.object.mode_set(mode ='OBJECT')
@@ -753,7 +749,6 @@ class Rig:
             const.subtarget = subtarget
             const.influence = influence
 
-    
     def constraints( self, all_bones ):
         ## Def bone constraints
       
@@ -924,7 +919,6 @@ class Rig:
             self.make_constraits( 'mch_tongue_copy_trans', owner, 'tongue_master', ( 1 / divider ) * factor )
             factor -= 1
 
-
     def drivers_and_props( self, all_bones ):
         
         bpy.ops.object.mode_set(mode ='OBJECT')
@@ -1002,6 +996,27 @@ class Rig:
             'mch'    : mchs 
             }, tweak_unique
 
+    def bone_grouping(self, bones):
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        rig = self.obj
+        pb = rig.pose.bones
+        groups = {'Face Primary': 'THEME03', 'Face Secondary': 'THEME04'}
+
+        for g in groups:
+            if g not in rig.pose.bone_groups.keys():
+                bg = rig.pose.bone_groups.new(g)
+                bg.color_set = groups[g]
+
+        # Face Primary
+        ctrls=[]
+        for group in bones['ctrls']:
+            ctrls += bones['ctrls'][group]
+        for ctrl in ctrls:
+            pb[ctrl].bone_group = rig.pose.bone_groups['Face Primary']
+        # Face Secondary
+        tweaks = bones['tweaks']['all']
+        for twk in tweaks:
+            pb[twk].bone_group = rig.pose.bone_groups['Face Secondary']
 
     def generate(self):
         
@@ -1020,6 +1035,8 @@ class Rig:
         for group in all_controls:
             for bone in group:
                 all_ctrls.append( bone )
+
+        self.bone_grouping(all_bones)
         
         controls_string = ", ".join(["'" + x + "'" for x in all_ctrls])
         return [ script % (
@@ -2396,6 +2413,7 @@ def create_sample(obj):
         bone.select_head = True
         bone.select_tail = True
         arm.edit_bones.active = bone
+
 
 def create_square_widget(rig, bone_name, size=1.0, bone_transform_name=None):
     obj = create_widget(rig, bone_name, bone_transform_name)
