@@ -23,6 +23,19 @@ class Rig:
         if len(self.org_bones) <= 1:
             raise MetarigError("RIGIFY ERROR: Bone '%s': listen bro, that finger rig jusaint put tugetha rite. A little hint, use more than one bone!!" % (strip_org(bone_name)))            
 
+    def bone_grouping(self, bones):
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        rig = self.obj
+        pb = rig.pose.bones
+        groups = {'FK': 'THEME04'}
+
+        for g in groups:
+            if g not in rig.pose.bone_groups.keys():
+                bg = rig.pose.bone_groups.new(g)
+                bg.color_set = groups[g]
+
+        for ctrl in bones:
+            pb[ctrl].bone_group = rig.pose.bone_groups['FK']
 
     def generate(self):
         org_bones = self.org_bones
@@ -295,7 +308,9 @@ class Rig:
         
         # Create tip control widget
         create_circle_widget(self.obj, tip_name, radius=0.3, head_tail=0.0)
-        
+
+        self.bone_grouping(ctrl_chain)
+
         # Create UI
         controls_string = ", ".join(
             ["'" + x + "'" for x in ctrl_chain]

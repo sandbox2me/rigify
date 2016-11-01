@@ -80,7 +80,7 @@ class Rig:
 
             tail_bones        = []
             if tail_index:
-                tail_bones = self.org_bones[::tail_index+1]
+                tail_bones = self.org_bones[::tail_index+1] # todo this is a mistake! try [0:tail_index]
 
             return {
                 'neck'  : neck_bones,
@@ -107,7 +107,7 @@ class Rig:
 
     def create_pivot(self, pivot):
         """ Create the pivot control and mechanism bones """
-        org_bones  = self.org_bones
+        org_bones = self.org_bones
         pivot_name = org_bones[pivot-1]
 
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -115,29 +115,29 @@ class Rig:
         
         # Create torso control bone    
         torso_name = 'torso'
-        ctrl_name  = copy_bone(self.obj, pivot_name, torso_name)
-        ctrl_eb    = eb[ ctrl_name ]
+        ctrl_name = copy_bone(self.obj, pivot_name, torso_name)
+        ctrl_eb = eb[ctrl_name]
         
-        self.orient_bone( ctrl_eb, 'y', self.spine_length / 2.5 )
+        self.orient_bone(ctrl_eb, 'y', self.spine_length / 2.5)
         
         # Create mch_pivot
-        mch_name = make_mechanism_name( 'pivot' )
+        mch_name = make_mechanism_name('pivot')
         mch_name = copy_bone(self.obj, ctrl_name, mch_name)
-        mch_eb   = eb[ mch_name ]
+        mch_eb = eb[mch_name]
         
         mch_eb.length /= 4
 
         # Positioning pivot in a more usable location for animators
-        if hasattr(self,'tail_pos') and self.tail_pos > 0:
-            pivot_loc = eb[ org_bones[pivot-1]].head
+        if hasattr(self, 'tail_pos') and self.tail_pos > 0:
+            pivot_loc = eb[org_bones[pivot-1]].head
         else:
-            pivot_loc = ( eb[ org_bones[0]].head + eb[ org_bones[0]].tail ) / 2
+            pivot_loc = (eb[org_bones[0]].head + eb[ org_bones[0]].tail) / 2
 
-        put_bone( self.obj, ctrl_name, pivot_loc )
+        put_bone(self.obj, ctrl_name, pivot_loc)
 
         return {
-            'ctrl' : ctrl_name,
-            'mch'  : mch_name
+            'ctrl': ctrl_name,
+            'mch': mch_name
         }
 
     def create_deform(self):
@@ -305,13 +305,13 @@ class Rig:
     def parent_bones(self, bones):
         org_bones = self.org_bones
 
-        bpy.ops.object.mode_set(mode ='EDIT')
+        bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
  
         # Parent deform bones
-        for i,b in enumerate( bones['def'] ):
-            if i > 0: # For all bones but the first (which has no parent)
-                eb[b].parent      = eb[ bones['def'][i-1] ] # to previous
+        for i,b in enumerate( bones['def']):
+            if i > 0:   # For all bones but the first (which has no parent)
+                eb[b].parent = eb[bones['def'][i-1]]    # to previous
                 eb[b].use_connect = True
         
         # Parent control bones
@@ -340,44 +340,44 @@ class Rig:
         chest_mch = bones['chest']['mch'] + [ bones['neck']['mch_neck'] ]
         for i,b in enumerate(chest_mch):
             if i == 0:
-                eb[b].parent = eb[ bones['pivot']['ctrl'] ]
+                eb[b].parent = eb[ bones['pivot']['ctrl']]
             else:
-                eb[b].parent = eb[ chest_mch[i-1] ]
+                eb[b].parent = eb[ chest_mch[i-1]]
 
         # Hips mch bones
-        for i,b in enumerate( bones['hips']['mch'] ):
+        for i,b in enumerate(bones['hips']['mch']):
             if i == len(bones['hips']['mch']) - 1:
-                eb[b].parent = eb[ bones['pivot']['ctrl'] ]
+                eb[b].parent = eb[bones['pivot']['ctrl']]
             else:
-                eb[b].parent = eb[ bones['hips']['mch'][i+1] ]
+                eb[b].parent = eb[bones['hips']['mch'][i+1]]
         
         # mch pivot
-        eb[ bones['pivot']['mch'] ].parent = eb[ bones['chest']['mch'][0] ]
+        eb[ bones['pivot']['mch']].parent = eb[bones['chest']['mch'][0]]
 
         # MCH widgets
-        eb[ bones['chest']['mch_wgt'] ].parent = eb[ bones['chest']['mch'][-1] ]
-        eb[ bones['hips' ]['mch_wgt'] ].parent = eb[ bones['hips' ]['mch'][0 ] ]
+        eb[bones['chest']['mch_wgt']].parent = eb[ bones['chest']['mch'][-1]]
+        eb[bones['hips']['mch_wgt']].parent = eb[ bones['hips']['mch'][0]]
         
         # Tweaks
 
         # Neck tweaks
-        for i,twk in enumerate( bones['neck']['tweak'] ):
+        for i,twk in enumerate( bones['neck']['tweak']):
             if i == 0:
-                eb[ twk ].parent = eb[ bones['neck']['ctrl_neck'] ]
+                eb[twk].parent = eb[ bones['neck']['ctrl_neck']]
             else:
-                eb[ twk ].parent = eb[ bones['neck']['mch'][i-1] ]
+                eb[twk].parent = eb[ bones['neck']['mch'][i-1]]
         
         # Chest tweaks
-        for twk,mch in zip( bones['chest']['tweak'], bones['chest']['mch'] ):
-            if bones['chest']['tweak'].index( twk ) == 0:
-                eb[ twk ].parent = eb[ bones['pivot']['mch'] ]
+        for twk, mch in zip( bones['chest']['tweak'], bones['chest']['mch']):
+            if bones['chest']['tweak'].index(twk) == 0:
+                eb[twk].parent = eb[ bones['pivot']['mch']]
             else:
-                eb[ twk ].parent = eb[ mch ]
+                eb[twk].parent = eb[mch]
                 
         # Hips tweaks
-        for i,twk in enumerate(bones['hips']['tweak']):
+        for i, twk in enumerate(bones['hips']['tweak']):
             if i == 0:
-                eb[twk].parent = eb[ bones['hips']['mch'][i] ]
+                eb[twk].parent = eb[ bones['hips']['mch'][i]]
             else:
                 eb[twk].parent = eb[ bones['hips']['mch'][i-1] ]
 

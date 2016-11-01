@@ -465,6 +465,21 @@ class Rig:
 
         return [main_control] + controls
 
+    def bone_grouping(self, bones):
+        bpy.ops.object.mode_set(mode='OBJECT')
+        rig = self.obj
+        pb = rig.pose.bones
+        groups = {'Torso': 'THEME03'}
+
+        for g in groups:
+            if g not in rig.pose.bone_groups.keys():
+                bg = rig.pose.bone_groups.new(g)
+                bg.color_set = groups[g]
+
+        for ctrl in bones:
+            pb[ctrl].bone_group = rig.pose.bone_groups['Torso']
+
+
     def generate(self):
         """ Generate the rig.
             Do NOT modify any of the original bones, except for adding constraints.
@@ -475,6 +490,9 @@ class Rig:
         controls = self.gen_control()
 
         controls_string = ", ".join(["'" + x + "'" for x in controls[1:]])
+
+        self.bone_grouping(controls)
+
         return [script % (controls[0], controls_string)]
 
 

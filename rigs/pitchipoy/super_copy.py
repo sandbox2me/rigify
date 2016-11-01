@@ -98,9 +98,9 @@ class Rig:
             if self.make_widget:
                 create_circle_widget(self.obj, bone, radius = 0.5 )
             else:
-                create_bone_widget(self.obj, bone, radius = 0.5 )
+                create_bone_widget(self.obj, bone)
 
-        self.bone_grouping(bone)
+            self.bone_grouping(bone)
 
 def add_parameters(params):
     """ Add the parameters of this rig type to the

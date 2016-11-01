@@ -126,6 +126,24 @@ class Rig:
             con.target = self.obj
             con.subtarget = b1tip
 
+    def bone_grouping(self, bones):
+        bpy.ops.object.mode_set(mode='OBJECT')
+        rig = self.obj
+        pb = rig.pose.bones
+        groups = {'IK': 'THEME01', 'FK': 'THEME04'}
+
+        for g in groups:
+            if g not in rig.pose.bone_groups.keys():
+                bg = rig.pose.bone_groups.new(g)
+                bg.color_set = groups[g]
+
+        # tweaks group
+        for twk in bones['main_ctrl']:
+            pb[twk].bone_group = rig.pose.bone_groups['IK']
+
+        for ctrl in bones['control']:
+            pb[ctrl].bone_group = rig.pose.bone_groups['FK']
+
     def control(self):
         """ Generate the control rig.
         """
@@ -267,6 +285,12 @@ class Rig:
 
         for bone in bones:
             create_limb_widget(self.obj, bone)
+
+        controls={}
+        controls['control'] = bones
+        controls['main_ctrl'] = [ctrl]
+
+        self.bone_grouping(controls)
 
     def generate(self):
         """ Generate the rig.
