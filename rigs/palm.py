@@ -109,8 +109,6 @@ class Rig:
         # Make control bone
         ctrl = copy_bone(self.obj, last_bone, ctrl_name)
 
-        self.bone_grouping(ctrl)
-
         # Make deformation bones
         def_bones = []
         for bone in self.org_bones:
@@ -123,6 +121,9 @@ class Rig:
         for d, b in zip(def_bones, self.org_bones):
             eb[d].use_connect = False
             eb[d].parent = eb[b]
+
+        # Bone Grouping
+        self.bone_grouping(ctrl)
 
         # Constraints
         bpy.ops.object.mode_set(mode='OBJECT')
