@@ -58,7 +58,7 @@ class Rig:
             member_Z_index = parent_p['member_index']
             bone_Z_index = 0
             for b in pb:
-                if b.bone.use_deform and b.name.startswith('DEF-'):  
+                if b.bone.use_deform and b.name.startswith('DEF-'):
                     if b['member_index'] == member_Z_index and b['bone_index'] > bone_Z_index:
                         bone_Z_index = b['bone_index']
             bone_Z_index += 1
@@ -69,7 +69,7 @@ class Rig:
             bone_Z_index = self.params.first_bone_Z_index
 
         eb = self.obj.data.edit_bones
-        
+
         # Get parent's layers
         if self.params.use_parent_layers and self.org_parent is not None:
             layers = list(eb[self.org_parent].layers)
@@ -78,7 +78,7 @@ class Rig:
 
         # layers = [i == 1 for i in range(32)]
         # print('LAYERS:', list(layers))
-            
+
         ctrl_chain = []
         # def_chain = []
 
@@ -125,7 +125,7 @@ class Rig:
                 ctrl_chain += [ctrl_bone_e.name]
 
                 # Def bones
-                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.flip_switch, member_Z_index, bone_Z_index + i, b+s)
+                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.flip_switch, member_Z_index, bone_Z_index + i, 0.0, b+s)
                 # def_chain.append(def_bone)
 
             if self.params.create_ik:
@@ -138,7 +138,7 @@ class Rig:
                 ik_ctrl_e.layers = layers
             bpy.ops.object.mode_set(mode='OBJECT')
             pb = self.obj.pose.bones
-            
+
             # Widgets
             if self.params.create_ik:
                 global_scale = self.obj.dimensions[2]
@@ -160,11 +160,11 @@ class Rig:
                 con.target = self.obj
                 con.subtarget = ik_ctrl
                 con.chain_count =len(self.org_bones)
-        
+
                 # Pelvis follow
                 if self.params.do_flip:
                     pantin_utils.create_ik_child_of(self.obj, ik_ctrl, self.params.pelvis_name)
-        
+
 def add_parameters(params):
     params.use_parent_Z_index = bpy.props.BoolProperty(name="Use parent's Z Index",
                                                   default=True,
@@ -260,7 +260,7 @@ def parameters_ui(layout, params):
         row.prop(params, "layers", index=21, toggle=True, text="")
         row.prop(params, "layers", index=22, toggle=True, text="")
         row.prop(params, "layers", index=23, toggle=True, text="")
-        
+
         col = r.column(align=True)
         row = col.row(align=True)
         row.prop(params, "layers", index=8, toggle=True, text="")
