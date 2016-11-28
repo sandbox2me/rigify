@@ -44,7 +44,7 @@ class Rig:
 
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
-        
+
         ctrl_chain = []
 
         eb = self.obj.data.edit_bones
@@ -100,7 +100,7 @@ class Rig:
             con.name = "copy_transforms"
             con.target = self.obj
             con.subtarget = ctrl
-        
+
         con = pb[neck].constraints.new('LIMIT_ROTATION')
         con.name = "limit_rotation"
         con.use_limit_z = True
@@ -131,9 +131,9 @@ class Rig:
 
         # Driver for hiding the eyelid behind the head, using the extra_offset
         # When the eyelid is open (rotation < 0.25...), the def bone goes behind the head
-        driver = self.obj.driver_add('pose.bones["{}"].["extra_offset"]'.format(eyelid_def_bone))
-        driver.driver.expression = '-2 * (eyelid_offset < -0.25)'
-        var = driver.driver.variables.new()      
+        driver = self.obj.animation_data.drivers.find('pose.bones["DEF-Paupiere"].location', index=2)
+        driver.driver.expression = 'z_index_same(member_index, flip, bone_index, -2 * (eyelid_offset < -0.25))'
+        var = driver.driver.variables.new()
 
         var.type = 'SINGLE_PROP'
         var.name = 'eyelid_offset'
@@ -142,7 +142,7 @@ class Rig:
         var.targets[0].id = self.obj
         var.targets[0].bone_target = eyelid
         var.targets[0].transform_type = 'ROT_Z'
-        var.targets[0].transform_space = 'LOCAL_SPACE'
+        var.targets[0].transform_space = 'TRANSFORM_SPACE'
         # var.targets[0].data_path = 'pose.bones["{}"]'.format(eyelid)
 
 def add_parameters(params):
