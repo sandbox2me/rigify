@@ -37,8 +37,12 @@ importlib.reload(limb_common)
 script = """
 ik_leg = ["%s", "%s", "%s"]
 if is_selected(ik_leg):
-    layout.prop(pose_bones[ik_leg[2]], '["pelvis_follow"]', text="Follow pelvis (" + ik_leg[2] + ")", slider=True)
+    layout.prop(pose_bones[ik_leg[2]], \
+'["pelvis_follow"]', \
+text="Follow pelvis (" + ik_leg[2] + ")", \
+slider=True)
 """
+
 
 class Rig:
     def __init__(self, obj, bone_name, params):
@@ -61,7 +65,7 @@ class Rig:
         # toe = bones[foot].children[0].name
         # roll = bones[toe].children[0].name
 
-        self.org_bones = [leg, shin, foot, heel, toe]# + connected_children_names(obj, bone_name)[:2]
+        self.org_bones = [leg, shin, foot, heel, toe]
         self.params = params
         if "right_layers" in params:
             self.right_layers = [bool(l) for l in params["right_layers"]]
@@ -73,31 +77,66 @@ class Rig:
             sides = ['.L', '.R']
         else:
             sides = [params.side]
-        
+
         self.ik_limbs = {}
         for s in sides:
-            self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones[:3], joint_name, params.do_flip, False, params.pelvis_name, params.duplicate_lr, s, ik_limits=[0.0, 160.0])
+            self.ik_limbs[s] = limb_common.IKLimb(
+                obj, self.org_bones[:3],
+                joint_name, params.do_flip,
+                False, params.pelvis_name,
+                params.duplicate_lr, s, ik_limits=[0.0, 160.0])
 
     def generate(self):
         ui_script = ""
         for s, ik_limb in self.ik_limbs.items():
-            ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str, elimb_ik, elimb_str, side_org_bones = ik_limb.generate()
+            ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str,
+            elimb_ik, elimb_str, side_org_bones = ik_limb.generate()
 
             bpy.ops.object.mode_set(mode='EDIT')
             eb = self.obj.data.edit_bones
 
             # Foot rig
-            foot_fr = copy_bone(self.obj, self.org_bones[2], pantin_utils.strip_LR_numbers(make_mechanism_name(strip_org(self.org_bones[2]))) + '.fr' + s)
-            foot_tgt = copy_bone(self.obj, self.org_bones[2], pantin_utils.strip_LR_numbers(make_mechanism_name(strip_org(self.org_bones[2]))) + '.tgt' + s)
-            heel_fr = copy_bone(self.obj, self.org_bones[3], pantin_utils.strip_LR_numbers(make_mechanism_name(strip_org(self.org_bones[3]))) + '.fr' + s)
-            toe_fr = copy_bone(self.obj, self.org_bones[4], pantin_utils.strip_LR_numbers(make_mechanism_name(strip_org(self.org_bones[4]))) + '.fr' + s)
-            toe_ctl = copy_bone(self.obj, self.org_bones[4], pantin_utils.strip_LR_numbers(strip_org(self.org_bones[4])) + s)
-            toe_pos = copy_bone(self.obj, self.org_bones[4], pantin_utils.strip_LR_numbers(make_mechanism_name(strip_org(self.org_bones[4]))) + '.pos' + s)
-            roll_fr = new_bone(self.obj, "Foot roll" + s)
+            foot_fr = copy_bone(
+                self.obj, self.org_bones[2],
+                pantin_utils.strip_LR_numbers(
+                    make_mechanism_name(
+                        strip_org(self.org_bones[2]))) + '.fr' + s)
+            foot_tgt = copy_bone(
+                self.obj, self.org_bones[2],
+                pantin_utils.strip_LR_numbers(
+                    make_mechanism_name(
+                        strip_org(self.org_bones[2]))) + '.tgt' + s)
+            heel_fr = copy_bone(
+                self.obj, self.org_bones[3],
+                pantin_utils.strip_LR_numbers(
+                    make_mechanism_name(
+                        strip_org(self.org_bones[3]))) + '.fr' + s)
+            toe_fr = copy_bone(
+                self.obj, self.org_bones[4],
+                pantin_utils.strip_LR_numbers(
+                    make_mechanism_name(
+                        strip_org(self.org_bones[4]))) + '.fr' + s)
+            toe_ctl = copy_bone(
+                self.obj, self.org_bones[4],
+                pantin_utils.strip_LR_numbers(
+                    strip_org(self.org_bones[4])) + s)
+            toe_pos = copy_bone(
+                self.obj, self.org_bones[4],
+                pantin_utils.strip_LR_numbers(
+                    make_mechanism_name(
+                        strip_org(self.org_bones[4]))) + '.pos' + s)
+            roll_fr = new_bone(
+                self.obj, "Foot roll" + s)
 
             # Position
-            eb[roll_fr].head = eb[elimb_str].head + Vector((-1,0,0)) * eb[elimb_str].length * 2
-            eb[roll_fr].tail = eb[elimb_str].head + Vector((-1,0,1)) * eb[elimb_str].length * 2
+            eb[roll_fr].head = (eb[elimb_str].head
+                                + Vector(
+                                    (-1, 0, 0)
+                                    ) * eb[elimb_str].length * 2)
+            eb[roll_fr].tail = (eb[elimb_str].head
+                                + Vector(
+                                    (-1, 0, 1)
+                                    ) * eb[elimb_str].length * 2)
             eb[roll_fr].layers = eb[elimb_ik].layers
 
             # IK foot horizontal and starting at heel
@@ -148,15 +187,23 @@ class Rig:
                 Z_index = -self.params.Z_index
             else:
                 Z_index = self.params.Z_index
-                
-            for i, b in enumerate(side_org_bones[:2]): #([flimb_str, ulimb_str]):
+
+            for i, b in enumerate(side_org_bones[:2]):
                 def_bone_name = b.split('.')[0][4:]
-                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.flip_switch, member_index=Z_index, bone_index=i, new_name=def_bone_name+s)
+                def_bone = pantin_utils.create_deformation(
+                    self.obj, b,
+                    self.params.flip_switch,
+                    member_index=Z_index,
+                    bone_index=i, new_name=def_bone_name+s)
 
             def_bone_name = elimb_str.split('.')[0][4:]
-            def_bone = pantin_utils.create_deformation(self.obj, elimb_str, self.params.flip_switch, member_index=Z_index, bone_index=2, new_name=def_bone_name + s)
+            def_bone = pantin_utils.create_deformation(
+                self.obj, elimb_str, self.params.flip_switch,
+                member_index=Z_index, bone_index=2, new_name=def_bone_name + s)
             def_bone_name = toe_ctl.split('.')[0]
-            def_bone = pantin_utils.create_deformation(self.obj, toe_pos, self.params.flip_switch, member_index=Z_index, bone_index=3, new_name=def_bone_name + s)
+            def_bone = pantin_utils.create_deformation(
+                self.obj, toe_pos, self.params.flip_switch,
+                member_index=Z_index, bone_index=3, new_name=def_bone_name + s)
 
             # Set layers if specified
             if s == '.R' and self.right_layers:
@@ -175,7 +222,7 @@ class Rig:
             pb[roll_fr].lock_rotation = [True, True, False]
             pb[roll_fr].lock_scale = [True]*3
             pb[foot_fr].rotation_mode = 'XZY'
-            
+
             # Widgets
             global_scale = self.obj.dimensions[2]
             member_factor = 0.06
@@ -183,9 +230,11 @@ class Rig:
                 side_factor = 1.2
             else:
                 side_factor = 1.0
-            widget_size = global_scale *  member_factor * side_factor
-            pantin_utils.create_aligned_circle_widget(self.obj, ulimb_ik, number_verts=3, radius=widget_size)
-            pantin_utils.create_aligned_circle_widget(self.obj, joint_str, radius=widget_size)
+            widget_size = global_scale * member_factor * side_factor
+            pantin_utils.create_aligned_circle_widget(
+                self.obj, ulimb_ik, number_verts=3, radius=widget_size)
+            pantin_utils.create_aligned_circle_widget(
+                self.obj, joint_str, radius=widget_size)
 
             # Foot WGT
             down = pb[heel_fr].head.z
@@ -193,21 +242,31 @@ class Rig:
             right = pb[foot_fr].head.x
             up = pb[foot_fr].tail.z + (side_factor - 1) * pb[heel_fr].length
 
-            foot_verts = ((left, down), (left, up), (right, down + (up - down) * 2 / 3), (right, down))
-            pantin_utils.create_aligned_polygon_widget(self.obj, elimb_ik, foot_verts)
+            foot_verts = (
+                (left, down),
+                (left, up),
+                (right, down + (up - down) * 2 / 3),
+                (right, down))
+            pantin_utils.create_aligned_polygon_widget(
+                self.obj, elimb_ik, foot_verts)
 
             # Toe WGT
             left = right
             right = pb[toe_fr].head.x + (side_factor - 1) * pb[heel_fr].length
             up = down + (up - down) * 2 / 3
 
-            # TODO investigate why moving an edit bones screws up widgets' matrices (foot_ik has moved)
-            toe_verts = ((left, down), (left, up), (right, down + (up - down) * 2 / 3), (right, down))
-            pantin_utils.create_aligned_polygon_widget(self.obj, toe_ctl, toe_verts)
-            #pantin_utils.create_aligned_polygon_widget(self.obj, toe_fr, toe_verts)
-            # pantin_utils.create_aligned_circle_widget(self.obj, toe_ctl, number_verts = 3, radius=widget_size)
+            # TODO investigate why moving an edit bones
+            # screws up widgets' matrices (foot_ik has moved)
+            toe_verts = (
+                (left, down),
+                (left, up),
+                (right, down + (up - down) * 2 / 3),
+                (right, down))
+            pantin_utils.create_aligned_polygon_widget(
+                self.obj, toe_ctl, toe_verts)
 
-            pantin_utils.create_aligned_crescent_widget(self.obj, roll_fr, radius=side_factor * pb[roll_fr].length / 2)
+            pantin_utils.create_aligned_crescent_widget(
+                self.obj, roll_fr, radius=side_factor * pb[roll_fr].length / 2)
 
             # Bone groups
             if s == '.R':
@@ -229,9 +288,11 @@ class Rig:
             toe_fr_p = pb[toe_fr]
             roll_fr_p = pb[roll_fr]
 
-            hor_vector = Vector((1,0,0))
-            foot_rotation = foot_fr_p.vector.rotation_difference(hor_vector).to_euler('XZY')
-            toe_rotation = toe_fr_p.vector.rotation_difference(hor_vector).to_euler('XZY')
+            hor_vector = Vector((1, 0, 0))
+            foot_rotation = foot_fr_p.
+            vector.rotation_difference(hor_vector).to_euler('XZY')
+            toe_rotation = toe_fr_p.vector.rotation_difference(
+                hor_vector).to_euler('XZY')
 
             foot_vertical_rot = foot_rotation[1] - pi/2
             toe_vertical_rot = toe_rotation[1] - pi/2
@@ -329,8 +390,9 @@ class Rig:
                 con2.owner_space = 'POSE'
 
                 # Set up custom properties
-                prop = rna_idprop_ui_prop_get(pb[elimb_ik], "foot_stretch", create=True)
-                pb[elimb_ik]["foot_stretch"] = 1 #int(self.foot_stretch)
+                prop = rna_idprop_ui_prop_get(
+                    pb[elimb_ik], "foot_stretch", create=True)
+                pb[elimb_ik]["foot_stretch"] = 1  # int(self.foot_stretch)
                 prop["soft_min"] = 0
                 prop["soft_max"] = 1
                 prop["min"] = 0
@@ -346,10 +408,11 @@ class Rig:
                     var_fs.name = 'foot_stretch'
                     var_fs.targets[0].id_type = 'OBJECT'
                     var_fs.targets[0].id = self.obj
-                    var_fs.targets[0].data_path = pb[elimb_ik].path_from_id() + '["foot_stretch"]'# 'bones["{}"]["pelvis_follow"]'.format(elimb_ik)
-                
+                    var_fs.targets[0].data_path = (pb[elimb_ik].path_from_id()
+                                                   + '["foot_stretch"]')
 
-            for org, ctrl in zip(side_org_bones, [ulimb_str, flimb_str, elimb_str]):
+            for org, ctrl in zip(
+                    side_org_bones, [ulimb_str, flimb_str, elimb_str]):
                 con = pb[org].constraints.new('COPY_TRANSFORMS')
                 con.name = "copy_transforms"
                 con.target = self.obj
@@ -357,40 +420,52 @@ class Rig:
 
             ui_script += script % (ulimb_ik, joint_str, elimb_ik)
             if self.params.do_stretch:
-                ui_script += """    layout.prop(pose_bones[ik_leg[2]], '["foot_stretch"]', text="Foot stretch (" + ik_leg[2] + ")", slider=True)
+                ui_script += """    layout.prop(pose_bones[ik_leg[2]], \
+'["foot_stretch"]', \
+text="Foot stretch (" + ik_leg[2] + ")", \slider=True)
     """
 
         return [ui_script]
-                    
+
+
 def add_parameters(params):
-    params.Z_index = bpy.props.FloatProperty(name="Z index",
-                                           default=0.0,
-                                           description="Defines member's Z order")
-    params.flip_switch = bpy.props.BoolProperty(name="Flip Switch",
-                                                  default=True,
-                                                  description="This member may change depth when flipped")
-    params.duplicate_lr = bpy.props.BoolProperty(name="Duplicate LR",
-                                                 default=True,
-                                                 description="Create two limbs for left and right")
-    params.side = bpy.props.EnumProperty(name="Side",
-                                         default='.R',
-                                         description="If the limb is not to be duplicated, choose its side",
-                                         items=(('.L', 'Left', ""),
-                                                ('.R', 'Right', "")))
-    params.do_flip = bpy.props.BoolProperty(name="Do Flip",
-                                            default=True,
-                                            description="True if the rig has a torso with flip system")
-    params.pelvis_name = bpy.props.StringProperty(name="Pelvis Name",
-                                                  default="Pelvis",
-                                                  description="Name of the pelvis bone in whole rig")
-    params.joint_name = bpy.props.StringProperty(name="Joint Name",
-                                                 default="Joint",
-                                                 description="Name of the middle joint")
-    params.right_layers = bpy.props.BoolVectorProperty(size=32,
-                                                       description="Layers for the duplicated limb to be on")
-    params.do_stretch = bpy.props.BoolProperty(name="Do Stretch",
-                                                 default=False,
-                                                 description="Create stretch constraint on lower leg")
+    params.Z_index = bpy.props.FloatProperty(
+        name="Z index",
+        default=0.0,
+        description="Defines member's Z order")
+    params.flip_switch = bpy.props.BoolProperty(
+        name="Flip Switch",
+        default=True,
+        description="This member may change depth when flipped")
+    params.duplicate_lr = bpy.props.BoolProperty(
+        name="Duplicate LR",
+        default=True,
+        description="Create two limbs for left and right")
+    params.side = bpy.props.EnumProperty(
+        name="Side",
+        default='.R',
+        description="If the limb is not to be duplicated, choose its side",
+        items=(('.L', 'Left', ""), ('.R', 'Right', "")))
+    params.do_flip = bpy.props.BoolProperty(
+        name="Do Flip",
+        default=True,
+        description="True if the rig has a torso with flip system")
+    params.pelvis_name = bpy.props.StringProperty(
+        name="Pelvis Name",
+        default="Pelvis",
+        description="Name of the pelvis bone in whole rig")
+    params.joint_name = bpy.props.StringProperty(
+        name="Joint Name",
+        default="Joint",
+        description="Name of the middle joint")
+    params.right_layers = bpy.props.BoolVectorProperty(
+        size=32,
+        description="Layers for the duplicated limb to be on")
+    params.do_stretch = bpy.props.BoolProperty(
+        name="Do Stretch",
+        default=False,
+        description="Create stretch constraint on lower leg")
+
 
 def parameters_ui(layout, params):
     """ Create the ui for the rig parameters.
@@ -410,7 +485,7 @@ def parameters_ui(layout, params):
     if params.duplicate_lr:
         r = layout.row()
         r.active = params.duplicate_lr
-        
+
         # Layers for the right leg
         col = r.column(align=True)
         row = col.row(align=True)
@@ -431,7 +506,7 @@ def parameters_ui(layout, params):
         row.prop(params, "right_layers", index=21, toggle=True, text="")
         row.prop(params, "right_layers", index=22, toggle=True, text="")
         row.prop(params, "right_layers", index=23, toggle=True, text="")
-        
+
         col = r.column(align=True)
         row = col.row(align=True)
         row.prop(params, "right_layers", index=8, toggle=True, text="")
@@ -455,6 +530,7 @@ def parameters_ui(layout, params):
     if not params.duplicate_lr:
         r = layout.row()
         r.prop(params, "side", expand=True)
+
 
 def create_sample(obj):
     # generated by rigify.utils.write_metarig
@@ -515,7 +591,14 @@ def create_sample(obj):
     except AttributeError:
         pass
     try:
-        pbone.rigify_parameters.right_layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False]
+        pbone.rigify_parameters.right_layers = [
+            False, False, False, False, False,
+            False, False, False, False, False,
+            False, False, False, False, False,
+            False, False, False, False, False,
+            False, False, True, False, False,
+            False, False, False, False, False,
+            False, False]
     except AttributeError:
         pass
     try:

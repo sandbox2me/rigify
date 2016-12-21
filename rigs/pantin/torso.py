@@ -31,12 +31,12 @@ from . import pantin_utils
 
 importlib.reload(pantin_utils)
 
+
 class Rig:
     def __init__(self, obj, bone_name, params):
         self.obj = obj
         self.org_bones = [bone_name] + connected_children_names(obj, bone_name)
         self.params = params
-
 
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
@@ -50,8 +50,8 @@ class Rig:
         root_name = self.params.root_name
         root = new_bone(self.obj, root_name)
         root_e = eb[root]
-        root_e.head = Vector((0,0,0))
-        root_e.tail = Vector((0,0,1)) * pelvis_e.length/2
+        root_e.head = Vector((0, 0, 0))
+        root_e.tail = Vector((0, 0, 1)) * pelvis_e.length/2
         align_bone_x_axis(self.obj, root, Vector((-1, 0, 0)))
         root_e.layers = [i == 28 for i in range(32)]
 
@@ -60,17 +60,14 @@ class Rig:
         flip_e = eb[flip]
 
         flip_e.head = pelvis_e.head
-        flip_e.tail = flip_e.head + Vector((0,0,1)) * pelvis_e.length/2
+        flip_e.tail = flip_e.head + Vector((0, 0, 1)) * pelvis_e.length/2
         align_bone_x_axis(self.obj, flip, Vector((-1, 0, 0)))
 
-        # One needs to reset edit bone reference everytime a new bone is created:
-        # The referenced bone changes (use hash() to check...)
-        # Good to know.
         root_e = eb[root]
 
         flip_e.use_connect = False
         flip_e.parent = root_e
-        
+
         ctrl_chain = []
         def_chain = []
         for i, b in enumerate(self.org_bones):
@@ -86,8 +83,10 @@ class Rig:
                 # First bone
 
                 # Vertical intermediate pelvis (animation helper)
-                inter_pelvis = copy_bone(self.obj, b, make_mechanism_name(strip_org(b)+'.intermediate'))
-                
+                inter_pelvis = copy_bone(
+                    self.obj, b, make_mechanism_name(
+                        strip_org(b)+'.intermediate'))
+
                 ctrl_bone_e = eb[ctrl_bone]
                 ctrl_bone_e.tail = ctrl_bone_e.head
                 ctrl_bone_e.tail[2] += 1.0 * eb[b].length
@@ -107,7 +106,12 @@ class Rig:
             ctrl_chain += [ctrl_bone_e.name]
 
             # Def bones
-            def_bone = pantin_utils.create_deformation(self.obj, b, self.params.flip_switch, member_index=self.params.Z_index, bone_index=i)
+            def_bone = pantin_utils.create_deformation(
+                self.obj,
+                b,
+                self.params.flip_switch,
+                member_index=self.params.Z_index,
+                bone_index=i)
             def_chain.append(def_bone)
 
         flip_e = eb[flip]
@@ -117,7 +121,7 @@ class Rig:
 
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
-        
+
         # Pose bone settings
         flip_p = pb[flip]
         flip_p.rotation_mode = 'XZY'
@@ -140,7 +144,7 @@ class Rig:
         # Widgets
         global_scale = self.obj.dimensions[2]
         member_factor = 0.1
-        widget_size = global_scale *  member_factor
+        widget_size = global_scale * member_factor
         pelvis = ctrl_chain[0]
         # abdomen = ctrl_chain[1]
         # torso = ctrl_chain[2]
@@ -149,16 +153,27 @@ class Rig:
         # create_cube_widget(self.obj, pelvis, radius=widget_size*4)
         radius = widget_size
         pelvis_center = pb[pelvis].center
-        vp = ((-radius*2.0+pelvis_center.x, -radius+pelvis_center.z), (-radius*2.0+pelvis_center.x, radius+pelvis_center.z), (radius*2.0+pelvis_center.x, radius+pelvis_center.z), (radius*2.0+pelvis_center.x, -radius+pelvis_center.z))
-        pantin_utils.create_aligned_polygon_widget(self.obj, pelvis, vertex_points=vp)
-        pantin_utils.create_aligned_half_ellipse_widget(self.obj, root, width=widget_size*1.5, height=widget_size)
+        vp = ((-radius*2.0+pelvis_center.x, -radius+pelvis_center.z),
+              (-radius*2.0+pelvis_center.x, radius+pelvis_center.z),
+              (radius*2.0+pelvis_center.x, radius+pelvis_center.z),
+              (radius*2.0+pelvis_center.x, -radius+pelvis_center.z))
+        pantin_utils.create_aligned_polygon_widget(
+            self.obj, pelvis, vertex_points=vp)
+        pantin_utils.create_aligned_half_ellipse_widget(
+            self.obj, root, width=widget_size*1.5, height=widget_size)
 
         for bone in ctrl_chain[1:]:
-            pantin_utils.create_capsule_widget(self.obj, bone, width=widget_size, height=widget_size*0.1, head_tail=0.5)
+            pantin_utils.create_capsule_widget(
+                self.obj,
+                bone,
+                width=widget_size,
+                height=widget_size*0.1,
+                head_tail=0.5)
             # create_widget(self.obj, bone)
 
         # Drivers
-        driver = self.obj.driver_add('pose.bones["{}"].rotation_euler'.format(flip), 1)
+        driver = self.obj.driver_add(
+            'pose.bones["{}"].rotation_euler'.format(flip), 1)
         driver.driver.expression = 'pi*flip'
         var_flip = driver.driver.variables.new()
 
@@ -181,11 +196,22 @@ class Rig:
             con.name = "copy_transforms"
             con.target = self.obj
             con.subtarget = ctrl
-            
+
+
 def add_parameters(params):
-    params.Z_index = bpy.props.FloatProperty(name="Z index", default=0.0, description="Defines member's Z order")
-    params.flip_switch = bpy.props.BoolProperty(name="Flip Switch", default=False, description="This member may change depth when flipped")
-    params.root_name = bpy.props.StringProperty(name="Root Name", default="Root 1", description="The name of the intermediate root bone")
+    params.Z_index = bpy.props.FloatProperty(
+        name="Z index",
+        default=0.0,
+        description="Defines member's Z order")
+    params.flip_switch = bpy.props.BoolProperty(
+        name="Flip Switch",
+        default=False,
+        description="This member may change depth when flipped")
+    params.root_name = bpy.props.StringProperty(
+        name="Root Name",
+        default="Root 1",
+        description="The name of the intermediate root bone")
+
 
 def parameters_ui(layout, params):
     """ Create the ui for the rig parameters.
@@ -198,6 +224,7 @@ def parameters_ui(layout, params):
     r.prop(params, "members_number")
     r = layout.row()
     r.prop(params, "root_name")
+
 
 def create_sample(obj):
     # generated by rigify.utils.write_metarig

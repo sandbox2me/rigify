@@ -31,12 +31,23 @@ from . import pantin_utils
 
 importlib.reload(pantin_utils)
 
+
 class IKLimb:
-    def __init__(self, obj, org_bones, stretch_joint_name, do_flip, pelvis_follow, pelvis_name, duplicate=False, side_suffix='', follow_org=False, ik_limits=[-150.0, 150.0, 0.0, 160.0]):
+    def __init__(self,
+                 obj,
+                 org_bones,
+                 stretch_joint_name,
+                 do_flip,
+                 pelvis_follow,
+                 pelvis_name,
+                 duplicate=False,
+                 side_suffix='',
+                 follow_org=False,
+                 ik_limits=[-150.0, 150.0, 0.0, 160.0]):
         self.obj = obj
 
         # Get the chain of 3 connected bones
-        self.org_bones = org_bones #[bone1, bone2, bone3]
+        self.org_bones = org_bones  # [bone1, bone2, bone3]
 
         # Get (optional) parent
         if self.obj.data.bones[org_bones[0]].parent is None:
@@ -61,29 +72,71 @@ class IKLimb:
         side_org_bones = []
         if self.duplicate:
             for b in self.org_bones:
-                side_org_bone = copy_bone(self.obj, b, pantin_utils.strip_LR_numbers(b) + self.side_suffix)
+                side_org_bone = copy_bone(
+                    self.obj, b,
+                    pantin_utils.strip_LR_numbers(b) + self.side_suffix)
                 side_org_bones.append(side_org_bone)
-                eb[side_org_bone].layers = [False if i != 31 else True for i in range(32)]
+                eb[side_org_bone].layers = [
+                    False if i != 31 else True for i in range(32)
+                ]
         else:
             side_org_bones = self.org_bones
 
         # Create the control bones
-        ulimb_ik = copy_bone(self.obj, self.org_bones[0], pantin_utils.strip_LR_numbers(strip_org(self.org_bones[0])) + self.side_suffix)
-        flimb_ik = copy_bone(self.obj, self.org_bones[1], make_mechanism_name(pantin_utils.strip_LR_numbers(strip_org(self.org_bones[1])) + self.side_suffix))
-        elimb_ik = copy_bone(self.obj, self.org_bones[2], pantin_utils.strip_LR_numbers(strip_org(self.org_bones[2])) + self.side_suffix)
+        ulimb_ik = copy_bone(
+            self.obj,
+            self.org_bones[0],
+            pantin_utils.strip_LR_numbers(
+                strip_org(self.org_bones[0])) + self.side_suffix)
+        flimb_ik = copy_bone(
+            self.obj,
+            self.org_bones[1],
+            make_mechanism_name(
+                pantin_utils.strip_LR_numbers(
+                    strip_org(self.org_bones[1])) + self.side_suffix))
+        elimb_ik = copy_bone(
+            self.obj,
+            self.org_bones[2],
+            pantin_utils.strip_LR_numbers(
+                strip_org(self.org_bones[2])) + self.side_suffix)
 
-        # elimb_mch = copy_bone(self.obj, self.org_bones[2], make_mechanism_name(strip_org(self.org_bones[2])))
+        # elimb_mch = copy_bone(
+            # self.obj, self.org_bones[2], make_mechanism_name(
+            #     strip_org(self.org_bones[2])))
 
-        ulimb_str = copy_bone(self.obj, self.org_bones[0], make_mechanism_name(pantin_utils.strip_LR_numbers(strip_org(self.org_bones[0])) + ".stretch.ik" + self.side_suffix))
-        flimb_str = copy_bone(self.obj, self.org_bones[1], make_mechanism_name(pantin_utils.strip_LR_numbers(strip_org(self.org_bones[1])) + ".stretch.ik" + self.side_suffix))
-        elimb_str = copy_bone(self.obj, self.org_bones[2], make_mechanism_name(pantin_utils.strip_LR_numbers(strip_org(self.org_bones[2])) + ".stretch.ik" + self.side_suffix))
+        ulimb_str = copy_bone(
+            self.obj,
+            self.org_bones[0],
+            make_mechanism_name(
+                pantin_utils.strip_LR_numbers(
+                    strip_org(
+                        self.org_bones[0]
+                    )) + ".stretch.ik" + self.side_suffix))
+        flimb_str = copy_bone(
+            self.obj,
+            self.org_bones[1],
+            make_mechanism_name(
+                pantin_utils.strip_LR_numbers(
+                    strip_org(
+                        self.org_bones[1]
+                    )) + ".stretch.ik" + self.side_suffix))
+        elimb_str = copy_bone(
+            self.obj,
+            self.org_bones[2],
+            make_mechanism_name(
+                pantin_utils.strip_LR_numbers(
+                    strip_org(
+                        self.org_bones[2]
+                    )) + ".stretch.ik" + self.side_suffix))
 
-        joint_str = new_bone(self.obj, self.stretch_joint_name + self.side_suffix)
+        joint_str = new_bone(self.obj,
+                             self.stretch_joint_name + self.side_suffix)
         eb[joint_str].head = eb[flimb_str].head
-        eb[joint_str].tail = eb[flimb_str].head + Vector((0,0,1)) * eb[flimb_str].length/2
+        eb[joint_str].tail = (eb[flimb_str].head
+                              + Vector((0, 0, 1)) * eb[flimb_str].length/2)
         align_bone_x_axis(self.obj, joint_str, Vector((-1, 0, 0)))
         #put_bone(self.obj, joint_str, Vector(eb[flimb_str].head))
-        
+
         # Get edit bones
         ulimb_ik_e = eb[ulimb_ik]
         flimb_ik_e = eb[flimb_ik]
@@ -99,7 +152,9 @@ class IKLimb:
 
         # Side org chain
         for b, o_b in zip(side_org_bones[1:], self.org_bones[1:]):
-            eb[b].parent = eb[pantin_utils.strip_LR_numbers(eb[o_b].parent.name) + self.side_suffix]
+            eb[b].parent = eb[
+                pantin_utils.strip_LR_numbers(
+                    eb[o_b].parent.name) + self.side_suffix]
 
         if self.org_parent is not None:
             ulimb_ik_e.use_connect = False
@@ -125,7 +180,7 @@ class IKLimb:
         joint_str_e.parent = ulimb_ik_e
 
         # Layers
-        joint_str_e.layers = elimb_str_e.layers 
+        joint_str_e.layers = elimb_str_e.layers
         # Object mode, get pose bones
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
@@ -139,7 +194,7 @@ class IKLimb:
         elimb_str_p = pb[elimb_str]
 
         joint_str_p = pb[joint_str]
-        
+
         joint_str_p.lock_location = (False, False, True)
         joint_str_p.lock_rotation = (True, True, False)
         joint_str_p.lock_rotation_w = False
@@ -198,10 +253,11 @@ class IKLimb:
         con.volume = 'NO_VOLUME'
         con.rest_length = flimb_str_p.length
         con.keep_axis = 'PLANE_Z'
-        
+
         # Pelvis follow
         if self.do_flip:
-            pantin_utils.create_ik_child_of(self.obj, elimb_ik, self.pelvis_name)
+            pantin_utils.create_ik_child_of(
+                self.obj, elimb_ik, self.pelvis_name)
 
         # IK Limits
         ulimb_ik_p.lock_ik_x = True
@@ -210,16 +266,20 @@ class IKLimb:
         flimb_ik_p.lock_ik_x = True
         flimb_ik_p.lock_ik_y = True
         flimb_ik_p.use_ik_limit_z = True
-        flimb_ik_p.ik_min_z = radians(self.ik_limits[0]) #0.0
-        flimb_ik_p.ik_max_z = radians(self.ik_limits[1]) #radians(160.0)
-        
+        flimb_ik_p.ik_min_z = radians(self.ik_limits[0])  # 0.0
+        flimb_ik_p.ik_max_z = radians(self.ik_limits[1])  # radians(160.0)
+
         # Arm ik angle fix
         limb_angle = ulimb_ik_p.vector.xz.angle_signed(flimb_ik_p.vector.xz)
-        if self.ik_limits[0] < 0: # folds counterclockwise (arms)
-            # if limb_angle < -radians(45):
-            flimb_ik_p.ik_max_z = -limb_angle -.02 #has to be slightly less than the original angle
+        if self.ik_limits[0] < 0:  # folds counterclockwise (arms)
+            # has to be slightly less than the original angle
+            flimb_ik_p.ik_max_z = -limb_angle - .02
         else:
-            # if limb_angle > radians(45):
-            flimb_ik_p.ik_min_z = -limb_angle +.02 #has to be slightly more than the original angle
+            # has to be slightly more than the original angle
+            flimb_ik_p.ik_min_z = -limb_angle + .02
 
-        return [ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str, elimb_ik, elimb_str, side_org_bones]
+        return [ulimb_ik, ulimb_str,
+                flimb_ik, flimb_str,
+                joint_str,
+                elimb_ik, elimb_str,
+                side_org_bones]

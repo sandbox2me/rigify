@@ -33,13 +33,18 @@ importlib.reload(limb_common)
 script = """
 ik_arm = ["%s", "%s", "%s"]
 if is_selected(ik_arm):
-    layout.prop(pose_bones[ik_arm[2]], '["pelvis_follow"]', text="Follow pelvis (" + ik_arm[2] + ")", slider=True)
+    layout.prop(pose_bones[ik_arm[2]], \
+'["pelvis_follow"]', \
+text="Follow pelvis (" + ik_arm[2] + ")", \
+slider=True)
 """
+
 
 class Rig:
     def __init__(self, obj, bone_name, params):
         self.obj = obj
-        self.org_bones = [bone_name] + connected_children_names(obj, bone_name)[:2]
+        self.org_bones = ([bone_name]
+                          + connected_children_names(obj, bone_name)[:2])
         self.params = params
         if "right_layers" in params:
             self.right_layers = [bool(l) for l in params["right_layers"]]
@@ -51,15 +56,24 @@ class Rig:
             sides = ['.L', '.R']
         else:
             sides = [params.side]
-        
+
         self.ik_limbs = {}
         for s in sides:
-            self.ik_limbs[s] = limb_common.IKLimb(obj, self.org_bones, joint_name, params.do_flip, True, params.pelvis_name, params.duplicate_lr, s, ik_limits=[-160.0, 0.0])
+            self.ik_limbs[s] = limb_common.IKLimb(obj,
+                                                  self.org_bones,
+                                                  joint_name,
+                                                  params.do_flip,
+                                                  True,
+                                                  params.pelvis_name,
+                                                  params.duplicate_lr,
+                                                  s,
+                                                  ik_limits=[-160.0, 0.0])
 
     def generate(self):
         ui_script = ""
         for s, ik_limb in self.ik_limbs.items():
-            ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str, elimb_ik, elimb_str, side_org_bones = ik_limb.generate()
+            ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str,
+            elimb_ik, elimb_str, side_org_bones = ik_limb.generate()
 
             bpy.ops.object.mode_set(mode='EDIT')
 
@@ -69,10 +83,14 @@ class Rig:
                 Z_index = -self.params.Z_index
             else:
                 Z_index = self.params.Z_index
-                
-            for i, b in enumerate(side_org_bones): #[elimb_str, flimb_str, ulimb_str]):
+
+            for i, b in enumerate(side_org_bones):
                 def_bone_name = b.split('.')[0][4:]
-                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.flip_switch, member_index=Z_index, bone_index=i, new_name=def_bone_name + s)
+                def_bone = pantin_utils.create_deformation(
+                    self.obj,
+                    b,
+                    self.params.flip_switch, member_index=Z_index,
+                    bone_index=i, new_name=def_bone_name + s)
 
             # Set layers if specified
             if s == '.R' and self.right_layers:
@@ -90,11 +108,13 @@ class Rig:
                 side_factor = 1.2
             else:
                 side_factor = 1.0
-            widget_size = global_scale *  member_factor * side_factor
-            pantin_utils.create_aligned_circle_widget(self.obj, ulimb_ik, number_verts=3, radius=widget_size)
-            #pantin_utils.create_aligned_polygon_widget(self.obj, ulimb_ik, [[-1,-1], [-1,1], [1,1], [1,-1]])
-            pantin_utils.create_aligned_circle_widget(self.obj, joint_str, radius=widget_size * 0.7)
-            pantin_utils.create_aligned_circle_widget(self.obj, elimb_ik, radius=widget_size)
+            widget_size = global_scale * member_factor * side_factor
+            pantin_utils.create_aligned_circle_widget(
+                self.obj, ulimb_ik, number_verts=3, radius=widget_size)
+            pantin_utils.create_aligned_circle_widget(
+                self.obj, joint_str, radius=widget_size * 0.7)
+            pantin_utils.create_aligned_circle_widget(
+                self.obj, elimb_ik, radius=widget_size)
 
             # Bone groups
             if s == '.R':
@@ -106,9 +126,10 @@ class Rig:
                 pantin_utils.assign_bone_group(self.obj, joint_str, 'L')
                 pantin_utils.assign_bone_group(self.obj, elimb_ik, 'L')
 
-
             # Constraints
-            for org, ctrl in zip(side_org_bones, [ulimb_str, flimb_str, elimb_str]):
+            for org, ctrl in zip(side_org_bones, [ulimb_str,
+                                                  flimb_str,
+                                                  elimb_str]):
                 con = pb[org].constraints.new('COPY_TRANSFORMS')
                 con.name = "copy_transforms"
                 con.target = self.obj
@@ -119,33 +140,44 @@ class Rig:
             ui_script += script % (ulimb_ik, joint_str, elimb_ik)
 
         return [ui_script]
-                    
+
+
 def add_parameters(params):
-    params.Z_index = bpy.props.FloatProperty(name="Z index",
-                                           default=0.0,
-                                           description="Defines member's Z order")
-    params.flip_switch = bpy.props.BoolProperty(name="Flip Switch",
-                                                  default=True,
-                                                  description="This member may change depth when flipped")
-    params.duplicate_lr = bpy.props.BoolProperty(name="Duplicate LR",
-                                                 default=True,
-                                                 description="Create two limbs for left and right")
-    params.side = bpy.props.EnumProperty(name="Side",
-                                         default='.R',
-                                         description="If the limb is not to be duplicated, choose its side",
-                                         items=(('.L', 'Left', ""),
-                                                ('.R', 'Right', "")))
-    params.do_flip = bpy.props.BoolProperty(name="Do Flip",
-                                            default=True,
-                                            description="True if the rig has a torso with flip system")
-    params.pelvis_name = bpy.props.StringProperty(name="Pelvis Name",
-                                                  default="Pelvis",
-                                                  description="Name of the pelvis bone in whole rig")
-    params.joint_name = bpy.props.StringProperty(name="Joint Name",
-                                                 default="Joint",
-                                                 description="Name of the middle joint")
-    params.right_layers = bpy.props.BoolVectorProperty(size=32,
-                                                       description="Layers for the duplicated limb to be on")
+    params.Z_index = bpy.props.FloatProperty(
+        name="Z index",
+        default=0.0,
+        description="Defines member's Z order")
+    params.flip_switch = bpy.props.BoolProperty(
+        name="Flip Switch",
+        default=True,
+        description="This member may change depth when flipped")
+    params.duplicate_lr = bpy.props.BoolProperty(
+        name="Duplicate LR",
+        default=True,
+        description="Create two limbs for left and right")
+    params.side = bpy.props.EnumProperty(
+        name="Side",
+        default='.R',
+        description="If the limb is not to be duplicated, choose its side",
+        items=(('.L', 'Left', ""),
+               ('.R', 'Right', "")))
+    params.do_flip = bpy.props.BoolProperty(
+        name="Do Flip",
+        default=True,
+        description="True if the rig has a torso with flip system")
+    params.pelvis_name = bpy.props.StringProperty(
+        name="Pelvis Name",
+        default="Pelvis",
+        description="Name of the pelvis bone in whole rig")
+    params.joint_name = bpy.props.StringProperty(
+        name="Joint Name",
+        default="Joint",
+        description="Name of the middle joint")
+    params.right_layers = bpy.props.BoolVectorProperty(
+        size=32,
+        description="Layers for the duplicated limb to be on")
+
+
 def parameters_ui(layout, params):
     """ Create the ui for the rig parameters.
     """
@@ -163,7 +195,7 @@ def parameters_ui(layout, params):
     if params.duplicate_lr:
         r = layout.row()
         r.active = params.duplicate_lr
-        
+
         # Layers for the right leg
         col = r.column(align=True)
         row = col.row(align=True)
@@ -184,7 +216,7 @@ def parameters_ui(layout, params):
         row.prop(params, "right_layers", index=21, toggle=True, text="")
         row.prop(params, "right_layers", index=22, toggle=True, text="")
         row.prop(params, "right_layers", index=23, toggle=True, text="")
-        
+
         col = r.column(align=True)
         row = col.row(align=True)
         row.prop(params, "right_layers", index=8, toggle=True, text="")
@@ -247,7 +279,14 @@ def create_sample(obj):
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
     try:
-        pbone.rigify_parameters.right_layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False]
+        pbone.rigify_parameters.right_layers = [False, False, False, False,
+                                                False, False, False, False,
+                                                False, False, False, False,
+                                                False, False, False, False,
+                                                False, False, False, False,
+                                                True, False, False, False,
+                                                False, False, False, False,
+                                                False, False, False, False]
     except AttributeError:
         pass
     try:

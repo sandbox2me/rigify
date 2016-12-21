@@ -28,6 +28,7 @@ from ...utils import align_bone_z_axis
 
 from . import pantin_utils
 
+
 class Rig:
     def __init__(self, obj, bone_name, params):
         self.obj = obj
@@ -35,13 +36,17 @@ class Rig:
 
         eb = self.obj.data.edit_bones
 
-        self.org_bones = [bone_name] + connected_children_names(self.obj, bone_name)
+        self.org_bones = [bone_name] + connected_children_names(self.obj,
+                                                                bone_name)
         if eb[bone_name].parent is not None:
             self.org_parent = eb[bone_name].parent.name
         else:
             self.org_parent = None
         if eb[bone_name].use_connect:
-            raise MetarigError("RIGIFY ERROR: Bone %s should not be connected. Check bone chain for multiple pantin.simple rigs" % (strip_org(self.org_parent)))
+            raise MetarigError(
+                "RIGIFY ERROR: Bone %s should not be connected. "
+                "Check bone chain for multiple pantin.simple rigs" % (
+                    strip_org(self.org_parent)))
 
     def generate(self):
         if self.params.use_parent_Z_index and self.org_parent is not None:
@@ -49,17 +54,21 @@ class Rig:
             bpy.ops.object.mode_set(mode='OBJECT')
             pb = self.obj.pose.bones
             def_parent_name = make_deformer_name(strip_org(self.org_parent))
-            if self.params.object_side != ".C" and def_parent_name[-2:] not in ['.L', '.R']:
+            if (self.params.object_side != ".C" and
+                    def_parent_name[-2:] not in ['.L', '.R']):
                 def_parent_name += self.params.object_side
             # print("DEF PARENT", def_parent_name)
             if not def_parent_name in pb:
-                raise MetarigError("RIGIFY ERROR: Bone %s does not have a %s side" % (strip_org(self.org_parent), self.params.object_side))
+                raise MetarigError(
+                    "RIGIFY ERROR: Bone %s does not have a %s side" % (
+                        strip_org(self.org_parent), self.params.object_side))
             parent_p = pb[def_parent_name]
             member_Z_index = parent_p['member_index']
             bone_Z_index = 0
             for b in pb:
                 if b.bone.use_deform and b.name.startswith('DEF-'):
-                    if b['member_index'] == member_Z_index and b['bone_index'] > bone_Z_index:
+                    if (b['member_index'] == member_Z_index
+                            and b['bone_index'] > bone_Z_index):
                         bone_Z_index = b['bone_index']
             bone_Z_index += 1
 
@@ -103,16 +112,19 @@ class Rig:
                 # Parenting
                 if i == 0:
                     # First bone
-                    # TODO Check if parent still exists, else check if .L / .R exists, else do nothing
+                    # TODO Check if parent still exists,
+                    # else check if .L / .R exists, else do nothing
                     if eb[b].parent is not None:
                         bone_parent_name = eb[b].parent.name
                         if bone_parent_name + self.params.object_side in eb:
-                            # print(bone_parent_name + self.params.object_side + ' WAS THERE')
-                            ctrl_bone_e.parent = eb[bone_parent_name + self.params.object_side]
+                            ctrl_bone_e.parent = (eb[bone_parent_name
+                                                  + self.params.object_side])
                         elif bone_parent_name in eb:
                             ctrl_bone_e.parent = eb[bone_parent_name]
                         else:
-                            raise MetarigError("RIGIFY ERROR: Bone %s does not have a %s side" % (strip_org(eb[b].parent.name), s))
+                            raise MetarigError(
+                                "RIGIFY ERROR: Bone %s does not have a %s side"
+                                % (strip_org(eb[b].parent.name), s))
                     else:
                         ctrl_bone_e.parent = eb['MCH-Flip']
                 else:
@@ -125,8 +137,13 @@ class Rig:
                 ctrl_chain += [ctrl_bone_e.name]
 
                 # Def bones
-                def_bone = pantin_utils.create_deformation(self.obj, b, self.params.flip_switch, member_Z_index, bone_Z_index + i, 0.0, b+s)
-                # def_chain.append(def_bone)
+                def_bone = pantin_utils.create_deformation(
+                    self.obj, b,
+                    self.params.flip_switch,
+                    member_Z_index,
+                    bone_Z_index + i,
+                    0.0,
+                    b+s)
 
             if self.params.create_ik:
                 last_bone = self.org_bones[-1]
@@ -143,8 +160,9 @@ class Rig:
             if self.params.create_ik:
                 global_scale = self.obj.dimensions[2]
                 member_factor = 0.06
-                widget_size = global_scale *  member_factor
-                pantin_utils.create_aligned_circle_widget(self.obj, ik_ctrl, radius=widget_size)
+                widget_size = global_scale * member_factor
+                pantin_utils.create_aligned_circle_widget(
+                    self.obj, ik_ctrl, radius=widget_size)
 
             # Constraints
             for org, ctrl in zip(self.org_bones, ctrl_chain):
@@ -159,52 +177,77 @@ class Rig:
                 # con.name = "copy_transforms"
                 con.target = self.obj
                 con.subtarget = ik_ctrl
-                con.chain_count =len(self.org_bones)
+                con.chain_count = len(self.org_bones)
 
                 # Pelvis follow
                 if self.params.do_flip:
-                    pantin_utils.create_ik_child_of(self.obj, ik_ctrl, self.params.pelvis_name)
+                    pantin_utils.create_ik_child_of(
+                        self.obj, ik_ctrl, self.params.pelvis_name)
+
 
 def add_parameters(params):
-    params.use_parent_Z_index = bpy.props.BoolProperty(name="Use parent's Z Index",
-                                                  default=True,
-                                                  description="The object will use its parent's Z index")
-    params.member_Z_index = bpy.props.FloatProperty(name="Z index",
-                                           default=0.0,
-                                           description="Defines member's Z order")
-    params.first_bone_Z_index = bpy.props.FloatProperty(name="First Bone Z index",
-                                           default=0.0,
-                                           description="Defines bone's Z order")
-    params.flip_switch = bpy.props.BoolProperty(name="Flip Switch",
-                                                  default=False,
-                                                  description="This member may change depth when flipped")
-    # params.member_Z_index = bpy.props.FloatProperty(name="Indice Z membre", default=0.0, description="Définit l'ordre des membres dans l'espace")
-    # params.first_bone_Z_index = bpy.props.FloatProperty(name="Indice Z premier os", default=0.0, description="Définit l'ordre des os dans l'espace")
-    # params.flip_switch = bpy.props.BoolProperty(name="Ordre change", default=True, description="Ce membre peut changer de profondeur")
-    # params.duplicate_lr = bpy.props.BoolProperty(name="Duplicate LR",
-    #                                              default=True,
-    #                                              description="Create two limbs for left and right")
-    params.object_side = bpy.props.EnumProperty(name="Side",
-                                         default='.C',
-                                         description="If the limb is not to be duplicated, choose its side",
-                                         items=(('.L', 'Left', ""),
-                                                ('.C', 'Center', ""),
-                                                ('.R', 'Right', ""),
-                                                ))
-    params.do_flip = bpy.props.BoolProperty(name="Do Flip",
-                                            default=True,
-                                            description="True if the rig has a torso with flip system")
-    params.pelvis_name = bpy.props.StringProperty(name="Pelvis Name",
-                                                  default="Pelvis",
-                                                  description="Name of the pelvis bone in whole rig")
-    params.use_parent_layers = bpy.props.BoolProperty(name="Use parent's layers",
-                                                  default=True,
-                                                  description="The object will use its parent's layers")
-    params.create_ik = bpy.props.BoolProperty(name="Create IK",
-                                                  default=False,
-                                                  description="Create an IK constraint on the last bone")
-    params.layers = bpy.props.BoolVectorProperty(size=32,
-                                                       description="Layers for the object")
+    params.use_parent_Z_index = bpy.props.BoolProperty(
+        name="Use parent's Z Index",
+        default=True,
+        description="The object will use its parent's Z index")
+    params.member_Z_index = bpy.props.FloatProperty(
+        name="Z index",
+        default=0.0,
+        description="Defines member's Z order")
+    params.first_bone_Z_index = bpy.props.FloatProperty(
+        name="First Bone Z index",
+        default=0.0,
+        description="Defines bone's Z order")
+    params.flip_switch = bpy.props.BoolProperty(
+        name="Flip Switch",
+        default=False,
+        description="This member may change depth when flipped")
+
+    # params.member_Z_index = bpy.props.FloatProperty(
+    #     name="Indice Z membre",
+    #     default=0.0,
+    #     description="Définit l'ordre des membres dans l'espace")
+    # params.first_bone_Z_index = bpy.props.FloatProperty(
+    #     name="Indice Z premier os",
+    #     default=0.0,
+    #     description="Définit l'ordre des os dans l'espace")
+    # params.flip_switch = bpy.props.BoolProperty(
+    #     name="Ordre change",
+    #     default=True,
+    #     description="Ce membre peut changer de profondeur")
+    # params.duplicate_lr = bpy.props.BoolProperty(
+    #     name="Duplicate LR",
+    #     default=True,
+    #     description="Create two limbs for left and right")
+
+    params.object_side = bpy.props.EnumProperty(
+        name="Side",
+        default='.C',
+        description="If the limb is not to be duplicated, choose its side",
+        items=(('.L', 'Left', ""),
+               ('.C', 'Center', ""),
+               ('.R', 'Right', ""),
+               ))
+    params.do_flip = bpy.props.BoolProperty(
+        name="Do Flip",
+        default=True,
+        description="True if the rig has a torso with flip system")
+    params.pelvis_name = bpy.props.StringProperty(
+        name="Pelvis Name",
+        default="Pelvis",
+        description="Name of the pelvis bone in whole rig")
+    params.use_parent_layers = bpy.props.BoolProperty(
+        name="Use parent's layers",
+        default=True,
+        description="The object will use its parent's layers")
+    params.create_ik = bpy.props.BoolProperty(
+        name="Create IK",
+        default=False,
+        description="Create an IK constraint on the last bone")
+    params.layers = bpy.props.BoolVectorProperty(
+        size=32,
+        description="Layers for the object")
+
 
 def parameters_ui(layout, params):
     """ Create the ui for the rig parameters.
@@ -281,6 +324,7 @@ def parameters_ui(layout, params):
         row.prop(params, "layers", index=30, toggle=True, text="")
         row.prop(params, "layers", index=31, toggle=True, text="")
 
+
 def create_sample(obj):
     # generated by rigify.utils.write_metarig
     bpy.ops.object.mode_set(mode='EDIT')
@@ -324,7 +368,13 @@ def create_sample(obj):
     except AttributeError:
         pass
     try:
-        pbone.rigify_parameters.layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False]
+        pbone.rigify_parameters.layers = [False, False, False, False, False,
+                                          False, False, False, False, False,
+                                          False, False, False, False, False,
+                                          False, False, False, False, False,
+                                          False, False, False, True, False,
+                                          False, False, False, False, False,
+                                          False, False]
     except AttributeError:
         pass
     try:
