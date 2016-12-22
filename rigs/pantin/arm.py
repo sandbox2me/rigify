@@ -72,8 +72,8 @@ class Rig:
     def generate(self):
         ui_script = ""
         for s, ik_limb in self.ik_limbs.items():
-            ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str,
-            elimb_ik, elimb_str, side_org_bones = ik_limb.generate()
+            (ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str,
+                elimb_ik, elimb_str, side_org_bones) = (ik_limb.generate())
 
             bpy.ops.object.mode_set(mode='EDIT')
 

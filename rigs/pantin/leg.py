@@ -89,8 +89,8 @@ class Rig:
     def generate(self):
         ui_script = ""
         for s, ik_limb in self.ik_limbs.items():
-            ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str,
-            elimb_ik, elimb_str, side_org_bones = ik_limb.generate()
+            (ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str,
+                elimb_ik, elimb_str, side_org_bones) = (ik_limb.generate())
 
             bpy.ops.object.mode_set(mode='EDIT')
             eb = self.obj.data.edit_bones
@@ -289,8 +289,8 @@ class Rig:
             roll_fr_p = pb[roll_fr]
 
             hor_vector = Vector((1, 0, 0))
-            foot_rotation = foot_fr_p.
-            vector.rotation_difference(hor_vector).to_euler('XZY')
+            foot_rotation = (foot_fr_p.vector.
+                             rotation_difference(hor_vector).to_euler('XZY'))
             toe_rotation = toe_fr_p.vector.rotation_difference(
                 hor_vector).to_euler('XZY')
 
