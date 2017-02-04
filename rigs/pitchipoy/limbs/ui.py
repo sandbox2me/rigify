@@ -4,10 +4,11 @@ tweaks   = [%s]
 ik_ctrl  = [%s]
 fk_ctrl  = '%s'
 parent   = '%s'
+hand_fk   = '%s'
 
 # IK/FK Switch on all Control Bones
 if is_selected( controls ):
-    layout.prop( pose_bones[ parent ], '["%s"]', slider = True )
+    layout.prop( pose_bones[ hand_fk ], '["%s"]', slider = True )
     props = layout.operator("pose.rigify_arm_fk2ik_" + rig_id, text="Snap FK->IK (" + fk_ctrl + ")")
     props.uarm_fk = controls[1]
     props.farm_fk = controls[2]
@@ -45,10 +46,11 @@ tweaks   = [%s]
 ik_ctrl  = [%s]
 fk_ctrl  = '%s'
 parent   = '%s'
+foot_fk = '%s'
 
 # IK/FK Switch on all Control Bones
 if is_selected( controls ):
-    layout.prop( pose_bones[ parent ], '["%s"]', slider = True )
+    layout.prop( pose_bones[ foot_fk ], '["%s"]', slider = True )
     props = layout.operator("pose.rigify_leg_fk2ik_" + rig_id, text="Snap FK->IK (" + fk_ctrl + ")")
     props.thigh_fk = controls[1]
     props.shin_fk  = controls[2]
@@ -110,6 +112,7 @@ def create_script( bones, limb_type=None):
             ik_ctrl_string,
             bones['fk']['ctrl'][0],
             bones['parent'],
+            bones['fk']['ctrl'][-1],
             'IK/FK',
             'rubber_tweak',
             'IK_Strertch',
@@ -123,6 +126,7 @@ def create_script( bones, limb_type=None):
             ik_ctrl_string,
             bones['fk']['ctrl'][0],
             bones['parent'],
+            bones['fk']['ctrl'][-1],
             'IK/FK',
             'rubber_tweak',
             'IK_Strertch',
@@ -136,6 +140,7 @@ def create_script( bones, limb_type=None):
             ik_ctrl_string,
             bones['fk']['ctrl'][0],
             bones['parent'],
+            bones['fk']['ctrl'][-1],
             'IK/FK',
             'rubber_tweak',
             'IK_Strertch',

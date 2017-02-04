@@ -472,9 +472,11 @@ class Rig:
         pb = self.obj.pose.bones
         pb_parent = pb[ parent ]
 
+        paw_fk = pb[fk[2]]
+
         # Create ik/fk switch property
-        pb_parent['IK/FK']  = 0.0
-        prop = rna_idprop_ui_prop_get( pb_parent, 'IK/FK', create=True )
+        paw_fk['IK/FK']  = 0.0
+        prop = rna_idprop_ui_prop_get(paw_fk, 'IK/FK', create=True )
         prop["min"]         = 0.0
         prop["max"]         = 1.0
         prop["soft_min"]    = 0.0
@@ -504,7 +506,7 @@ class Rig:
             var.type = "SINGLE_PROP"
             var.targets[0].id = self.obj
             var.targets[0].data_path = \
-                pb_parent.path_from_id() + '['+ '"' + prop.name + '"' + ']'
+                paw_fk.path_from_id() + '['+ '"' + prop.name + '"' + ']'
 
     def create_paw( self, bones ):
 
@@ -689,7 +691,8 @@ class Rig:
 
             # Find IK/FK switch property
             pb   = self.obj.pose.bones
-            prop = rna_idprop_ui_prop_get( pb[ bones['parent'] ], 'IK/FK' )
+            #prop = rna_idprop_ui_prop_get( pb[ bones['parent'] ], 'IK/FK' )
+            prop = rna_idprop_ui_prop_get(pb[bones['fk']['ctrl'][-1]], 'IK/FK')
 
             # Add driver to limit scale constraint influence
             b        = org_bones[3]
@@ -731,13 +734,15 @@ class Rig:
 
         ctrl = pb[bones['ik']['mch_foot'][0]]
 
+        owner = pb[bones['ik']['ctrl']['limb']]
+
         props  = [ "IK_follow", "root/parent" ]
 
         for prop in props:
             if prop == 'IK_follow':
 
-                ctrl[prop] = True
-                rna_prop = rna_idprop_ui_prop_get( ctrl, prop, create=True )
+                owner[prop] = True
+                rna_prop = rna_idprop_ui_prop_get(owner, prop, create=True )
                 rna_prop["min"]         = False
                 rna_prop["max"]         = True
                 rna_prop["description"] = prop
@@ -750,7 +755,7 @@ class Rig:
                 var.type = "SINGLE_PROP"
                 var.targets[0].id = self.obj
                 var.targets[0].data_path = \
-                ctrl.path_from_id() + '['+ '"' + prop + '"' + ']'
+                    owner.path_from_id() + '[' + '"' + prop + '"' + ']'
 
                 drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
 
@@ -768,7 +773,7 @@ class Rig:
                     var.type = "SINGLE_PROP"
                     var.targets[0].id = self.obj
                     var.targets[0].data_path = \
-                    ctrl.path_from_id() + '['+ '"' + prop + '"' + ']'
+                        owner.path_from_id() + '['+ '"' + prop + '"' + ']'
 
                     drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
 
@@ -778,8 +783,8 @@ class Rig:
                     drv_modifier.coefficients[1] = -1.0
 
             elif len(ctrl.constraints) > 1:
-                ctrl[prop]=0.0
-                rna_prop = rna_idprop_ui_prop_get( ctrl, prop, create=True )
+                owner[prop]=0.0
+                rna_prop = rna_idprop_ui_prop_get(owner, prop, create=True )
                 rna_prop["min"]         = 0.0
                 rna_prop["max"]         = 1.0
                 rna_prop["soft_min"]    = 0.0
@@ -811,7 +816,7 @@ class Rig:
                 var.type = "SINGLE_PROP"
                 var.targets[0].id = self.obj
                 var.targets[0].data_path = \
-                ctrl.path_from_id() + '['+ '"' + prop + '"' + ']'
+                    owner.path_from_id() + '['+ '"' + prop + '"' + ']'
 
     def bone_grouping(self, bones):
         bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -865,7 +870,8 @@ class Rig:
         controls_string = ", ".join(["'" + x + "'" for x in controls])
 
         script = create_script( bones, 'paw' )
-        script += extra_script % (controls_string, bones['ik']['mch_foot'][0], 'IK_follow', 'root/parent','root/parent')
+        #script += extra_script % (controls_string, bones['ik']['mch_foot'][0], 'IK_follow', 'root/parent','root/parent')
+        script += extra_script % (controls_string, bones['ik']['ctrl']['limb'], 'IK_follow', 'root/parent','root/parent')
 
         self.bone_grouping(bones)
 

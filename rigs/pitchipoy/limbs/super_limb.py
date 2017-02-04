@@ -496,9 +496,11 @@ class Rig:
         pb = self.obj.pose.bones
         pb_parent = pb[ parent ]
 
+        terminal_fk = pb[fk[2]]
+
         # Create ik/fk switch property
-        pb_parent['IK/FK']  = 0.0
-        prop = rna_idprop_ui_prop_get( pb_parent, 'IK/FK', create=True )
+        terminal_fk['IK/FK']  = 0.0
+        prop = rna_idprop_ui_prop_get(terminal_fk, 'IK/FK', create=True )
         prop["min"]         = 0.0
         prop["max"]         = 1.0
         prop["soft_min"]    = 0.0
@@ -528,7 +530,7 @@ class Rig:
             var.type = "SINGLE_PROP"
             var.targets[0].id = self.obj
             var.targets[0].data_path = \
-                pb_parent.path_from_id() + '['+ '"' + prop.name + '"' + ']'
+                terminal_fk.path_from_id() + '['+ '"' + prop.name + '"' + ']'
 
 
     def create_terminal( self, limb_type, bones ):

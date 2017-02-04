@@ -183,8 +183,9 @@ def create_paw( cls, bones ):
 
         # Find IK/FK switch property
         pb   = cls.obj.pose.bones
-        prop = rna_idprop_ui_prop_get( pb[ bones['parent'] ], 'IK/FK' )
-        
+        #prop = rna_idprop_ui_prop_get( pb[ bones['parent'] ], 'IK/FK' )
+        prop = rna_idprop_ui_prop_get( pb[bones['fk']['ctrl'][-1]], 'IK/FK' )
+
         # Add driver to limit scale constraint influence
         b        = org_bones[3]
         drv      = pb[b].constraints[-1].driver_add("influence").driver

@@ -306,10 +306,21 @@ def generate_rig(context, metarig):
 
     # Parent any free-floating bones to the root excluding bones with child of constraint.
     pbones = obj.pose.bones
+
+
+    ik_follow_drivers = []
+    for drv in obj.animation_data.drivers:
+        for var in drv.driver.variables:
+            if 'IK_follow' == var.name:
+                ik_follow_drivers.append(drv.data_path)
+
     noparent_bones = []
     for bone in bones:
-        if 'IK_follow' in pbones[bone].keys():
-            noparent_bones += [bone]
+        # if 'IK_follow' in pbones[bone].keys():
+        #     noparent_bones += [bone]
+        for d in ik_follow_drivers:
+            if bone in d:
+                noparent_bones += [bone]
 
     bpy.ops.object.mode_set(mode='EDIT')
     for bone in bones:
