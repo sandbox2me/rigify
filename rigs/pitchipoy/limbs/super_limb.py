@@ -8,11 +8,12 @@ from   mathutils       import Vector
 from   ....utils       import copy_bone, flip_bone, put_bone, create_cube_widget
 from   ....utils       import strip_org, make_deformer_name, create_widget
 from   ....utils       import create_circle_widget, create_sphere_widget
+from ..super_widgets import create_gear_widget
 from   ....utils       import MetarigError, make_mechanism_name, org
 from   ....utils       import create_limb_widget, connected_children_names
 from   rna_prop_ui     import rna_idprop_ui_prop_get
 from   ..super_widgets import create_ikarrow_widget
-from   math            import trunc
+from   math            import trunc, pi
 
 
 class Rig:
@@ -61,7 +62,15 @@ class Rig:
         eb[ mch ].parent = eb[ org_bones[0] ].parent
         
         eb[ mch ].roll = 0.0
-        
+
+        # Add non-MCH main limb control
+        name = get_bone_name(strip_org(org_bones[0]), 'ctrl', 'parent')
+        main_parent = copy_bone(self.obj, org_bones[0], name)
+        #orient_bone(self, eb[main_parent], 'y')
+        eb[main_parent].length = eb[org_bones[0]].length / 4
+        eb[main_parent].parent = eb[org_bones[0]]
+        eb[main_parent].roll = 0.0
+
         # Constraints
         make_constraint( self, mch, {
             'constraint'  : 'COPY_ROTATION',
@@ -78,34 +87,39 @@ class Rig:
 
         name = 'FK_limb_follow'
 
-        pb[ mch ][ name ] = 0.0
-        prop = rna_idprop_ui_prop_get( pb[ mch ], name, create = True )
-                              
-        prop["min"]         = 0.0
-        prop["max"]         = 1.0
-        prop["soft_min"]    = 0.0
-        prop["soft_max"]    = 1.0
+        # pb[ mch ][ name ] = 0.0
+        # prop = rna_idprop_ui_prop_get( pb[ mch ], name, create = True )
+        pb[main_parent][name] = 0.0
+        prop = rna_idprop_ui_prop_get(pb[main_parent], name, create=True)
+
+        prop["min"] = 0.0
+        prop["max"] = 1.0
+        prop["soft_min"] = 0.0
+        prop["soft_max"] = 1.0
         prop["description"] = name
 
-        drv = pb[ mch ].constraints[ 0 ].driver_add("influence").driver
+        drv = pb[mch].constraints[0].driver_add("influence").driver
 
         drv.type = 'AVERAGE'
         var = drv.variables.new()
         var.name = name
         var.type = "SINGLE_PROP"
         var.targets[0].id = self.obj
-        var.targets[0].data_path = pb[ mch ].path_from_id() + \
+        var.targets[0].data_path = pb[main_parent].path_from_id() + \
                                    '[' + '"' + name + '"' + ']'
 
-        return mch
+        size = pb[main_parent].bone.y_axis.length * 10
+        create_gear_widget(self.obj, main_parent, size=size, bone_transform_name=None)
 
-    def create_tweak( self ):
+        return [mch, main_parent]
+
+    def create_tweak(self):
         org_bones = self.org_bones
-        
+
         bpy.ops.object.mode_set(mode ='EDIT')
         eb = self.obj.data.edit_bones
 
-        tweaks         = {}        
+        tweaks         = {}
         tweaks['ctrl'] = []
         tweaks['mch' ] = []
 
@@ -263,8 +277,7 @@ class Rig:
         
         return tweaks
 
-
-    def create_def( self, tweaks ):
+    def create_def(self, tweaks):
         org_bones = self.org_bones
         
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -368,9 +381,8 @@ class Rig:
                                            '[' + '"' + name + '"' + ']'
                        
         return def_bones
-        
-        
-    def create_ik( self, parent ):
+
+    def create_ik(self, parent):
         org_bones = self.org_bones
         
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -496,11 +508,11 @@ class Rig:
         pb = self.obj.pose.bones
         pb_parent = pb[ parent ]
 
-        terminal_fk = pb[fk[2]]
+        # terminal_fk = pb[fk[2]]
 
         # Create ik/fk switch property
-        terminal_fk['IK/FK']  = 0.0
-        prop = rna_idprop_ui_prop_get(terminal_fk, 'IK/FK', create=True )
+        pb_parent['IK/FK'] = 0.0
+        prop = rna_idprop_ui_prop_get(pb_parent, 'IK/FK', create=True )
         prop["min"]         = 0.0
         prop["max"]         = 1.0
         prop["soft_min"]    = 0.0
@@ -530,7 +542,7 @@ class Rig:
             var.type = "SINGLE_PROP"
             var.targets[0].id = self.obj
             var.targets[0].data_path = \
-                terminal_fk.path_from_id() + '['+ '"' + prop.name + '"' + ']'
+                pb_parent.path_from_id() + '['+ '"' + prop.name + '"' + ']'
 
 
     def create_terminal( self, limb_type, bones ):
@@ -563,7 +575,7 @@ class Rig:
         for fk_bone in bones['fk']['ctrl']:
             pb[fk_bone].bone_group = rig.pose.bone_groups['FK']
 
-    def generate( self ):
+    def generate(self):
         bpy.ops.object.mode_set(mode ='EDIT')
         eb = self.obj.data.edit_bones
 
@@ -575,14 +587,16 @@ class Rig:
         bones = {}
 
         # Create mch limb parent
-        bones['parent'] = self.create_parent()
+        mch_parent, main_parent = self.create_parent()
+        bones['parent'] = mch_parent
+        bones['main_parent'] = main_parent
         bones['tweak']  = self.create_tweak()                
         bones['def']    = self.create_def( bones['tweak']['ctrl'] )
         bones['ik']     = self.create_ik(  bones['parent']        )
         bones['fk']     = self.create_fk(  bones['parent']        )
 
-        self.org_parenting_and_switch( 
-            self.org_bones, bones['ik'], bones['fk']['ctrl'], bones['parent'] 
+        self.org_parenting_and_switch(
+            self.org_bones, bones['ik'], bones['fk']['ctrl'], bones['main_parent']
         )
 
         bones = self.create_terminal( self.limb_type, bones )

@@ -70,7 +70,10 @@ def create_arm( cls, bones ):
         'owner_space' : 'LOCAL'
     })
 
+    # Create ik/fk switch property
     pb = cls.obj.pose.bones
+    #pb_parent = pb[ bones['parent'] ]
+    pb_parent = pb[bones['main_parent']]
 
     # Modify rotation mode for ik and tweak controls
     pb[bones['ik']['ctrl']['limb']].rotation_mode = 'ZXY'
@@ -78,9 +81,6 @@ def create_arm( cls, bones ):
     for b in bones['tweak']['ctrl']:
         pb[b].rotation_mode = 'ZXY'
 
-    # Create ik/fk switch property
-    pb_parent = pb[ bones['parent'] ]
-    
     pb_parent['IK_Strertch'] = 1.0
     prop = rna_idprop_ui_prop_get( pb_parent, 'IK_Strertch', create=True )
     prop["min"]         = 0.0

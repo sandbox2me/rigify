@@ -8,9 +8,9 @@ from   ....utils       import create_circle_widget, create_sphere_widget
 from   ....utils       import MetarigError, make_mechanism_name, org
 from   ....utils       import create_limb_widget, connected_children_names
 from   rna_prop_ui     import rna_idprop_ui_prop_get
-from   ..super_widgets import create_ikarrow_widget
+from   ..super_widgets import create_ikarrow_widget, create_gear_widget
 from   ..super_widgets import create_foot_widget, create_ballsocket_widget
-from   math            import trunc
+from   math            import trunc, pi
 
 
 extra_script = """
@@ -50,7 +50,7 @@ class Rig:
         else:
             self.fk_layers = None
 
-    def create_parent( self ):
+    def create_parent(self):
 
         org_bones = self.org_bones
 
@@ -66,6 +66,13 @@ class Rig:
         eb[ mch ].parent = eb[ org_bones[0] ].parent
 
         eb[ mch ].roll = 0.0
+
+        # Add non-MCH main limb control
+        name = get_bone_name(strip_org(org_bones[0]), 'ctrl', 'parent')
+        main_parent = copy_bone(self.obj, org_bones[0], name)
+        eb[main_parent].length = eb[org_bones[0]].length / 4
+        eb[main_parent].parent = eb[org_bones[0]]
+        eb[main_parent].roll = 0.0
 
         # Constraints
         make_constraint( self, mch, {
@@ -83,28 +90,33 @@ class Rig:
 
         name = 'FK_limb_follow'
 
-        pb[ mch ][ name ] = 0.0
-        prop = rna_idprop_ui_prop_get( pb[ mch ], name, create = True )
+        # pb[ mch ][ name ] = 0.0
+        # prop = rna_idprop_ui_prop_get( pb[ mch ], name, create = True )
+        pb[main_parent][name] = 0.0
+        prop = rna_idprop_ui_prop_get(pb[main_parent], name, create=True)
 
-        prop["min"]         = 0.0
-        prop["max"]         = 1.0
-        prop["soft_min"]    = 0.0
-        prop["soft_max"]    = 1.0
+        prop["min"] = 0.0
+        prop["max"] = 1.0
+        prop["soft_min"] = 0.0
+        prop["soft_max"] = 1.0
         prop["description"] = name
 
-        drv = pb[ mch ].constraints[ 0 ].driver_add("influence").driver
+        drv = pb[mch].constraints[0].driver_add("influence").driver
 
         drv.type = 'AVERAGE'
         var = drv.variables.new()
         var.name = name
         var.type = "SINGLE_PROP"
         var.targets[0].id = self.obj
-        var.targets[0].data_path = pb[ mch ].path_from_id() + \
+        var.targets[0].data_path = pb[main_parent].path_from_id() + \
                                    '[' + '"' + name + '"' + ']'
 
-        return mch
+        size = pb[main_parent].bone.y_axis.length * 10
+        create_gear_widget(self.obj, main_parent, size=size, bone_transform_name=None)
 
-    def create_tweak( self ):
+        return [mch, main_parent]
+
+    def create_tweak(self):
         org_bones = self.org_bones
 
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -242,7 +254,7 @@ class Rig:
 
         return tweaks
 
-    def create_def( self, tweaks ):
+    def create_def(self, tweaks ):
         org_bones = self.org_bones
 
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -348,7 +360,7 @@ class Rig:
 
         return def_bones
 
-    def create_ik( self, parent ):
+    def create_ik(self, parent):
         org_bones = self.org_bones
 
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -379,6 +391,15 @@ class Rig:
 
         eb[ mch_ik  ].parent = eb[ ctrl   ]
 
+        # Make standard pole target bone
+        pole_name = get_bone_name(org_bones[0], 'ctrl', 'ik_target')
+        elbow_vector = -(eb[org_bones[0]].z_axis + eb[org_bones[1]].z_axis)
+        elbow_vector.normalize()
+        elbow_vector *= eb[org_bones[0]].length/2
+        pole_target = copy_bone(self.obj, org_bones[0], pole_name)
+        eb[pole_target].parent = eb[mch_str]
+        eb[pole_target].tail = eb[org_bones[0]].tail
+        eb[pole_target].head = eb[org_bones[0]].tail + elbow_vector
 
         make_constraint( self, mch_ik, {
             'constraint'  : 'IK',
@@ -386,7 +407,18 @@ class Rig:
             'chain_count' : 2,
         })
 
+        make_constraint(self, mch_ik, {
+            'constraint': 'IK',
+            'subtarget': mch_target,
+            'chain_count': 2,
+        })
+
         pb = self.obj.pose.bones
+
+        pb[mch_ik].constraints[-1].pole_target = self.obj
+        pb[mch_ik].constraints[-1].pole_subtarget = pole_target
+        pb[mch_ik].constraints[-1].pole_angle = -pi/2
+
         pb[ mch_ik ].ik_stretch = 0.1
         pb[ ctrl   ].ik_stretch = 0.1
 
@@ -396,16 +428,17 @@ class Rig:
                setattr( pb[ mch_ik ], 'lock_ik_' + axis, True )
 
         # Locks and Widget
-        pb[ ctrl ].lock_rotation = True, False, True
-        create_ikarrow_widget( self.obj, ctrl, bone_transform_name=None )
+        pb[ctrl].lock_rotation = True, False, True
+        create_ikarrow_widget(self.obj, ctrl, bone_transform_name=None)
+        create_sphere_widget(self.obj, pole_target, bone_transform_name=None)
 
-        return { 'ctrl'       : { 'limb' : ctrl },
-                 'mch_ik'     : mch_ik,
-                 'mch_target' : mch_target,
-                 'mch_str'    : mch_str
+        return {'ctrl': {'limb': ctrl, 'ik_target': pole_target},
+                 'mch_ik': mch_ik,
+                 'mch_target': mch_target,
+                 'mch_str': mch_str
         }
 
-    def create_fk( self, parent ):
+    def create_fk(self, parent ):
         org_bones = self.org_bones.copy()
 
 
@@ -466,15 +499,13 @@ class Rig:
                 if i <= len(org)-1:
                     eb[o].use_connect = True
 
-        bpy.ops.object.mode_set(mode ='OBJECT')
+        bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
         pb_parent = pb[ parent ]
 
-        paw_fk = pb[fk[2]]
-
         # Create ik/fk switch property
-        paw_fk['IK/FK']  = 0.0
-        prop = rna_idprop_ui_prop_get(paw_fk, 'IK/FK', create=True )
+        pb_parent['IK/FK']  = 0.0
+        prop = rna_idprop_ui_prop_get(pb_parent, 'IK/FK', create=True )
         prop["min"]         = 0.0
         prop["max"]         = 1.0
         prop["soft_min"]    = 0.0
@@ -504,9 +535,9 @@ class Rig:
             var.type = "SINGLE_PROP"
             var.targets[0].id = self.obj
             var.targets[0].data_path = \
-                paw_fk.path_from_id() + '['+ '"' + prop.name + '"' + ']'
+                pb_parent.path_from_id() + '['+ '"' + prop.name + '"' + ']'
 
-    def create_paw( self, bones ):
+    def create_paw(self, bones):
 
         org_bones = list(
             [self.org_bones[0]] + connected_children_names(self.obj, self.org_bones[0])
@@ -541,7 +572,10 @@ class Rig:
             ctrl_parent = copy_bone(self.obj, org_bones[2], get_bone_name( org_bones[2], 'mch', 'ik_parent'))
             eb[ctrl_parent].tail = eb[ctrl_parent].head + 0.6*(eb[ctrl_parent].tail-eb[ctrl_parent].head)
             eb[ctrl_parent].use_connect = False
-            eb[ctrl_parent].parent = eb[org_bones[0]].parent
+            if eb[org_bones[0]].parent_recursive:
+                eb[ctrl_parent].parent = eb[org_bones[0]].parent_recursive[-1]
+            else:
+                eb[ctrl_parent].parent = eb[org_bones[0]].parent
         else:
             paw_parent = None
 
@@ -611,19 +645,19 @@ class Rig:
 
         # Create ik/fk switch property
         pb = self.obj.pose.bones
-        pb_parent = pb[ bones['parent'] ]
+        pb_parent = pb[bones['main_parent']]
 
         pb_parent['IK_Strertch'] = 1.0
-        prop = rna_idprop_ui_prop_get( pb_parent, 'IK_Strertch', create=True )
-        prop["min"]         = 0.0
-        prop["max"]         = 1.0
-        prop["soft_min"]    = 0.0
-        prop["soft_max"]    = 1.0
+        prop = rna_idprop_ui_prop_get(pb_parent, 'IK_Strertch', create=True)
+        prop["min"] = 0.0
+        prop["max"] = 1.0
+        prop["soft_min"] = 0.0
+        prop["soft_max"] = 1.0
         prop["description"] = 'IK Stretch'
 
         # Add driver to limit scale constraint influence
-        b        = bones['ik']['mch_str']
-        drv      = pb[b].constraints[-1].driver_add("influence").driver
+        b = bones['ik']['mch_str']
+        drv = pb[b].constraints[-1].driver_add("influence").driver
         drv.type = 'AVERAGE'
 
         var = drv.variables.new()
@@ -631,7 +665,7 @@ class Rig:
         var.type = "SINGLE_PROP"
         var.targets[0].id = self.obj
         var.targets[0].data_path = \
-            pb_parent.path_from_id() + '['+ '"' + prop.name + '"' + ']'
+            pb_parent.path_from_id() + '[' + '"' + prop.name + '"' + ']'
 
         drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
 
@@ -690,7 +724,7 @@ class Rig:
             # Find IK/FK switch property
             pb   = self.obj.pose.bones
             #prop = rna_idprop_ui_prop_get( pb[ bones['parent'] ], 'IK/FK' )
-            prop = rna_idprop_ui_prop_get(pb[bones['fk']['ctrl'][-1]], 'IK/FK' )
+            prop = rna_idprop_ui_prop_get(pb[bones['fk']['ctrl'][-1]], 'IK/FK')
 
             # Add driver to limit scale constraint influence
             b        = org_bones[3]
@@ -732,15 +766,84 @@ class Rig:
 
         ctrl = pb[bones['ik']['mch_foot'][0]]
 
-        owner = pb[bones['ik']['ctrl']['limb']]
+        #owner = pb[bones['ik']['ctrl']['limb']]
+        owner = pb[bones['main_parent']]
 
-        props  = [ "IK_follow", "root/parent" ]
+        props = ["IK_follow", "root/parent", "pole_vector"]
 
         for prop in props:
-            if prop == 'IK_follow':
+
+            if prop == 'pole_vector':
+                owner[prop] = False
+                pole_prop = rna_idprop_ui_prop_get(owner, prop, create=True)
+                pole_prop["min"] = False
+                pole_prop["max"] = True
+                pole_prop["description"] = prop
+                mch_ik = pb[bones['ik']['mch_ik']]
+
+                pole_target = pb[bones['ik']['ctrl']['ik_target']]
+                drv = pole_target.bone.driver_add("hide").driver
+                drv.type = 'AVERAGE'
+
+                var = drv.variables.new()
+                var.name = prop
+                var.type = "SINGLE_PROP"
+                var.targets[0].id = self.obj
+                var.targets[0].data_path = \
+                    owner.path_from_id() + '[' + '"' + prop + '"' + ']'
+
+                drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
+
+                drv_modifier.mode = 'POLYNOMIAL'
+                drv_modifier.poly_order = 1
+                drv_modifier.coefficients[0] = 1.0
+                drv_modifier.coefficients[1] = -1.0
+
+                pole_target = pb[bones['ik']['ctrl']['limb']]
+                drv = pole_target.bone.driver_add("hide").driver
+                drv.type = 'AVERAGE'
+
+                var = drv.variables.new()
+                var.name = prop
+                var.type = "SINGLE_PROP"
+                var.targets[0].id = self.obj
+                var.targets[0].data_path = \
+                    owner.path_from_id() + '[' + '"' + prop + '"' + ']'
+
+                drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
+
+                drv_modifier.mode = 'POLYNOMIAL'
+                drv_modifier.poly_order = 1
+                drv_modifier.coefficients[0] = 0.0
+                drv_modifier.coefficients[1] = 1.0
+
+                for cns in mch_ik.constraints:
+                    if 'IK' in cns.type:
+                        drv = cns.driver_add("mute").driver
+                        drv.type = 'AVERAGE'
+
+                        var = drv.variables.new()
+                        var.name = prop
+                        var.type = "SINGLE_PROP"
+                        var.targets[0].id = self.obj
+                        var.targets[0].data_path = \
+                            owner.path_from_id() + '[' + '"' + prop + '"' + ']'
+
+                        drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
+
+                        drv_modifier.mode = 'POLYNOMIAL'
+                        drv_modifier.poly_order = 1
+                        if not cns.pole_subtarget:
+                            drv_modifier.coefficients[0] = 0.0
+                            drv_modifier.coefficients[1] = 1
+                        else:
+                            drv_modifier.coefficients[0] = 1.0
+                            drv_modifier.coefficients[1] = -1.0
+
+            elif prop == 'IK_follow':
 
                 owner[prop] = True
-                rna_prop = rna_idprop_ui_prop_get(owner, prop, create=True )
+                rna_prop = rna_idprop_ui_prop_get(owner, prop, create=True)
                 rna_prop["min"]         = False
                 rna_prop["max"]         = True
                 rna_prop["description"] = prop
@@ -753,7 +856,7 @@ class Rig:
                 var.type = "SINGLE_PROP"
                 var.targets[0].id = self.obj
                 var.targets[0].data_path = \
-                    owner.path_from_id() + '['+ '"' + prop + '"' + ']'
+                    owner.path_from_id() + '[' + '"' + prop + '"' + ']'
 
                 drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
 
@@ -814,7 +917,7 @@ class Rig:
                 var.type = "SINGLE_PROP"
                 var.targets[0].id = self.obj
                 var.targets[0].data_path = \
-                    owner.path_from_id() + '['+ '"' + prop + '"' + ']'
+                    owner.path_from_id() + '[' + '"' + prop + '"' + ']'
 
     def bone_grouping(self, bones):
         bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -849,27 +952,32 @@ class Rig:
         bones = {}
 
         # Create mch limb parent
-        bones['parent'] = self.create_parent()
+        mch_parent, main_parent = self.create_parent()
+        bones['parent'] = mch_parent
+        bones['main_parent'] = main_parent
         bones['tweak']  = self.create_tweak()
         bones['def']    = self.create_def( bones['tweak']['ctrl'] )
         bones['ik']     = self.create_ik(  bones['parent']        )
         bones['fk']     = self.create_fk(  bones['parent']        )
 
         self.org_parenting_and_switch(
-            self.org_bones, bones['ik'], bones['fk']['ctrl'], bones['parent']
+            self.org_bones, bones['ik'], bones['fk']['ctrl'], bones['main_parent']
         )
 
         bones = self.create_paw( bones )
         self.create_drivers(    bones )
 
-        controls =  [ bones['ik']['ctrl']['limb'], bones['ik']['ctrl']['terminal'][-1], bones['ik']['ctrl']['terminal'][-2] ]
+        controls = [ bones['ik']['ctrl']['limb'], bones['ik']['ctrl']['terminal'][-1], bones['ik']['ctrl']['terminal'][-2] ]
+
+        controls.append(bones['main_parent'])
 
         # Create UI
         controls_string = ", ".join(["'" + x + "'" for x in controls])
 
         script = create_script( bones, 'paw' )
         #script += extra_script % (controls_string, bones['ik']['mch_foot'][0], 'IK_follow', 'root/parent','root/parent')
-        script += extra_script % (controls_string, bones['ik']['ctrl']['limb'], 'IK_follow', 'root/parent','root/parent')
+        #script += extra_script % (controls_string, bones['ik']['ctrl']['limb'], 'IK_follow', 'root/parent','root/parent')
+        script += extra_script % (controls_string, bones['main_parent'], 'IK_follow', 'root/parent','root/parent')
 
         self.bone_grouping(bones)
 

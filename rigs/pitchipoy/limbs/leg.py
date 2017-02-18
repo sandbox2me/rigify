@@ -21,6 +21,7 @@ import bpy, math
 from ....utils       import MetarigError, connected_children_names
 from ....utils       import create_widget, copy_bone, create_circle_widget
 from ....utils       import strip_org, flip_bone, put_bone
+from ....utils       import align_bone_y_axis, align_bone_x_axis
 from rna_prop_ui     import rna_idprop_ui_prop_get
 from ..super_widgets import create_foot_widget, create_ballsocket_widget
 from .limb_utils     import *
@@ -56,13 +57,17 @@ def create_leg( cls, bones ):
     # Create heel ctrl bone
     heel = get_bone_name( org_bones[2], 'ctrl', 'heel_ik' )
     heel = copy_bone( cls.obj, org_bones[2], heel )
-    orient_bone( cls, eb[ heel ], 'y', 0.5 )
+    # orient_bone( cls, eb[ heel ], 'y', 0.5 )
+    ax = eb[org_bones[2]].head - eb[org_bones[2]].tail
+    ax[2] = 0
+    align_bone_y_axis(cls.obj, heel, ax)
+    align_bone_x_axis(cls.obj, heel, eb[org_bones[2]].x_axis)
     eb[ heel ].length = eb[ org_bones[2] ].length / 2
 
     # Reset control position and orientation
-    l = eb[ ctrl ].length
-    orient_bone( cls, eb[ ctrl ], 'y', reverse = True )
-    eb[ ctrl ].length = l
+    l = eb[ctrl].length
+    orient_bone( cls, eb[ctrl], 'y', reverse=True )
+    eb[ctrl].length = l
 
     # Parent 
     eb[ heel ].use_connect = False
@@ -87,7 +92,8 @@ def create_leg( cls, bones ):
     eb[ roll1_mch ].use_connect = False
     eb[ roll1_mch ].parent      = None
 
-    flip_bone( cls.obj, roll1_mch )
+    flip_bone(cls.obj, roll1_mch)
+    align_bone_x_axis(cls.obj, roll1_mch, eb[org_bones[2]].x_axis)
 
     # Create 2nd roll mch, and two rock mch bones
     roll2_mch = get_bone_name( tmp_heel, 'mch', 'roll' )
@@ -112,6 +118,7 @@ def create_leg( cls, bones ):
     eb[ rock1_mch ].parent      = None    
     
     orient_bone( cls, eb[ rock1_mch ], 'y', 1.0, reverse = True )
+    align_bone_y_axis(cls.obj, rock1_mch, ax)
     eb[ rock1_mch ].length = eb[ tmp_heel ].length / 2
     
     rock2_mch = get_bone_name( tmp_heel, 'mch', 'rock' )
@@ -120,7 +127,8 @@ def create_leg( cls, bones ):
     eb[ rock2_mch ].use_connect = False
     eb[ rock2_mch ].parent      = None    
 
-    orient_bone( cls, eb[ rock2_mch ], 'y', 1.0 )
+    #orient_bone( cls, eb[ rock2_mch ], 'y', 1.0 )
+    align_bone_y_axis(cls.obj, rock2_mch, ax)
     eb[ rock2_mch ].length = eb[ tmp_heel ].length / 2
     
     # Parent rock and roll MCH bones
@@ -234,7 +242,8 @@ def create_leg( cls, bones ):
         pb[b].rotation_mode = 'ZXY'
 
     # Create ik/fk switch property
-    pb_parent = pb[ bones['parent'] ]
+    #pb_parent = pb[ bones['parent'] ]
+    pb_parent = pb[bones['main_parent']]
     
     pb_parent['IK_Strertch'] = 1.0
     prop = rna_idprop_ui_prop_get( pb_parent, 'IK_Strertch', create=True )
@@ -254,7 +263,7 @@ def create_leg( cls, bones ):
     var.type = "SINGLE_PROP"
     var.targets[0].id = cls.obj
     var.targets[0].data_path = \
-        pb_parent.path_from_id() + '['+ '"' + prop.name + '"' + ']'
+        pb_parent.path_from_id() + '[' + '"' + prop.name + '"' + ']'
 
     drv_modifier = cls.obj.animation_data.drivers[-1].modifiers[0]
     

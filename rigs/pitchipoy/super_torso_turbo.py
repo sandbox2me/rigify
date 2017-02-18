@@ -161,7 +161,7 @@ class Rig:
         eb = self.obj.data.edit_bones
 
         neck, neck_pivot = '', ''
-        if len(neck_bones)>2:
+        if len(neck_bones) > 2:
             # Create neck control
             neck = copy_bone(self.obj, org(neck_bones[0]), 'neck')
             neck_eb = eb[neck]
@@ -169,19 +169,20 @@ class Rig:
             # Neck spans all neck bones (except head)
             neck_eb.tail[:] = eb[ org(neck_bones[-1])].head
 
-            # Create neck bend control
-            neck_pivot = copy_bone(self.obj, org(neck_bones[0]), 'neck_pivot')
-            neck_pivot_eb = eb[neck_pivot]
+            if len(neck_bones) > 3:
+                # Create neck bend control
+                neck_pivot = copy_bone(self.obj, org(neck_bones[0]), 'neck_pivot')
+                neck_pivot_eb = eb[neck_pivot]
 
-            # Neck pivot position
-            if (len(neck_bones)-1)%2:
-                center_bone = org(neck_bones[int((len(neck_bones))/2) - 1])
-                head_position = (eb[center_bone].head + eb[center_bone].tail)/2
-            else:
-                center_bone = org(neck_bones[int((len(neck_bones)-1)/2) -1])
-                head_position = eb[center_bone].tail
-            neck_pivot_eb.head = head_position
-            neck_pivot_eb.tail = head_position + (neck_eb.tail - neck_eb.head)/2
+                # Neck pivot position
+                if (len(neck_bones)-1) % 2:
+                    center_bone = org(neck_bones[int((len(neck_bones))/2) - 1])
+                    head_position = (eb[center_bone].head + eb[center_bone].tail)/2
+                else:
+                    center_bone = org(neck_bones[int((len(neck_bones)-1)/2) -1])
+                    head_position = eb[center_bone].tail
+                neck_pivot_eb.head = head_position
+                neck_pivot_eb.tail = head_position + (neck_eb.tail - neck_eb.head)/2
 
 
         # Create head control
@@ -347,7 +348,8 @@ class Rig:
             eb[bones['neck']['ctrl_neck']].parent = eb[bones['neck']['mch_neck']]
 
             # Neck pivot => MCH-rotation_neck
-            eb[bones['neck']['neck_pivot']].parent = eb[bones['neck']['ctrl_neck']]
+            if bones['neck']['neck_pivot']:
+                eb[bones['neck']['neck_pivot']].parent = eb[bones['neck']['ctrl_neck']]
 
         # Parent hips and chest controls to torso
         eb[bones['chest']['ctrl']].parent = eb[bones['pivot']['ctrl']]
@@ -485,13 +487,14 @@ class Rig:
                     xval = (j+1)*step
                     influence = 2*xval - xval**2 #parabolic influence of pivot
 
-                    self.make_constraint( b, {
-                        'constraint'   : 'COPY_TRANSFORMS',
-                        'subtarget'    : l['neck_pivot'],
-                        'influence'    : influence,
-                        'owner_space'  : 'LOCAL',
-                        'target_space' : 'LOCAL'
-                    } )
+                    if bones['neck']['neck_pivot']:
+                        self.make_constraint( b, {
+                            'constraint'   : 'COPY_TRANSFORMS',
+                            'subtarget'    : l['neck_pivot'],
+                            'influence'    : influence,
+                            'owner_space'  : 'LOCAL',
+                            'target_space' : 'LOCAL'
+                        } )
 
                 else:
                     factor  = float( 1 / len( l['tweak'] ) )

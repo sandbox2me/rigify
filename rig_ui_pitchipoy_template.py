@@ -357,7 +357,10 @@ def ik2fk_arm(obj, fk, ik):
     uarmi = obj.pose.bones[ik[0]]
     farmi = obj.pose.bones[ik[1]]
     handi = obj.pose.bones[ik[2]]
-    if ik[3] != "":
+
+    main_parent = obj.pose.bones[ik[4]]
+
+    if ik[3] != "" and main_parent['pole_vector']:
         pole  = obj.pose.bones[ik[3]]
     else:
         pole = None
@@ -365,7 +368,7 @@ def ik2fk_arm(obj, fk, ik):
 
     if pole:
         # Stretch
-        handi['stretch_length'] = uarm['stretch_length']
+        # handi['stretch_length'] = uarm['stretch_length']
 
         # Hand position
         match_pose_translation(handi, hand)
@@ -464,7 +467,11 @@ def ik2fk_leg(obj, fk, ik):
     shini    = obj.pose.bones[ik[1]]
     footi    = obj.pose.bones[ik[2]]
     footroll = obj.pose.bones[ik[3]]
-    if ik[4] != "":
+
+    print(ik[6])
+    main_parent = obj.pose.bones[ik[6]]
+
+    if ik[4] != "" and main_parent['pole_vector']:
         pole     = obj.pose.bones[ik[4]]
     else:
         pole = None
@@ -472,7 +479,7 @@ def ik2fk_leg(obj, fk, ik):
 
     if (not pole) and (foot):
         # Stretch
-        #footi['stretch_length'] = thigh['stretch_length']
+        # footi['stretch_length'] = thigh['stretch_length']
 
         # Clear footroll
         set_pose_rotation(footroll, Matrix())
@@ -499,7 +506,7 @@ def ik2fk_leg(obj, fk, ik):
 
     else:
         # Stretch
-        footi['stretch_length'] = thigh['stretch_length']
+        # footi['stretch_length'] = thigh['stretch_length']
 
         # Clear footroll
         set_pose_rotation(footroll, Matrix())
@@ -566,6 +573,8 @@ class Rigify_Arm_IK2FK(bpy.types.Operator):
     hand_ik = bpy.props.StringProperty(name="Hand IK Name")
     pole    = bpy.props.StringProperty(name="Pole IK Name")
 
+    main_parent = bpy.props.StringProperty(name="Main Parent", default="")
+
     @classmethod
     def poll(cls, context):
         return (context.active_object != None and context.mode == 'POSE')
@@ -574,7 +583,7 @@ class Rigify_Arm_IK2FK(bpy.types.Operator):
         use_global_undo = context.user_preferences.edit.use_global_undo
         context.user_preferences.edit.use_global_undo = False
         try:
-            ik2fk_arm(context.active_object, fk=[self.uarm_fk, self.farm_fk, self.hand_fk], ik=[self.uarm_ik, self.farm_ik, self.hand_ik, self.pole])
+            ik2fk_arm(context.active_object, fk=[self.uarm_fk, self.farm_fk, self.hand_fk], ik=[self.uarm_ik, self.farm_ik, self.hand_ik, self.pole, self.main_parent])
         finally:
             context.user_preferences.edit.use_global_undo = use_global_undo
         return {'FINISHED'}
@@ -629,6 +638,7 @@ class Rigify_Leg_IK2FK(bpy.types.Operator):
     pole     = bpy.props.StringProperty(name="Pole IK Name")
     mfoot_ik = bpy.props.StringProperty(name="MFoot IK Name")
 
+    main_parent = bpy.props.StringProperty(name="Main Parent", default="")
 
     @classmethod
     def poll(cls, context):
@@ -638,7 +648,7 @@ class Rigify_Leg_IK2FK(bpy.types.Operator):
         use_global_undo = context.user_preferences.edit.use_global_undo
         context.user_preferences.edit.use_global_undo = False
         try:
-            ik2fk_leg(context.active_object, fk=[self.thigh_fk, self.shin_fk, self.mfoot_fk, self.foot_fk], ik=[self.thigh_ik, self.shin_ik, self.foot_ik, self.footroll, self.pole, self.mfoot_ik])
+            ik2fk_leg(context.active_object, fk=[self.thigh_fk, self.shin_fk, self.mfoot_fk, self.foot_fk], ik=[self.thigh_ik, self.shin_ik, self.foot_ik, self.footroll, self.pole, self.mfoot_ik, self.main_parent])
         finally:
             context.user_preferences.edit.use_global_undo = use_global_undo
         return {'FINISHED'}

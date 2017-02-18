@@ -52,6 +52,21 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
 
         if obj.mode in {'POSE', 'OBJECT'}:
             layout.operator("pose.rigify_generate", text="Generate")
+            WARNING = "Warning: Some features may change after generation"
+            show_warning = False
+
+            check_props = ['IK_follow', 'root/parent', 'FK_limb_follow', 'IK_Strertch']
+            for obj in bpy.data.objects:
+                if type(obj.data) != bpy.types.Armature:
+                    continue
+                for bone in obj.pose.bones:
+                    if bone.bone.layers[30] and (list(set(bone.keys()) & set(check_props))):
+                        show_warning = True
+                        break
+
+            if show_warning:
+                layout.label(text=WARNING, icon='ERROR')
+
         elif obj.mode == 'EDIT':
             # Build types list
             collection_name = str(id_store.rigify_collection).replace(" ", "")
