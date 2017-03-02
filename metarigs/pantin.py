@@ -59,7 +59,7 @@ def create(obj):
     arm.rigify_layers[14].row = 1
     arm.rigify_layers[15].name = " "
     arm.rigify_layers[15].row = 1
-    arm.rigify_layers[16].name = " "
+    arm.rigify_layers[16].name = "Face"
     arm.rigify_layers[16].row = 1
     arm.rigify_layers[17].name = " "
     arm.rigify_layers[17].row = 1

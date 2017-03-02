@@ -89,27 +89,62 @@ class Rig:
         # print('LAYERS:', list(layers))
 
         ctrl_chain = []
+        mch_chain = []
         # def_chain = []
 
         # if self.params.duplicate_lr:
         #     sides = ['.L', '.R']
         # else:
-        sides = [self.params.object_side]
-        if sides[0] == '.C':
-            sides[0] = ''
-        for s in sides:
-            for i, b in enumerate(self.org_bones):
-                # Control bones
-                ctrl_bone = copy_bone(self.obj, b)
+        side = self.params.object_side
+        if side == '.C':
+            side = ''
+        
+        # IK control bone
+        if self.params.chain_type == 'IK':
+            last_bone = self.org_bones[-1]
+            ctrl_bone = new_bone(self.obj, strip_org(last_bone) + ".ik" + side)
+            ctrl_bone_e = eb[ctrl_bone]
+            ctrl_bone_e.head = eb[last_bone].tail
+            ctrl_bone_e.tail = eb[last_bone].tail + Vector((0.3, 0, 0))
+            align_bone_z_axis(self.obj, ctrl_bone, Vector((0, 1, 0)))
+            ctrl_bone_e.layers = layers
+            
+        for i, b in enumerate(self.org_bones):
+            # Control bones
+            if self.params.chain_type != 'IK':
+                ctrl_bone = copy_bone(self.obj, b, strip_org(b) + side)
                 ctrl_bone_e = eb[ctrl_bone]
 
-                # Name
-                ctrl_bone_name = strip_org(b) + s
-                if self.params.create_ik:
-                    ctrl_bone_name = make_mechanism_name(ctrl_bone_name)
-                ctrl_bone_e.name = ctrl_bone_name
+                if self.params.chain_type == 'Curve':
+                    ctrl_bone_e.use_connect = False
+                    ctrl_bone_e.parent = eb[self.org_parent]
+                    ctrl_bone_e.tail = (ctrl_bone_e.head
+                                    + Vector((0, 0, 1)) * ctrl_bone_e.length)
+                    align_bone_z_axis(self.obj, ctrl_bone, Vector((0, 1, 0)))
 
-                # Parenting
+                ctrl_chain.append(ctrl_bone)
+                ctrl_bone_e.layers = layers
+
+            # Mechanism bones
+            if self.params.chain_type == 'Curve':
+                stretch_bone = copy_bone(
+                    self.obj, b,
+                    make_mechanism_name(strip_org(b)) + '.stretch' + side)
+                stretch_bone_e = eb[stretch_bone]
+                stretch_bone_e.use_connect = False
+                stretch_bone_e.parent = eb[ctrl_bone]
+                mch_chain.append(stretch_bone)
+
+            if self.params.chain_type == 'IK':
+                ik_bone = copy_bone(
+                    self.obj, b,
+                    make_mechanism_name(strip_org(b)) + '.ik' + side)
+                ik_bone_e = eb[ik_bone]
+                ik_bone_e.parent = eb[ctrl_bone]
+                mch_chain.append(ik_bone)
+
+            # Parenting
+            if self.params.chain_type == 'Normal':
                 if i == 0:
                     # First bone
                     # TODO Check if parent still exists,
@@ -124,46 +159,54 @@ class Rig:
                         else:
                             raise MetarigError(
                                 "RIGIFY ERROR: Bone %s does not have a %s side"
-                                % (strip_org(eb[b].parent.name), s))
+                                % (strip_org(eb[b].parent.name), side))
                     else:
                         ctrl_bone_e.parent = eb['MCH-Flip']
-                else:
-                    # The rest
-                    ctrl_bone_e.parent = eb[ctrl_chain[-1]]
+            # else:
+            #     # The rest
+            #     ctrl_bone_e.parent = eb[ctrl_chain[-1]]
 
-                ctrl_bone_e.layers = layers
+            # Def bones
+            def_bone = pantin_utils.create_deformation(
+                self.obj, b,
+                self.params.flip_switch,
+                member_Z_index,
+                bone_Z_index + i,
+                0.0,
+                b+side)
 
-                # Add to list
-                ctrl_chain += [ctrl_bone_e.name]
+        if self.params.chain_type == 'Curve':
+            last_bone = self.org_bones[-1]
+            ctrl_bone = new_bone(self.obj, strip_org(last_bone) + ".end" + side)
+            ctrl_bone_e = eb[ctrl_bone]
 
-                # Def bones
-                def_bone = pantin_utils.create_deformation(
-                    self.obj, b,
-                    self.params.flip_switch,
-                    member_Z_index,
-                    bone_Z_index + i,
-                    0.0,
-                    b+s)
+            ctrl_bone_e.use_connect = False
+            ctrl_bone_e.parent = eb[self.org_parent]
+            ctrl_bone_e.head = eb[last_bone].tail
+            ctrl_bone_e.tail = (ctrl_bone_e.head
+                                + Vector((0, 0, 1)) * eb[last_bone].length)
+            align_bone_z_axis(self.obj, ctrl_bone, Vector((0, 1, 0)))
+            ctrl_chain.append(ctrl_bone)
+            ctrl_bone_e.layers = layers
+        bpy.ops.object.mode_set(mode='OBJECT')
+        pb = self.obj.pose.bones
 
-            if self.params.create_ik:
-                last_bone = self.org_bones[-1]
-                ik_ctrl = new_bone(self.obj, strip_org(last_bone) + ".ik" + s)
-                ik_ctrl_e = eb[ik_ctrl]
-                ik_ctrl_e.head = eb[last_bone].tail
-                ik_ctrl_e.tail = eb[last_bone].tail + Vector((0.3, 0, 0))
-                align_bone_z_axis(self.obj, ik_ctrl, Vector((0, 1, 0)))
-                ik_ctrl_e.layers = layers
-            bpy.ops.object.mode_set(mode='OBJECT')
-            pb = self.obj.pose.bones
-
+        if self.params.chain_type in ('IK', 'Curve'):
             # Widgets
-            if self.params.create_ik:
+            for ctrl_bone in ctrl_chain:
                 global_scale = self.obj.dimensions[2]
                 member_factor = 0.06
                 widget_size = global_scale * member_factor
                 pantin_utils.create_aligned_circle_widget(
-                    self.obj, ik_ctrl, radius=widget_size)
+                    self.obj, ctrl_bone, radius=widget_size)
 
+            # Constraints
+            for org, ctrl in zip(self.org_bones, mch_chain):
+                con = pb[org].constraints.new('COPY_TRANSFORMS')
+                con.name = "copy_transforms"
+                con.target = self.obj
+                con.subtarget = ctrl
+        else:
             # Constraints
             for org, ctrl in zip(self.org_bones, ctrl_chain):
                 con = pb[org].constraints.new('COPY_TRANSFORMS')
@@ -171,18 +214,24 @@ class Rig:
                 con.target = self.obj
                 con.subtarget = ctrl
 
-            if self.params.create_ik:
-                last_bone = ctrl_chain[-1]
-                con = pb[last_bone].constraints.new('IK')
-                # con.name = "copy_transforms"
+        if self.params.chain_type == 'Curve':
+            for ctrl, mch in zip(ctrl_chain[1:], mch_chain):
+                con = pb[mch].constraints.new('STRETCH_TO')
+                con.name = "stretch_to"
                 con.target = self.obj
-                con.subtarget = ik_ctrl
-                con.chain_count = len(self.org_bones)
+                con.subtarget = ctrl
 
-                # Pelvis follow
-                if self.params.do_flip:
-                    pantin_utils.create_ik_child_of(
-                        self.obj, ik_ctrl, self.params.pelvis_name)
+        if self.params.chain_type == 'IK':
+            last_bone = ctrl_chain[-1]
+            con = pb[last_bone].constraints.new('IK')
+            con.target = self.obj
+            con.subtarget = ik_ctrl
+            con.chain_count = len(self.org_bones)
+
+            # Pelvis follow
+            if self.params.do_flip:
+                pantin_utils.create_ik_child_of(
+                    self.obj, ik_ctrl, self.params.pelvis_name)
 
 
 def add_parameters(params):
@@ -240,10 +289,15 @@ def add_parameters(params):
         name="Use parent's layers",
         default=True,
         description="The object will use its parent's layers")
-    params.create_ik = bpy.props.BoolProperty(
-        name="Create IK",
-        default=False,
-        description="Create an IK constraint on the last bone")
+    # params.create_ik = bpy.props.BoolProperty(
+    #     name="Create IK",
+    #     default=False,
+    #     description="Create an IK constraint on the last bone")
+    params.chain_type = bpy.props.EnumProperty(
+        name="Chain Type",
+        items=(('Normal',)*3, ('IK',)*3, ('Curve',)*3,),
+        default="Normal",
+        description="Type of chain to be generated")
     params.layers = bpy.props.BoolVectorProperty(
         size=32,
         description="Layers for the object")
@@ -275,7 +329,7 @@ def parameters_ui(layout, params):
 
     col = layout.column()
     r = col.row()
-    r.prop(params, "create_ik")
+    r.prop(params, "chain_type")
 
     # Layers
     col = layout.column(align=True)
