@@ -140,7 +140,7 @@ class Rig:
                     self.obj, b,
                     make_mechanism_name(strip_org(b)) + '.ik' + side)
                 ik_bone_e = eb[ik_bone]
-                ik_bone_e.parent = eb[ctrl_bone]
+                ik_bone_e.parent = eb[mch_chain[-1] if i > 0 else self.org_parent]
                 mch_chain.append(ik_bone)
 
             # Parenting
@@ -194,9 +194,9 @@ class Rig:
         if self.params.chain_type in ('IK', 'Curve'):
             # Widgets
             for ctrl_bone in ctrl_chain:
-                global_scale = self.obj.dimensions[2]
-                member_factor = 0.06
-                widget_size = global_scale * member_factor
+                global_scale = pb[ctrl_bone].length  # self.obj.dimensions[2]
+                # member_factor = 0.06
+                widget_size = global_scale * 0.5  # * member_factor
                 pantin_utils.create_aligned_circle_widget(
                     self.obj, ctrl_bone, radius=widget_size)
 
@@ -222,16 +222,16 @@ class Rig:
                 con.subtarget = ctrl
 
         if self.params.chain_type == 'IK':
-            last_bone = ctrl_chain[-1]
+            last_bone = mch_chain[-1]
             con = pb[last_bone].constraints.new('IK')
             con.target = self.obj
-            con.subtarget = ik_ctrl
+            con.subtarget = ctrl_bone
             con.chain_count = len(self.org_bones)
 
             # Pelvis follow
             if self.params.do_flip:
                 pantin_utils.create_ik_child_of(
-                    self.obj, ik_ctrl, self.params.pelvis_name)
+                    self.obj, ctrl_bone, self.params.pelvis_name)
 
 
 def add_parameters(params):

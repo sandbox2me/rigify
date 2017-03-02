@@ -39,10 +39,10 @@ class Rig:
         head_children = [c for c in head_children if not c['rigify_type']]
         head_children = sorted(head_children, key=lambda b: b.tail.z)
 
-        self.jaw = head_children[0].name
-        self.eyelid = head_children[1].name
+        # self.jaw = head_children[0].name
+        # self.eyelid = head_children[1].name
 
-        self.org_bones = [self.neck, self.head, self.jaw, self.eyelid]
+        self.org_bones = [self.neck, self.head]  # , self.jaw, self.eyelid]
 
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
@@ -64,9 +64,9 @@ class Rig:
                 if eb[b].parent is not None:
                     bone_parent_name = strip_org(eb[b].parent.name)
                     ctrl_bone_e.parent = eb[bone_parent_name]
-            elif i >= len(self.org_bones)-1:
-                # Parent jaw and eyelid to the head (1)
-                ctrl_bone_e.parent = eb[ctrl_chain[1]]
+            # elif i >= len(self.org_bones)-1:
+            #     # Parent jaw and eyelid to the head (1)
+            #     ctrl_bone_e.parent = eb[ctrl_chain[1]]
             else:
                 # The rest
                 ctrl_bone_e.parent = eb[ctrl_chain[-1]]
@@ -81,8 +81,8 @@ class Rig:
                 self.params.flip_switch,
                 member_index=self.params.Z_index,
                 bone_index=i)
-            if b == self.eyelid:
-                eyelid_def_bone = def_bone
+            # if b == self.eyelid:
+            #     eyelid_def_bone = def_bone
 
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
@@ -94,15 +94,15 @@ class Rig:
 
         neck = ctrl_chain[0]
         head = ctrl_chain[1]
-        jaw = ctrl_chain[2]
-        eyelid = ctrl_chain[3]
+        # jaw = ctrl_chain[2]
+        # eyelid = ctrl_chain[3]
 
         pantin_utils.create_capsule_widget(
             self.obj, neck, width=widget_size, height=widget_size*0.1)
         pantin_utils.create_aligned_circle_widget(
             self.obj, head, radius=widget_size, head_tail=0.5)
-        pantin_utils.create_aligned_circle_widget(
-            self.obj, jaw, radius=widget_size * 0.3, head_tail=0.5)
+        # pantin_utils.create_aligned_circle_widget(
+        #     self.obj, jaw, radius=widget_size * 0.3, head_tail=0.5)
 
         # Constraints
         for org, ctrl in zip(self.org_bones, ctrl_chain):
@@ -124,40 +124,6 @@ class Rig:
         con.min_z = -0.5
         con.max_z = 0.68
         con.owner_space = 'LOCAL'
-
-        # con = pb[jaw].constraints.new('LIMIT_ROTATION')
-        # con.name = "limit_rotation"
-        # con.use_limit_z = True
-        # con.min_z = 0.0
-        # con.max_z = 0.39
-        # con.owner_space = 'LOCAL'
-
-        con = pb[eyelid].constraints.new('LIMIT_ROTATION')
-        con.name = "limit_rotation"
-        con.use_limit_z = True
-        con.min_z = -0.39
-        con.max_z = 0.0
-        con.owner_space = 'LOCAL'
-
-        # Driver for hiding the eyelid behind the head, using the extra_offset
-        # When the eyelid is open (rotation < 0.25...),
-        # the def bone goes behind the head
-        driver = self.obj.animation_data.drivers.find(
-            'pose.bones["DEF-Paupiere"].location', index=2)
-        driver.driver.expression = ('z_index_same(member_index, '
-                                    'flip, bone_index, -2 * '
-                                    '(eyelid_offset < -0.25))')
-        var = driver.driver.variables.new()
-
-        var.type = 'SINGLE_PROP'
-        var.name = 'eyelid_offset'
-        var.type = 'TRANSFORMS'
-        # var.targets[0].id_type = 'OBJECT'
-        var.targets[0].id = self.obj
-        var.targets[0].bone_target = eyelid
-        var.targets[0].transform_type = 'ROT_Z'
-        var.targets[0].transform_space = 'TRANSFORM_SPACE'
-        # var.targets[0].data_path = 'pose.bones["{}"]'.format(eyelid)
 
 
 def add_parameters(params):
