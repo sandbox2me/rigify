@@ -162,6 +162,12 @@ class Rig:
                 self.params.flip_switch,
                 member_index=Z_index,
                 bone_index=i, new_name=def_bone_name)
+            if b == stretch_c_chain[1]:
+                pantin_utils.create_deformation(
+                    self.obj, b,
+                    self.params.flip_switch,
+                    member_index=Z_index,
+                    bone_index=i+1, new_name=strip_org(self.org_bones[0])+'_int')
 
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
