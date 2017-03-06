@@ -92,8 +92,9 @@ class Rig:
         left_ctrl = copy_bone(self.obj, self.org_bone, strip_org(self.params.eye_name) + '.L')
         left_ctrl_e = eb[left_ctrl]
         left_ctrl_e.use_connect = False
-        left_ctrl_e.tail = (left_ctrl_e.head
-                            + Vector((0, 0, 1)) * left_ctrl_e.length)
+        left_ctrl_e.tail = (left_ctrl_e.tail
+                             + Vector((0, 0, 1)) * left_ctrl_e.length)
+        left_ctrl_e.head = eb[self.org_bone].tail
         align_bone_z_axis(self.obj, left_ctrl, Vector((0, 1, 0)))
         ctrl_chain.append(left_ctrl)
 
@@ -101,9 +102,8 @@ class Rig:
         right_ctrl = copy_bone(self.obj, self.org_bone, strip_org(self.params.eye_name) + '.R')
         right_ctrl_e = eb[right_ctrl]
         right_ctrl_e.use_connect = False
-        right_ctrl_e.tail = (right_ctrl_e.tail
-                             + Vector((0, 0, 1)) * right_ctrl_e.length)
-        right_ctrl_e.head = eb[self.org_bone].tail
+        right_ctrl_e.tail = (right_ctrl_e.head
+                            + Vector((0, 0, 1)) * right_ctrl_e.length)
         align_bone_z_axis(self.obj, right_ctrl, Vector((0, 1, 0)))
         ctrl_chain.append(right_ctrl)
 
