@@ -17,7 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix
 from math import pi, cos, sin
 import re
 
@@ -209,8 +209,9 @@ def create_axis_line_widget(rig,
         mesh.update()
 
 
-def create_capsule_polygon(number_verts, width, height=0.1):
-    """ Creates a capsule shape.
+def create_capsule_polygon(number_verts, width, height=0.1,
+                           length_co=0, width_co=2):
+    """ Create a capsule shape.
         number_verts: number of vertices of the poligon
         width: the width of the capsule
         height: the height of the capsule
@@ -223,10 +224,14 @@ def create_capsule_polygon(number_verts, width, height=0.1):
     for side in [-1, 1]:
         for i in range(0, number_verts//2+1):
             angle = 2*pi*i/number_verts - pi / 2 - (side+1) * (pi/2)
-            verts.append((
-                cos(angle) * height/2 - (width - height/2) * side,
-                0,
-                sin(angle) * height/2))
+            vert = [0, 0, 0]
+            vert[length_co] = cos(angle) * height/2 - (width - height/2) * side
+            vert[width_co] = sin(angle) * height/2
+            verts.append(vert)
+            # verts.append((
+            #     cos(angle) * height/2 - (width - height/2) * side,
+            #     0,
+            #     sin(angle) * height/2))
             if v_ind < number_verts+1:
                 edges.append((v_ind, v_ind+1))
                 v_ind += 1
@@ -241,8 +246,9 @@ def create_capsule_widget(rig,
                           width=None,
                           height=None,
                           head_tail=0.0,
+                          align=True,
                           bone_transform_name=None):
-    """ Creates a basic line widget which remains horizontal.
+    """ Create a basic line widget which remains horizontal.
     """
     obj = create_widget(rig, bone_name, bone_transform_name)
     if obj is not None:
@@ -256,10 +262,15 @@ def create_capsule_widget(rig,
         if height is None:
             height = width * 0.1
 
-        verts, edges = create_capsule_polygon(32, width, height)
         head_tail_vector = pbone.vector * head_tail
-        verts = [(pbone.matrix * pbone.length).inverted()
+        if align:
+            verts, edges = create_capsule_polygon(32, width, height)
+            verts = [(pbone.matrix * pbone.length).inverted()
                  * (pos + Vector(v) + head_tail_vector) for v in verts]
+        else:
+            verts, edges = create_capsule_polygon(32, width, height, 1, 0)
+            verts = [1/pbone.length
+                 * (Vector(v) + head_tail_vector) for v in verts]
 
         mesh = obj.data
         mesh.from_pydata(verts, edges, [])
@@ -294,24 +305,23 @@ def create_aligned_circle_widget(rig,
                                  bone_name,
                                  number_verts=32,
                                  radius=1.0,
+                                 width_ratio=1.0,
                                  head_tail=0.0,
+                                 align=True,
                                  bone_transform_name=None):
     """ Creates a circle widget, aligned to view.
     """
     obj = create_widget(rig, bone_name, bone_transform_name)
     if obj is not None:
-
         pbone = rig.pose.bones[bone_name]
         # print(pbone.matrix.translation)
         pos = pbone.matrix.translation
 
-        verts, edges = create_circle_polygon(number_verts, 'Y', radius)
+        verts, edges = create_circle_polygon(number_verts, 'Z', radius)
         head_tail_vector = pbone.vector * head_tail
-        verts = [(pbone.matrix * pbone.length).inverted()
-                 * (pos + Vector(v) + head_tail_vector)
-                 for v in verts
-                 ]
-
+        verts = [1/pbone.length
+                 * ((Vector(v)*Matrix.Scale(width_ratio, 3, Vector((1, 0, 0))))
+                    + head_tail_vector) for v in verts]
         mesh = obj.data
         mesh.from_pydata(verts, edges, [])
         mesh.update()

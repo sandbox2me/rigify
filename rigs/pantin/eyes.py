@@ -142,7 +142,7 @@ class Rig:
 
         # Widgets
         pantin_utils.create_capsule_widget(
-            self.obj, main_ctrl, width=pb[self.org_bone].length, height=pb[self.org_bone].length*0.7)
+            self.obj, main_ctrl, width=pb[self.org_bone].length, height=pb[self.org_bone].length*0.7, align=False)
         for b in [left_ctrl, right_ctrl]:
             pantin_utils.create_aligned_circle_widget(
                 self.obj, b, radius=pb[b].length / 5)

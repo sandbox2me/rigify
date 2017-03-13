@@ -111,13 +111,17 @@ class Rig:
             
         for i, b in enumerate(self.org_bones):
             # Control bones
-            if self.params.chain_type != 'IK':
+            if self.params.chain_type in {'Normal', 'Curve'}:
                 ctrl_bone = copy_bone(self.obj, b, strip_org(b) + side)
                 ctrl_bone_e = eb[ctrl_bone]
 
                 if self.params.chain_type == 'Curve':
                     ctrl_bone_e.use_connect = False
-                    ctrl_bone_e.parent = eb[self.org_parent]
+                    if self.params.curve_parent_to_first:
+                        if i > 0:
+                            ctrl_bone_e.parent = eb[ctrl_chain[0]]
+                    else:
+                        ctrl_bone_e.parent = eb[self.org_parent]
                     ctrl_bone_e.tail = (ctrl_bone_e.head
                                     + Vector((0, 0, 1)) * ctrl_bone_e.length)
                     align_bone_z_axis(self.obj, ctrl_bone, Vector((0, 1, 0)))
@@ -176,20 +180,34 @@ class Rig:
                 b+side)
 
         if self.params.chain_type == 'Curve':
+            # Curve end bone
             last_bone = self.org_bones[-1]
             ctrl_bone = new_bone(self.obj, strip_org(last_bone) + ".end" + side)
             ctrl_bone_e = eb[ctrl_bone]
+            last_bone_e = eb[last_bone]
 
             ctrl_bone_e.use_connect = False
-            ctrl_bone_e.parent = eb[self.org_parent]
-            ctrl_bone_e.head = eb[last_bone].tail
+            if self.params.curve_parent_to_first:
+                ctrl_bone_e.parent = eb[ctrl_chain[0]]
+            else:
+                ctrl_bone_e.parent = eb[self.org_parent]
+            ctrl_bone_e.head = last_bone_e.tail
             ctrl_bone_e.tail = (ctrl_bone_e.head
-                                + Vector((0, 0, 1)) * eb[last_bone].length)
+                                + (last_bone_e.tail - last_bone_e.head))
             align_bone_z_axis(self.obj, ctrl_bone, Vector((0, 1, 0)))
             ctrl_chain.append(ctrl_bone)
             ctrl_bone_e.layers = layers
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
+
+        # Pose bone settings
+        if self.params.chain_type == 'Curve':
+            pbone = pb[ctrl_chain[-1]]
+            pbone.rotation_mode = 'XZY'
+            pbone.lock_location = (False, False, True)
+            pbone.lock_rotation = (True, True, True)
+            pbone.lock_rotation_w = False
+            pbone.lock_scale = (False, False, False)
 
         if self.params.chain_type in ('IK', 'Curve'):
             # Widgets
@@ -220,6 +238,7 @@ class Rig:
                 con.name = "stretch_to"
                 con.target = self.obj
                 con.subtarget = ctrl
+                con.volume = 'NO_VOLUME'
 
         if self.params.chain_type == 'IK':
             last_bone = mch_chain[-1]
@@ -295,9 +314,13 @@ def add_parameters(params):
     #     description="Create an IK constraint on the last bone")
     params.chain_type = bpy.props.EnumProperty(
         name="Chain Type",
-        items=(('Normal',)*3, ('IK',)*3, ('Curve',)*3,),
+        items=(('Normal',)*3, ('IK',)*3, ('Curve',)*3, ('Def',)*3,),
         default="Normal",
         description="Type of chain to be generated")
+    params.curve_parent_to_first = bpy.props.BoolProperty(
+        name="Parent to first",
+        default=False,
+        description="Parent all control bones to the first")
     params.layers = bpy.props.BoolVectorProperty(
         size=32,
         description="Layers for the object")
@@ -330,6 +353,8 @@ def parameters_ui(layout, params):
     col = layout.column()
     r = col.row()
     r.prop(params, "chain_type")
+    if params.chain_type == "Curve":
+        r.prop(params, "curve_parent_to_first")
 
     # Layers
     col = layout.column(align=True)

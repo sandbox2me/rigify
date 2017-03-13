@@ -487,6 +487,10 @@ def create(obj):
         pbone.rigify_parameters.pelvis_name = "Bassin"
     except AttributeError:
         pass
+    try:
+        pbone.rigify_parameters.chain_type = "Curve"
+    except AttributeError:
+        pass
     pbone = obj.pose.bones[bones['Paupiere']]
     pbone.rigify_type = 'pantin.simple'
     pbone.lock_location = (True, True, True)

@@ -173,12 +173,13 @@ class Rig:
         pb = self.obj.pose.bones
 
         # Widgets
+        wgt_radius = pb[ctrl_uc].length / 3
         for b in [ctrl_r, ctrl_l, ctrl_uc, ctrl_lc]:
             pantin_utils.create_aligned_circle_widget(
-                self.obj, b, radius=pb[b].length / 3)
+                self.obj, b, radius=wgt_radius)
         pantin_utils.create_aligned_circle_widget(
-            self.obj, ctrl_g, radius=pb[ctrl_g].length * 2,
-            head_tail=0.5)
+            self.obj, ctrl_g, radius=pb[ctrl_g].length,
+            head_tail=0.0, width_ratio=2.0)
 
         # Constraints
         for src_b, target_b in zip(stretch_r_chain, stretch_c_chain):
