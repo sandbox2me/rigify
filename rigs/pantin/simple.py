@@ -214,7 +214,7 @@ class Rig:
             for ctrl_bone in ctrl_chain:
                 global_scale = pb[ctrl_bone].length  # self.obj.dimensions[2]
                 # member_factor = 0.06
-                widget_size = global_scale * 0.5  # * member_factor
+                widget_size = global_scale * 0.3  # * member_factor
                 pantin_utils.create_aligned_circle_widget(
                     self.obj, ctrl_bone, radius=widget_size)
 
