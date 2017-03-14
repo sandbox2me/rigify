@@ -79,14 +79,12 @@ class Rig:
 
         eb = self.obj.data.edit_bones
 
-        # Get parent's layers
-        if self.params.use_parent_layers and self.org_parent is not None:
-            layers = list(eb[self.org_parent].layers)
-        else:
-            layers = self.params.layers
+        # # Get parent's layers
+        # if self.params.use_parent_layers and self.org_parent is not None:
+        #     layers = list(eb[self.org_parent].layers)
+        # else:
+        #     layers = self.params.layers
 
-        # layers = [i == 1 for i in range(32)]
-        # print('LAYERS:', list(layers))
 
         ctrl_chain = []
         mch_chain = []
@@ -107,7 +105,7 @@ class Rig:
             ctrl_bone_e.head = eb[last_bone].tail
             ctrl_bone_e.tail = eb[last_bone].tail + Vector((0.3, 0, 0))
             align_bone_z_axis(self.obj, ctrl_bone, Vector((0, 1, 0)))
-            ctrl_bone_e.layers = layers
+            # ctrl_bone_e.layers = layers
             
         for i, b in enumerate(self.org_bones):
             # Control bones
@@ -127,7 +125,7 @@ class Rig:
                     align_bone_z_axis(self.obj, ctrl_bone, Vector((0, 1, 0)))
 
                 ctrl_chain.append(ctrl_bone)
-                ctrl_bone_e.layers = layers
+                # ctrl_bone_e.layers = layers
 
             # Mechanism bones
             if self.params.chain_type == 'Curve':
@@ -196,7 +194,8 @@ class Rig:
                                 + (last_bone_e.tail - last_bone_e.head))
             align_bone_z_axis(self.obj, ctrl_bone, Vector((0, 1, 0)))
             ctrl_chain.append(ctrl_bone)
-            ctrl_bone_e.layers = layers
+            ctrl_bone_e.layers = last_bone_e.layers
+            # ctrl_bone_e.layers = layers
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
 
@@ -304,14 +303,10 @@ def add_parameters(params):
         name="Pelvis Name",
         default="Pelvis",
         description="Name of the pelvis bone in whole rig")
-    params.use_parent_layers = bpy.props.BoolProperty(
-        name="Use parent's layers",
-        default=True,
-        description="The object will use its parent's layers")
-    # params.create_ik = bpy.props.BoolProperty(
-    #     name="Create IK",
-    #     default=False,
-    #     description="Create an IK constraint on the last bone")
+    # params.use_parent_layers = bpy.props.BoolProperty(
+    #     name="Use parent's layers",
+    #     default=True,
+    #     description="The object will use its parent's layers")
     params.chain_type = bpy.props.EnumProperty(
         name="Chain Type",
         items=(('Normal',)*3, ('IK',)*3, ('Curve',)*3, ('Def',)*3,),
@@ -321,9 +316,9 @@ def add_parameters(params):
         name="Parent to first",
         default=False,
         description="Parent all control bones to the first")
-    params.layers = bpy.props.BoolVectorProperty(
-        size=32,
-        description="Layers for the object")
+    # params.layers = bpy.props.BoolVectorProperty(
+    #     size=32,
+    #     description="Layers for the object")
 
 
 def parameters_ui(layout, params):
@@ -356,52 +351,52 @@ def parameters_ui(layout, params):
     if params.chain_type == "Curve":
         r.prop(params, "curve_parent_to_first")
 
-    # Layers
-    col = layout.column(align=True)
-    col.prop(params, "use_parent_layers")
-    if not params.use_parent_layers:
-        col = layout.column(align=True)
-        col.label("Layers:")
-        r = col.row()
-        col = r.column(align=True)
-        row = col.row(align=True)
-        row.prop(params, "layers", index=0, toggle=True, text="")
-        row.prop(params, "layers", index=1, toggle=True, text="")
-        row.prop(params, "layers", index=2, toggle=True, text="")
-        row.prop(params, "layers", index=3, toggle=True, text="")
-        row.prop(params, "layers", index=4, toggle=True, text="")
-        row.prop(params, "layers", index=5, toggle=True, text="")
-        row.prop(params, "layers", index=6, toggle=True, text="")
-        row.prop(params, "layers", index=7, toggle=True, text="")
-        row = col.row(align=True)
-        row.prop(params, "layers", index=16, toggle=True, text="")
-        row.prop(params, "layers", index=17, toggle=True, text="")
-        row.prop(params, "layers", index=18, toggle=True, text="")
-        row.prop(params, "layers", index=19, toggle=True, text="")
-        row.prop(params, "layers", index=20, toggle=True, text="")
-        row.prop(params, "layers", index=21, toggle=True, text="")
-        row.prop(params, "layers", index=22, toggle=True, text="")
-        row.prop(params, "layers", index=23, toggle=True, text="")
-
-        col = r.column(align=True)
-        row = col.row(align=True)
-        row.prop(params, "layers", index=8, toggle=True, text="")
-        row.prop(params, "layers", index=9, toggle=True, text="")
-        row.prop(params, "layers", index=10, toggle=True, text="")
-        row.prop(params, "layers", index=11, toggle=True, text="")
-        row.prop(params, "layers", index=12, toggle=True, text="")
-        row.prop(params, "layers", index=13, toggle=True, text="")
-        row.prop(params, "layers", index=14, toggle=True, text="")
-        row.prop(params, "layers", index=15, toggle=True, text="")
-        row = col.row(align=True)
-        row.prop(params, "layers", index=24, toggle=True, text="")
-        row.prop(params, "layers", index=25, toggle=True, text="")
-        row.prop(params, "layers", index=26, toggle=True, text="")
-        row.prop(params, "layers", index=27, toggle=True, text="")
-        row.prop(params, "layers", index=28, toggle=True, text="")
-        row.prop(params, "layers", index=29, toggle=True, text="")
-        row.prop(params, "layers", index=30, toggle=True, text="")
-        row.prop(params, "layers", index=31, toggle=True, text="")
+    # # Layers
+    # col = layout.column(align=True)
+    # col.prop(params, "use_parent_layers")
+    # if not params.use_parent_layers:
+    #     col = layout.column(align=True)
+    #     col.label("Layers:")
+    #     r = col.row()
+    #     col = r.column(align=True)
+    #     row = col.row(align=True)
+    #     row.prop(params, "layers", index=0, toggle=True, text="")
+    #     row.prop(params, "layers", index=1, toggle=True, text="")
+    #     row.prop(params, "layers", index=2, toggle=True, text="")
+    #     row.prop(params, "layers", index=3, toggle=True, text="")
+    #     row.prop(params, "layers", index=4, toggle=True, text="")
+    #     row.prop(params, "layers", index=5, toggle=True, text="")
+    #     row.prop(params, "layers", index=6, toggle=True, text="")
+    #     row.prop(params, "layers", index=7, toggle=True, text="")
+    #     row = col.row(align=True)
+    #     row.prop(params, "layers", index=16, toggle=True, text="")
+    #     row.prop(params, "layers", index=17, toggle=True, text="")
+    #     row.prop(params, "layers", index=18, toggle=True, text="")
+    #     row.prop(params, "layers", index=19, toggle=True, text="")
+    #     row.prop(params, "layers", index=20, toggle=True, text="")
+    #     row.prop(params, "layers", index=21, toggle=True, text="")
+    #     row.prop(params, "layers", index=22, toggle=True, text="")
+    #     row.prop(params, "layers", index=23, toggle=True, text="")
+    # 
+    #     col = r.column(align=True)
+    #     row = col.row(align=True)
+    #     row.prop(params, "layers", index=8, toggle=True, text="")
+    #     row.prop(params, "layers", index=9, toggle=True, text="")
+    #     row.prop(params, "layers", index=10, toggle=True, text="")
+    #     row.prop(params, "layers", index=11, toggle=True, text="")
+    #     row.prop(params, "layers", index=12, toggle=True, text="")
+    #     row.prop(params, "layers", index=13, toggle=True, text="")
+    #     row.prop(params, "layers", index=14, toggle=True, text="")
+    #     row.prop(params, "layers", index=15, toggle=True, text="")
+    #     row = col.row(align=True)
+    #     row.prop(params, "layers", index=24, toggle=True, text="")
+    #     row.prop(params, "layers", index=25, toggle=True, text="")
+    #     row.prop(params, "layers", index=26, toggle=True, text="")
+    #     row.prop(params, "layers", index=27, toggle=True, text="")
+    #     row.prop(params, "layers", index=28, toggle=True, text="")
+    #     row.prop(params, "layers", index=29, toggle=True, text="")
+    #     row.prop(params, "layers", index=30, toggle=True, text="")
+    #     row.prop(params, "layers", index=31, toggle=True, text="")
 
 
 def create_sample(obj):
@@ -430,10 +425,10 @@ def create_sample(obj):
         pbone.rigify_parameters.object_side = ".R"
     except AttributeError:
         pass
-    try:
-        pbone.rigify_parameters.use_parent_layers = True
-    except AttributeError:
-        pass
+    # try:
+    #     pbone.rigify_parameters.use_parent_layers = True
+    # except AttributeError:
+    #     pass
     try:
         pbone.rigify_parameters.use_parent_Z_index = True
     except AttributeError:
@@ -446,16 +441,16 @@ def create_sample(obj):
         pbone.rigify_parameters.flip_switch = False
     except AttributeError:
         pass
-    try:
-        pbone.rigify_parameters.layers = [False, False, False, False, False,
-                                          False, False, False, False, False,
-                                          False, False, False, False, False,
-                                          False, False, False, False, False,
-                                          False, False, False, True, False,
-                                          False, False, False, False, False,
-                                          False, False]
-    except AttributeError:
-        pass
+    # try:
+    #     pbone.rigify_parameters.layers = [False, False, False, False, False,
+    #                                       False, False, False, False, False,
+    #                                       False, False, False, False, False,
+    #                                       False, False, False, False, False,
+    #                                       False, False, False, True, False,
+    #                                       False, False, False, False, False,
+    #                                       False, False]
+    # except AttributeError:
+    #     pass
     try:
         pbone.rigify_parameters.pelvis_name = "Bassin"
     except AttributeError:
