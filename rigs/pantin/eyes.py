@@ -214,15 +214,15 @@ def create_sample(obj):
 
     bones = {}
 
-    bone = arm.edit_bones.new('Eyes')
+    bone = arm.edit_bones.new('Yeux')
     bone.head[:] = -0.0045, -0.0000, 1.5476
     bone.tail[:] = 0.0964, -0.0000, 1.5476
-    bone.roll = 1.5708
+    bone.roll = -1.5708
     bone.use_connect = False
-    bones['Eyes'] = bone.name
+    bones['Yeux'] = bone.name
 
     bpy.ops.object.mode_set(mode='OBJECT')
-    pbone = obj.pose.bones[bones['Eyes']]
+    pbone = obj.pose.bones[bones['Yeux']]
     pbone.rigify_type = 'pantin.eyes'
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
