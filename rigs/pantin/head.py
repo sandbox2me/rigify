@@ -70,6 +70,8 @@ class Rig:
             else:
                 # The rest
                 ctrl_bone_e.parent = eb[ctrl_chain[-1]]
+                if self.params.detach:
+                    ctrl_bone_e.use_connect = False
 
             # Add to list
             ctrl_chain += [ctrl_bone_e.name]
@@ -83,6 +85,10 @@ class Rig:
                 bone_index=i)
             # if b == self.eyelid:
             #     eyelid_def_bone = def_bone
+
+        # Parenting
+        if self.params.detach:
+            eb[self.head].use_connect = False
 
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
@@ -132,6 +138,9 @@ def add_parameters(params):
     params.flip_switch = bpy.props.BoolProperty(
         name="Flip Switch", default=False,
         description="This member may change depth when flipped")
+    params.detach = bpy.props.BoolProperty(
+        name="Detach Head", default=False,
+        description="Off with her head!")
 
 
 def parameters_ui(layout, params):
@@ -141,6 +150,8 @@ def parameters_ui(layout, params):
     r.prop(params, "Z_index")
     r = layout.row()
     r.prop(params, "flip_switch")
+    r = layout.row()
+    r.prop(params, "detach")
 
 
 def create_sample(obj):

@@ -542,6 +542,10 @@ def create(obj):
         pbone.rigify_parameters.flip_switch = False
     except AttributeError:
         pass
+    try:
+        pbone.rigify_parameters.detach = True
+    except AttributeError:
+        pass
     pbone = obj.pose.bones[bones['Bras haut.L']]
     pbone.rigify_type = 'pantin.arm'
     pbone.lock_location = (False, False, True)
