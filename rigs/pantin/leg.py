@@ -422,7 +422,7 @@ class Rig:
             if self.params.do_stretch:
                 ui_script += """    layout.prop(pose_bones[ik_leg[2]], \
 '["foot_stretch"]', \
-text="Foot stretch (" + ik_leg[2] + ")", \slider=True)
+text="Foot stretch (" + ik_leg[2] + ")", slider=True)
     """
 
         return [ui_script]
