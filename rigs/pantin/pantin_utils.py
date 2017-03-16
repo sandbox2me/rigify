@@ -307,7 +307,6 @@ def create_aligned_circle_widget(rig,
                                  radius=1.0,
                                  width_ratio=1.0,
                                  head_tail=0.0,
-                                 align=True,
                                  bone_transform_name=None):
     """ Creates a circle widget, aligned to view.
     """
@@ -318,7 +317,7 @@ def create_aligned_circle_widget(rig,
         pos = pbone.matrix.translation
 
         verts, edges = create_circle_polygon(number_verts, 'Z', radius)
-        head_tail_vector = pbone.vector * head_tail
+        head_tail_vector = Vector((0, head_tail, 0)) * pbone.length
         verts = [1/pbone.length
                  * ((Vector(v)*Matrix.Scale(width_ratio, 3, Vector((1, 0, 0))))
                     + head_tail_vector) for v in verts]
