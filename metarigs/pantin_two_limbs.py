@@ -267,6 +267,13 @@ def create(obj):
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['Tete']]
     bones['Sourcil.parent.R'] = bone.name
+    bone = arm.edit_bones.new('Paupiere')
+    bone.head[:] = 0.1132, -0.0000, 1.5975
+    bone.tail[:] = 0.1433, -0.0000, 1.5926
+    bone.roll = -1.4094
+    bone.use_connect = False
+    bone.parent = arm.edit_bones[bones['Tete']]
+    bones['Paupiere'] = bone.name
     bone = arm.edit_bones.new('Main.L')
     bone.head[:] = 0.2565, 0.0000, 0.9915
     bone.tail[:] = 0.3366, 0.0000, 0.8363
@@ -740,6 +747,26 @@ def create(obj):
         pass
     try:
         pbone.rigify_parameters.curve_parent_to_first = True
+    except AttributeError:
+        pass
+    pbone = obj.pose.bones[bones['Paupiere']]
+    pbone.rigify_type = 'pantin.simple'
+    pbone.lock_location = (True, True, True)
+    pbone.lock_rotation = (True, True, False)
+    pbone.lock_rotation_w = False
+    pbone.lock_scale = (False, False, False)
+    pbone.rotation_mode = 'XZY'
+    pbone.bone.layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+    try:
+        pbone.rigify_parameters.pelvis_name = "Bassin"
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.do_flip = True
+    except AttributeError:
+        pass
+    try:
+        pbone.rigify_parameters.use_parent_Z_index = True
     except AttributeError:
         pass
     pbone = obj.pose.bones[bones['Main.L']]
