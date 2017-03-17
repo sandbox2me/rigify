@@ -149,6 +149,35 @@ class Rigify_Reapply_Members(bpy.types.Operator):
             
         return {'FINISHED'}
 
+class Rigify_Sort_Doubles(bpy.types.Operator):
+    """Sort bones which have the same index"""
+    bl_idname = "pose.rigify_sort_doubles"# + rig_id
+    bl_label = "Sort double bones"
+    bl_options = {'UNDO'}
+
+
+    @classmethod
+    def poll(cls, context):
+        return (context.active_object != None and context.active_object.type == 'ARMATURE')
+
+    def execute(self, context):
+        obj = context.object
+        
+        for member in obj.pantin_members:
+            bone_indices = [[bone.index, bone.name] for bone in member.bones]
+            bone_indices.sort(key=lambda e: e[0])
+            
+            for i, bone in enumerate(bone_indices):
+                try:
+                    pb = obj.pose.bones[bone[1]]
+                except KeyError:
+                    self.report({'WARNING'}, 'Bone {} not found'.format(bone[1]))
+                    continue
+                pb['bone_index'] = i
+
+        bpy.ops.pose.rigify_fill_members()
+        return {'FINISHED'}
+
 class Rigify_Reorder_Members(bpy.types.Operator):
     """ Change members' order"""
     bl_idname = "pose.rigify_reorder_members"# + rig_id
@@ -390,7 +419,7 @@ class DATA_PT_members_panel(bpy.types.Panel):
                     op.direction = 'DOWN'
                     op = row.operator("pose.rigify_fill_members", icon='FILE_REFRESH', text="")
                     row = col.row()
-                    row.template_list("PANTIN_UL_bones_list", "bones", id_store.pantin_members[i], "bones", id_store.pantin_members[i], "active_bone", rows=3)
+                    row.template_list("PANTIN_UL_bones_list", "bones_{}".format(i), id_store.pantin_members[i], "bones", id_store.pantin_members[i], "active_bone", rows=3)
 
                     sub = row.column(align=True)
                     op = sub.operator("pose.rigify_reorder_bones", icon='TRIA_UP', text="")
@@ -403,6 +432,7 @@ class DATA_PT_members_panel(bpy.types.Panel):
                     col.separator()
             col = layout.column(align=True)
             col.operator("pose.rigify_fill_members")
+            col.operator("pose.rigify_sort_doubles")
             col.operator("pose.rigify_reapply_order_members")
 
 class RigUI(bpy.types.Panel):
@@ -521,6 +551,7 @@ def register():
     bpy.utils.register_class(Rigify_Fill_Members)
     bpy.utils.register_class(Rigify_Reapply_Members)
     bpy.utils.register_class(Rigify_Reorder_Members)
+    bpy.utils.register_class(Rigify_Sort_Doubles)
     bpy.utils.register_class(Rigify_Reorder_Bones)
     bpy.utils.register_class(PantinMembers)
     bpy.utils.register_class(PANTIN_UL_bones_list)
@@ -538,6 +569,7 @@ def unregister():
     del bpy.types.Object.pantin_members
     bpy.utils.unregister_class(Rigify_Fill_Members)
     bpy.utils.unregister_class(Rigify_Reapply_Members)
+    bpy.utils.unregister_class(Rigify_Sort_Doubles)
     bpy.utils.unregister_class(Rigify_Reorder_Members)
     bpy.utils.unregister_class(Rigify_Reorder_Bones)
     bpy.utils.unregister_class(PANTIN_UL_bones_list)
