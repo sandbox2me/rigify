@@ -56,8 +56,8 @@ class RigifyPreferences(AddonPreferences):
     def update_legacy(self, context):
         if self.legacy_mode:
 
-            sys.path.append("C:\\Program Files\\Blender Foundation\\blender-2.77-windows64 DEV\\2.77\\scripts\\"
-                            "addons\\rigify")
+            rigify_dir = os.path.dirname(os.path.realpath(__file__))
+            sys.path.append(rigify_dir)
 
             unregister()
 
@@ -85,8 +85,10 @@ class RigifyPreferences(AddonPreferences):
 
         else:
 
+            rigify_dir = os.path.dirname(os.path.realpath(__file__))
+
             for i, p in enumerate(sys.path):
-                if p == "C:\\Program Files\\Blender Foundation\\blender-2.77-windows64 DEV\\2.77\\scripts\\addons\\rigify":
+                if p == rigify_dir:
                     sys.path.pop(i)
 
             unregister()
@@ -120,10 +122,33 @@ class RigifyPreferences(AddonPreferences):
         update=update_legacy
     )
 
+    show_expanded = BoolProperty()
+
     def draw(self, context):
         layout = self.layout
-        layout.label(text='Select if you want to use Rigify in legacy mode ')
-        layout.prop(self, 'legacy_mode')
+        column = layout.column()
+        box = column.box()
+
+        # first stage
+        expand = getattr(self, 'show_expanded')
+        icon = 'TRIA_DOWN' if expand else 'TRIA_RIGHT'
+        col = box.column()
+        row = col.row()
+        sub = row.row()
+        sub.context_pointer_set('addon_prefs', self)
+        sub.alignment = 'LEFT'
+        op = sub.operator('wm.context_toggle', text='', icon=icon,
+                          emboss=False)
+        op.data_path = 'addon_prefs.show_expanded'
+        sub.label('{}: {}'.format('Rigify', 'LEGACY'))
+        sub = row.row()
+        sub.alignment = 'RIGHT'
+        sub.prop(self, 'legacy_mode')
+
+        if expand:
+            split = col.row().split(percentage=0.15)
+            split.label('Description:')
+            split.label(text='Select if you want to use Rigify in legacy mode ')
 
 
 class RigifyName(bpy.types.PropertyGroup):
