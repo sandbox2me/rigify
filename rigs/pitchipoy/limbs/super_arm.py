@@ -5,7 +5,7 @@ from   .limb_utils     import *
 from   mathutils       import Vector
 from   ....utils       import copy_bone, flip_bone, put_bone, create_cube_widget
 from   ....utils       import strip_org, make_deformer_name, create_widget
-from   ....utils       import create_circle_widget, create_sphere_widget
+from   ....utils       import create_circle_widget, create_sphere_widget, create_line_widget
 from   ....utils       import MetarigError, make_mechanism_name, org
 from   ....utils       import create_limb_widget, connected_children_names
 from   ....utils       import align_bone_y_axis
@@ -70,7 +70,7 @@ class Rig:
         name = get_bone_name(strip_org(org_bones[0]), 'ctrl', 'parent')
         main_parent = copy_bone(self.obj, org_bones[0], name)
         eb[main_parent].length = eb[org_bones[0]].length / 4
-        eb[main_parent].parent = eb[org_bones[0]]
+        eb[main_parent].parent = None
         eb[main_parent].roll = 0.0
 
         # Constraints
@@ -373,11 +373,22 @@ class Rig:
         pole_name = get_bone_name(org_bones[0], 'ctrl', 'ik_target')
         elbow_vector = -(eb[org_bones[0]].z_axis + eb[org_bones[1]].z_axis)
         elbow_vector.normalize()
-        elbow_vector *= eb[org_bones[0]].length/2
+        # elbow_vector *= eb[org_bones[0]].length/2
+        elbow_vector *= (eb[org_bones[1]].tail - eb[org_bones[0]].head).length
         pole_target = copy_bone(self.obj, org_bones[0], pole_name)
         eb[pole_target].parent = eb[mch_str]
-        eb[pole_target].tail = eb[org_bones[0]].tail
+        #eb[pole_target].tail = eb[org_bones[0]].tail
         eb[pole_target].head = eb[org_bones[0]].tail + elbow_vector
+        eb[pole_target].tail = eb[pole_target].head - elbow_vector/8
+        eb[pole_target].roll = 0.0
+
+        # Make visual pole
+        vispole_name = 'VIS_' + get_bone_name(org_bones[0], 'ctrl', 'ik_pole')
+        vispole = copy_bone(self.obj, org_bones[1], vispole_name)
+        eb[vispole].tail = eb[vispole].head + Vector((0.0, 0.0, eb[org_bones[1]].length/10))
+        eb[vispole].use_connect = False
+        eb[vispole].hide_select = True
+        eb[vispole].parent = None
 
         make_constraint(self, mch_ik, {
             'constraint': 'IK',
@@ -389,9 +400,24 @@ class Rig:
             'constraint': 'IK',
             'subtarget': mch_target,
             'chain_count': 2,
+        })
+
+        # VIS pole constraints
+        make_constraint(self, vispole, {
+            'constraint': 'COPY_LOCATION',
+            'name': 'copy_loc',
+            'subtarget': org_bones[1],
         })
 
         pb = self.obj.pose.bones
+
+        make_constraint(self, vispole, {
+            'constraint': 'STRETCH_TO',
+            'name': 'stretch_to',
+            'subtarget': pole_target,
+            'volume': 'NO_VOLUME',
+            'rest_length': pb[vispole].length
+        })
 
         pb[mch_ik].constraints[-1].pole_target = self.obj
         pb[mch_ik].constraints[-1].pole_subtarget = pole_target
@@ -409,11 +435,13 @@ class Rig:
         pb[ ctrl ].lock_rotation = True, False, True
         create_ikarrow_widget( self.obj, ctrl, bone_transform_name=None )
         create_sphere_widget(self.obj, pole_target, bone_transform_name=None)
+        create_line_widget(self.obj, vispole)
 
-        return { 'ctrl' : {'limb': ctrl, 'ik_target': pole_target},
-                 'mch_ik'     : mch_ik,
-                 'mch_target' : mch_target,
-                 'mch_str'    : mch_str
+        return {'ctrl': {'limb': ctrl, 'ik_target': pole_target},
+                 'mch_ik': mch_ik,
+                 'mch_target': mch_target,
+                 'mch_str': mch_str,
+                 'visuals': {'vispole': vispole}
         }
 
     def create_fk(self, parent):
@@ -555,6 +583,13 @@ class Rig:
         else:
             arm_parent = None
 
+        mch_name = get_bone_name(strip_org(org_bones[0]), 'mch', 'parent_socket')
+        mch_main_parent = copy_bone(self.obj, org_bones[0], mch_name)
+        eb[mch_main_parent].length = eb[org_bones[0]].length / 12
+        eb[mch_main_parent].parent = eb[bones['parent']]
+        eb[mch_main_parent].roll = 0.0
+        eb[bones['main_parent']].parent = eb[mch_main_parent]
+
         # Set up constraints
 
         # Constrain ik ctrl to root / parent
@@ -594,6 +629,11 @@ class Rig:
             'use_max_y'   : True,
             'max_y'       : 1.05,
             'owner_space' : 'LOCAL'
+        })
+
+        make_constraint( self, mch_main_parent, {
+            'constraint'  : 'COPY_ROTATION',
+            'subtarget'   : org_bones[0]
         })
 
         # Create ik/fk switch property
@@ -667,6 +707,7 @@ class Rig:
                 pole_prop["description"] = prop
                 mch_ik = pb[bones['ik']['mch_ik']]
 
+                # ik target hide driver
                 pole_target = pb[bones['ik']['ctrl']['ik_target']]
                 drv = pole_target.bone.driver_add("hide").driver
                 drv.type = 'AVERAGE'
@@ -685,6 +726,25 @@ class Rig:
                 drv_modifier.coefficients[0] = 1.0
                 drv_modifier.coefficients[1] = -1.0
 
+                # vis-pole hide driver
+                vispole = pb[bones['ik']['visuals']['vispole']]
+                drv = vispole.bone.driver_add("hide").driver
+                drv.type = 'AVERAGE'
+                var = drv.variables.new()
+                var.name = prop
+                var.type = "SINGLE_PROP"
+                var.targets[0].id = self.obj
+                var.targets[0].data_path = \
+                    owner.path_from_id() + '[' + '"' + prop + '"' + ']'
+
+                drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
+
+                drv_modifier.mode = 'POLYNOMIAL'
+                drv_modifier.poly_order = 1
+                drv_modifier.coefficients[0] = 1.0
+                drv_modifier.coefficients[1] = -1.0
+
+                # arrow hide driver
                 pole_target = pb[bones['ik']['ctrl']['limb']]
                 drv = pole_target.bone.driver_add("hide").driver
                 drv.type = 'AVERAGE'

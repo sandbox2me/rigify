@@ -258,10 +258,6 @@ def generate_rig(context, metarig):
     obj.data.edit_bones[root_bone].roll = 0
     bpy.ops.object.mode_set(mode='OBJECT')
     obj.data.bones[root_bone].layers = ROOT_LAYER
-    if 'Root' not in obj.pose.bone_groups.keys():
-        root_group = obj.pose.bone_groups.new('Root')
-        root_group.color_set = 'THEME11'
-    obj.pose.bones[root_bone].bone_group = obj.pose.bone_groups['Root']
     # Put the rig_name in the armature custom properties
     rna_idprop_ui_prop_get(obj.data, "rig_id", create=True)
     obj.data["rig_id"] = rig_id
@@ -304,32 +300,12 @@ def generate_rig(context, metarig):
     # Get a list of all the bones in the armature
     bones = [bone.name for bone in obj.data.bones]
 
-    # Parent any free-floating bones to the root excluding bones with child of constraint.
-    pbones = obj.pose.bones
-
-
-    ik_follow_drivers = []
-    for drv in obj.animation_data.drivers:
-        for var in drv.driver.variables:
-            if 'IK_follow' == var.name:
-                ik_follow_drivers.append(drv.data_path)
-
-    noparent_bones = []
-    for bone in bones:
-        # if 'IK_follow' in pbones[bone].keys():
-        #     noparent_bones += [bone]
-        for d in ik_follow_drivers:
-            if bone in d:
-                noparent_bones += [bone]
-
+    # Parent any free-floating bones to the root.
     bpy.ops.object.mode_set(mode='EDIT')
     for bone in bones:
-        if bone in noparent_bones:
-            continue
-        elif obj.data.edit_bones[bone].parent is None:
+        if obj.data.edit_bones[bone].parent is None:
             obj.data.edit_bones[bone].use_connect = False
             obj.data.edit_bones[bone].parent = obj.data.edit_bones[root_bone]
-
     bpy.ops.object.mode_set(mode='OBJECT')
 
     # Lock transforms on all non-control bones
@@ -494,7 +470,6 @@ def param_name(param_name, rig_type):
     """ Get the actual parameter name, sans-rig-type.
     """
     return param_name[len(rig_type) + 1:]
-
 
 def isPitchipoy(metarig):
     """ Returns True if metarig is type pitchipoy.

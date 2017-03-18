@@ -42,88 +42,6 @@ else:
     from . import utils, rig_lists, generate, ui, metarig_menu
 
 import bpy
-import sys
-import os
-from bpy.types import AddonPreferences
-from bpy.props import BoolProperty
-
-
-class RigifyPreferences(AddonPreferences):
-    # this must match the addon name, use '__package__'
-    # when defining this in a submodule of a python package.
-    bl_idname = __name__
-
-    def update_legacy(self, context):
-        if self.legacy_mode:
-
-            sys.path.append("C:\\Program Files\\Blender Foundation\\blender-2.77-windows64 DEV\\2.77\\scripts\\"
-                            "addons\\rigify")
-
-            unregister()
-
-            globals().pop('utils')
-            globals().pop('rig_lists')
-            globals().pop('generate')
-            globals().pop('ui')
-            globals().pop('metarig_menu')
-
-            import legacy.utils
-            import legacy.rig_lists
-            import legacy.generate
-            import legacy.ui
-            import legacy.metarig_menu
-
-            print("ENTERING RIGIFY LEGACY\r\n")
-
-            globals()['utils'] = legacy.utils
-            globals()['rig_lists'] = legacy.rig_lists
-            globals()['generate'] = legacy.generate
-            globals()['ui'] = legacy.ui
-            globals()['metarig_menu'] = legacy.metarig_menu
-
-            register()
-
-        else:
-
-            for i, p in enumerate(sys.path):
-                if p == "C:\\Program Files\\Blender Foundation\\blender-2.77-windows64 DEV\\2.77\\scripts\\addons\\rigify":
-                    sys.path.pop(i)
-
-            unregister()
-
-            globals().pop('utils')
-            globals().pop('rig_lists')
-            globals().pop('generate')
-            globals().pop('ui')
-            globals().pop('metarig_menu')
-
-            from . import utils
-            from . import rig_lists
-            from . import generate
-            from . import ui
-            from . import metarig_menu
-
-            print("ENTERING RIGIFY LEGACY\r\n")
-
-            globals()['utils'] = utils
-            globals()['rig_lists'] = rig_lists
-            globals()['generate'] = generate
-            globals()['ui'] = ui
-            globals()['metarig_menu'] = metarig_menu
-
-            register()
-
-    legacy_mode = BoolProperty(
-        name='Rigify Legacy Mode',
-        description='Select if you want to use Rigify in legacy mode',
-        default=False,
-        update=update_legacy
-    )
-
-    def draw(self, context):
-        layout = self.layout
-        layout.label(text='Select if you want to use Rigify in legacy mode ')
-        layout.prop(self, 'legacy_mode')
 
 
 class RigifyName(bpy.types.PropertyGroup):
@@ -148,7 +66,6 @@ def register():
     bpy.utils.register_class(RigifyName)
     bpy.utils.register_class(RigifyParameters)
     bpy.utils.register_class(RigifyArmatureLayer)
-    bpy.utils.register_class(RigifyPreferences)
 
     bpy.types.PoseBone.rigify_type = bpy.props.StringProperty(name="Rigify Type", description="Rig type for this bone")
     bpy.types.PoseBone.rigify_parameters = bpy.props.PointerProperty(type=RigifyParameters)
@@ -181,7 +98,6 @@ def unregister():
     bpy.utils.unregister_class(RigifyName)
     bpy.utils.unregister_class(RigifyParameters)
     bpy.utils.unregister_class(RigifyArmatureLayer)
-    bpy.utils.unregister_class(RigifyPreferences)
 
     metarig_menu.unregister()
     ui.unregister()
