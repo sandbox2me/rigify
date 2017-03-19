@@ -56,40 +56,44 @@ class RigifyPreferences(AddonPreferences):
     def update_legacy(self, context):
         if self.legacy_mode:
 
-            rigify_dir = os.path.dirname(os.path.realpath(__file__))
-            sys.path.append(rigify_dir)
+            if 'ui' in globals() and 'legacy' in str(globals()['ui']):    # already in legacy mode. needed when rigify is reloaded
+                return
+            else:
+                rigify_dir = os.path.dirname(os.path.realpath(__file__))
+                if rigify_dir not in sys.path:
+                    sys.path.append(rigify_dir)
 
-            unregister()
+                unregister()
 
-            globals().pop('utils')
-            globals().pop('rig_lists')
-            globals().pop('generate')
-            globals().pop('ui')
-            globals().pop('metarig_menu')
+                globals().pop('utils')
+                globals().pop('rig_lists')
+                globals().pop('generate')
+                globals().pop('ui')
+                globals().pop('metarig_menu')
 
-            import legacy.utils
-            import legacy.rig_lists
-            import legacy.generate
-            import legacy.ui
-            import legacy.metarig_menu
+                import legacy.utils
+                import legacy.rig_lists
+                import legacy.generate
+                import legacy.ui
+                import legacy.metarig_menu
 
-            print("ENTERING RIGIFY LEGACY\r\n")
+                print("ENTERING RIGIFY LEGACY\r\n")
 
-            globals()['utils'] = legacy.utils
-            globals()['rig_lists'] = legacy.rig_lists
-            globals()['generate'] = legacy.generate
-            globals()['ui'] = legacy.ui
-            globals()['metarig_menu'] = legacy.metarig_menu
+                globals()['utils'] = legacy.utils
+                globals()['rig_lists'] = legacy.rig_lists
+                globals()['generate'] = legacy.generate
+                globals()['ui'] = legacy.ui
+                globals()['metarig_menu'] = legacy.metarig_menu
 
-            register()
+                register()
 
         else:
 
             rigify_dir = os.path.dirname(os.path.realpath(__file__))
 
-            for i, p in enumerate(sys.path):
-                if p == rigify_dir:
-                    sys.path.pop(i)
+            if rigify_dir in sys.path:
+                id = sys.path.index(rigify_dir)
+                sys.path.pop(id)
 
             unregister()
 
@@ -105,7 +109,7 @@ class RigifyPreferences(AddonPreferences):
             from . import ui
             from . import metarig_menu
 
-            print("ENTERING RIGIFY LEGACY\r\n")
+            print("EXIT RIGIFY LEGACY\r\n")
 
             globals()['utils'] = utils
             globals()['rig_lists'] = rig_lists
@@ -184,6 +188,9 @@ def register():
     IDStore.rigify_collection = bpy.props.EnumProperty(items=rig_lists.col_enum_list, default="All", name="Rigify Active Collection", description="The selected rig collection")
     IDStore.rigify_types = bpy.props.CollectionProperty(type=RigifyName)
     IDStore.rigify_active_type = bpy.props.IntProperty(name="Rigify Active Type", description="The selected rig type")
+
+    if ui and 'legacy' in str(ui):
+        bpy.context.user_preferences.addons['rigify'].preferences.legacy_mode = True
 
     # Add rig parameters
     for rig in rig_lists.rig_list:
