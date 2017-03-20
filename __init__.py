@@ -189,7 +189,8 @@ def register():
     IDStore.rigify_types = bpy.props.CollectionProperty(type=RigifyName)
     IDStore.rigify_active_type = bpy.props.IntProperty(name="Rigify Active Type", description="The selected rig type")
 
-    if ui and 'legacy' in str(ui):
+    if (ui and 'legacy' in str(ui)) or bpy.context.user_preferences.addons['rigify'].preferences.legacy_mode:
+        # update legacy on restart or reload
         bpy.context.user_preferences.addons['rigify'].preferences.legacy_mode = True
 
     # Add rig parameters
