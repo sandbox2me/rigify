@@ -144,7 +144,7 @@ class RigifyPreferences(AddonPreferences):
         op = sub.operator('wm.context_toggle', text='', icon=icon,
                           emboss=False)
         op.data_path = 'addon_prefs.show_expanded'
-        sub.label('{}: {}'.format('Rigify', 'LEGACY'))
+        sub.label('{}: {}'.format('Rigify', 'Enable Legacy Mode'))
         sub = row.row()
         sub.alignment = 'RIGHT'
         sub.prop(self, 'legacy_mode')
@@ -152,7 +152,10 @@ class RigifyPreferences(AddonPreferences):
         if expand:
             split = col.row().split(percentage=0.15)
             split.label('Description:')
-            split.label(text='Select if you want to use Rigify in legacy mode ')
+            split.label(text='When enabled the add-on will run in legacy mode using the old 2.76b feature set.')
+
+        row = layout.row()
+        row.label("End of Rigify Preferences")
 
 
 class RigifyName(bpy.types.PropertyGroup):
