@@ -238,6 +238,7 @@ class Rig:
                 con.target = self.obj
                 con.subtarget = ctrl
                 con.volume = 'NO_VOLUME'
+                con.keep_axis = 'PLANE_Z'
 
         if self.params.chain_type == 'IK':
             last_bone = mch_chain[-1]
