@@ -309,10 +309,12 @@ def generate_rig(context, metarig):
 
 
     ik_follow_drivers = []
-    for drv in obj.animation_data.drivers:
-        for var in drv.driver.variables:
-            if 'IK_follow' == var.name:
-                ik_follow_drivers.append(drv.data_path)
+
+    if obj.animation_data:
+        for drv in obj.animation_data.drivers:
+            for var in drv.driver.variables:
+                if 'IK_follow' == var.name:
+                    ik_follow_drivers.append(drv.data_path)
 
     noparent_bones = []
     for bone in bones:
