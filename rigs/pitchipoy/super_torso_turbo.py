@@ -48,9 +48,9 @@ class Rig:
         if not self.use_head:
             self.neck_pos = len(self.org_bones)
 
-        if params.use_tail and self.pivot_pos - 2 > 0:
-            self.use_tail = params.use_tail
-            self.tail_pos = params.pivot_pos - 2
+        self.use_tail = params.use_tail
+        if self.use_tail and self.pivot_pos - 2 > 0:
+            self.tail_pos = params.tail_pos
 
         # Assign values to tweak layers props if opted by user
         if params.tweak_extra_layers:
@@ -74,12 +74,12 @@ class Rig:
             pivot_index = self.pivot_pos - 1
 
             tail_index = 0
-            if 'tail_pos' in dir(self) and self.tail_pos > 0:
+            if self.use_tail and self.tail_pos > 1:     # 2 bones for the tail at least
                 tail_index = self.tail_pos - 1
 
             neck_bones = self.org_bones[neck_index::]
             upper_torso_bones = self.org_bones[pivot_index:neck_index]
-            lower_torso_bones = self.org_bones[tail_index:pivot_index]
+            lower_torso_bones = self.org_bones[tail_index+1:pivot_index]
 
             tail_bones = []
             if tail_index:
@@ -146,14 +146,14 @@ class Rig:
     def create_deform(self):
         org_bones = self.org_bones
 
-        bpy.ops.object.mode_set(mode ='EDIT')
+        bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
         def_bones = []
-        for org in org_bones:
-            def_name = make_deformer_name( strip_org( org ) )
-            def_name = copy_bone( self.obj, org, def_name )
-            def_bones.append( def_name )
+        for org_b in org_bones:
+            def_name = make_deformer_name(strip_org(org_b))
+            def_name = copy_bone(self.obj, org_b, def_name)
+            def_bones.append(def_name)
 
         return def_bones
 
@@ -182,7 +182,7 @@ class Rig:
                     center_bone = org(neck_bones[int((len(neck_bones))/2) - 1])
                     head_position = (eb[center_bone].head + eb[center_bone].tail)/2
                 else:
-                    center_bone = org(neck_bones[int((len(neck_bones)-1)/2) -1])
+                    center_bone = org(neck_bones[int((len(neck_bones)-1)/2) - 1])
                     head_position = eb[center_bone].tail
                 neck_pivot_eb.head = head_position
                 neck_pivot_eb.tail = head_position + (neck_eb.tail - neck_eb.head)/2
@@ -233,13 +233,13 @@ class Rig:
                 twk += [twk_name]
 
         return {
-            'ctrl_neck' : neck,
-            'ctrl'      : head,
-            'mch_str'   : mch_str,
-            'mch_neck'  : mch_neck,
-            'mch_head'  : mch_head,
-            'mch'       : mch,
-            'tweak'     : twk,
+            'ctrl_neck': neck,
+            'ctrl': head,
+            'mch_str': mch_str,
+            'mch_neck': mch_neck,
+            'mch_head': mch_head,
+            'mch': mch,
+            'tweak': twk,
             'neck_pivot': neck_pivot,
             'original_names': neck_bones
         }
@@ -328,6 +328,28 @@ class Rig:
         }
 
     def create_tail(self, tail_bones):
+        bpy.ops.object.mode_set(mode='EDIT')
+        org_bones = self.org_bones
+
+        ctrl_chain = []
+        for i in range(len(org_bones)):
+            name = org_bones[i]
+
+            ctrl_bone = copy_bone(
+                self.obj,
+                name,
+                strip_org(name)
+            )
+
+            ctrl_chain.append(ctrl_bone)
+
+        # Make widgets
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        for ctrl in ctrl_chain:
+            create_circle_widget(self.obj, ctrl, radius=0.3, head_tail=0.5)
+
+        return ctrl_chain
         return []
 
     def parent_bones(self, bones):
@@ -856,12 +878,12 @@ def add_parameters(params):
         description  = 'Position of the torso control and pivot point'
     )
 
-    # params.tail_pos = bpy.props.IntProperty(
-    #     name        = 'tail_position',
-    #     default     = 0,
-    #     min         = 0,
-    #     description = 'Where the tail starts (change from 0 to enable)'
-    # )
+    params.tail_pos = bpy.props.IntProperty(
+        name        = 'tail_position',
+        default     = 0,
+        min         = 0,
+        description = 'Where the tail starts'
+    )
 
     params.use_tail = bpy.props.BoolProperty(
         name='use_tail',
