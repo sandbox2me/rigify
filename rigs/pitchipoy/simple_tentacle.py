@@ -6,6 +6,7 @@ from ...utils    import create_widget, create_circle_widget
 from ...utils    import MetarigError
 from rna_prop_ui import rna_idprop_ui_prop_get
 
+
 class Rig:
     
     def __init__(self, obj, bone_name, params):
@@ -22,7 +23,7 @@ class Rig:
         
         if len(self.org_bones) <= 1:
             raise MetarigError(
-                "RIGIFY ERROR: invalid rig structure" % (strip_org(bone_name))
+                "RIGIFY ERROR: invalid rig structure on bone: %s" % (strip_org(bone_name))
             )
 
     def make_controls(self):

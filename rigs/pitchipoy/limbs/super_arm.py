@@ -447,8 +447,7 @@ class Rig:
     def create_fk(self, parent):
         org_bones = self.org_bones.copy()
 
-
-        bpy.ops.object.mode_set(mode ='EDIT')
+        bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
         ctrls = []
