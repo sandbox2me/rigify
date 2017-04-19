@@ -671,18 +671,18 @@ class Rig:
         for org, twk in zip( org_bones, tweaks ):
             eb[ org ].parent = eb[ twk ]
 
-    def make_constraint( self, bone, constraint ):
-        bpy.ops.object.mode_set(mode = 'OBJECT')
+    def make_constraint(self, bone, constraint):
+        bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
 
-        owner_pb     = pb[bone]
-        const        = owner_pb.constraints.new( constraint['constraint'] )
+        owner_pb = pb[bone]
+        const = owner_pb.constraints.new(constraint['constraint'])
         const.target = self.obj
 
         # filter contraint props to those that actually exist in the currnet
         # type of constraint, then assign values to each
-        for p in [ k for k in constraint.keys() if k in dir(const) ]:
-            setattr( const, p, constraint[p] )
+        for p in [k for k in constraint.keys() if k in dir(const)]:
+            setattr(const, p, constraint[p])
 
     def constrain_bones( self, bones ):
         # DEF bones
@@ -730,17 +730,18 @@ class Rig:
 
         mch_auto = bones['chain']['mch_auto']
 
-        self.make_constraint( mch_auto, {
-            'constraint': 'COPY_LOCATION',
-            'subtarget' : mch[0],
-            'owner_space'  : 'WORLD',
-            'target_space' : 'WORLD'
-        } )
+        if mch_auto:
+            self.make_constraint( mch_auto, {
+                'constraint': 'COPY_LOCATION',
+                'subtarget' : mch[0],
+                'owner_space'  : 'WORLD',
+                'target_space' : 'WORLD'
+            } )
 
-        self.make_constraint( mch_auto, {
-            'constraint'    : 'STRETCH_TO',
-            'subtarget'     : tweaks[-1]
-        } )
+            self.make_constraint( mch_auto, {
+                'constraint'    : 'STRETCH_TO',
+                'subtarget'     : tweaks[-1]
+            } )
 
         # PIVOT CTRL
 
