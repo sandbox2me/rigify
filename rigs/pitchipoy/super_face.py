@@ -111,13 +111,6 @@ class Rig:
         ## create control bones
         bpy.ops.object.mode_set(mode ='EDIT')
         eb = self.obj.data.edit_bones
-        
-        # eyes ctrls
-        eyeL_e = eb[ bones['eyes'][0] ]
-        eyeR_e = eb[ bones['eyes'][1] ]
-        
-        distance = ( eyeL_e.head - eyeR_e.head ) * 3
-        distance = distance.cross( (0, 0, 1) )
 
         eyeL_ctrl_name = strip_org( bones['eyes'][0] )
         eyeR_ctrl_name = strip_org( bones['eyes'][1] )
@@ -129,7 +122,14 @@ class Rig:
         eyeL_ctrl_e = eb[ eyeL_ctrl_name ]
         eyeR_ctrl_e = eb[ eyeR_ctrl_name ]
         eyes_ctrl_e = eb[ 'eyes' ]
-        
+
+        # eyes ctrls
+        eyeL_e = eb[bones['eyes'][0]]
+        eyeR_e = eb[bones['eyes'][1]]
+
+        distance = (eyeL_e.head - eyeR_e.head) * 3
+        distance = distance.cross((0, 0, 1))
+
         eyeL_ctrl_e.head    += distance
         eyeR_ctrl_e.head    += distance
         eyes_ctrl_e.head[:] =  ( eyeL_ctrl_e.head + eyeR_ctrl_e.head ) / 2
