@@ -1,6 +1,6 @@
 import bpy
 from mathutils import Vector
-from ...utils import copy_bone, flip_bone, put_bone, org
+from ...utils import copy_bone, flip_bone, put_bone, org, align_bone_y_axis, align_bone_x_axis, align_bone_z_axis
 from ...utils import strip_org, make_deformer_name, connected_children_names 
 from ...utils import create_circle_widget, create_sphere_widget, create_widget
 from ...utils import MetarigError, make_mechanism_name, create_cube_widget
@@ -175,19 +175,23 @@ class Rig:
             neck_eb.tail[:] = eb[org(neck_bones[-1])].head
 
             if len(neck_bones) > 3:
-                # Create neck bend control
-                neck_pivot = copy_bone(self.obj, org(neck_bones[0]), 'neck_pivot')
-                neck_pivot_eb = eb[neck_pivot]
 
                 # Neck pivot position
-                if (len(neck_bones)-1) % 2:
+                if (len(neck_bones)-1) % 2:     # odd num of neck bones (head excluded)
                     center_bone = org(neck_bones[int((len(neck_bones))/2) - 1])
                     head_position = (eb[center_bone].head + eb[center_bone].tail)/2
                 else:
                     center_bone = org(neck_bones[int((len(neck_bones)-1)/2) - 1])
                     head_position = eb[center_bone].tail
+
+                # Create neck bend control
+                neck_pivot = copy_bone(self.obj, org(neck_bones[0]), 'neck_pivot')
+                neck_pivot_eb = eb[neck_pivot]
                 neck_pivot_eb.head = head_position
-                neck_pivot_eb.tail = head_position + (neck_eb.tail - neck_eb.head)/2
+                # neck_pivot_eb.tail = head_position + (neck_eb.tail - neck_eb.head)/2
+                align_bone_y_axis(self.obj, neck_pivot, eb[neck].y_axis)
+                align_bone_x_axis(self.obj, neck_pivot, eb[neck].x_axis)
+                eb[neck_pivot].length = eb[neck].length / 2
 
         # Create head control
         if self.use_head:
@@ -222,7 +226,8 @@ class Rig:
             for b in neck_bones[1:-1]:  # All except 1st neck and (last) head
                 mch_name = copy_bone(self.obj, org(b), make_mechanism_name(b))
                 eb[mch_name].length /= 4
-
+                align_bone_y_axis(self.obj, mch_name, eb[neck].y_axis)
+                align_bone_x_axis(self.obj, mch_name, eb[neck].x_axis)
                 mch += [mch_name]
 
             # Tweak bones
@@ -435,9 +440,10 @@ class Rig:
             eb[bones['neck']['mch_head']].parent = eb[bones['chest']['ctrl']]
 
         for i, b in enumerate([eb[n] for n in bones['neck']['mch']]):
-            for org_b in bones['neck']['original_names']:
-                if org_b in b.name:
-                    b.parent = eb[org(org_b)]
+            b.parent = eb[bones['neck']['mch_str']]
+            # for org_b in bones['neck']['original_names']:
+            #     if org_b in b.name:
+            #         b.parent = eb[org(org_b)]
 
         # Chest mch bones and neck mch
         chest_mch = bones['chest']['mch'] + [bones['neck']['mch_neck']]
@@ -559,12 +565,12 @@ class Rig:
 
             for j, b in enumerate(mch):
 
-                if i == 0:
-                    nfactor = float((j + 1) / len(mch))
+                if i == 0:      # Neck mch-s
+                    #nfactor = float((j + 1) / len(mch))
                     self.make_constraint(b, {
-                        'constraint': 'COPY_ROTATION',
-                        'subtarget': l['ctrl'],
-                        'influence': nfactor
+                        'constraint': 'COPY_LOCATION',
+                        'subtarget': org(l['original_names'][j+1]),
+                        'influence': 1.0
                     } )
 
                     step = 2/(len(mch)+1)
@@ -573,9 +579,10 @@ class Rig:
 
                     if bones['neck']['neck_pivot']:
                         self.make_constraint(b, {
-                            'constraint': 'COPY_TRANSFORMS',
+                            'constraint': 'COPY_LOCATION',
                             'subtarget': l['neck_pivot'],
                             'influence': influence,
+                            'use_offset': True,
                             'owner_space': 'LOCAL',
                             'target_space': 'LOCAL'
                         })

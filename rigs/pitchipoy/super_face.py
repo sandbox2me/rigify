@@ -135,7 +135,7 @@ class Rig:
         eyes_ctrl_e.head[:] =  ( eyeL_ctrl_e.head + eyeR_ctrl_e.head ) / 2
         
         for bone in [ eyeL_ctrl_e, eyeR_ctrl_e, eyes_ctrl_e ]:
-            bone.tail[:] = bone.head + Vector( [ 0, 0, eyeL_e.length * 0.75 ] )
+            bone.tail[:] = bone.head + Vector( [ 0, 0, eyeL_e.length * 1.35 ] )
 
         ## Widget for transforming the both eyes
         eye_master_names = []
