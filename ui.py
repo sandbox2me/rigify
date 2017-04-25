@@ -55,7 +55,7 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
             WARNING = "Warning: Some features may change after generation"
             show_warning = False
 
-            check_props = ['IK_follow', 'root/parent', 'FK_limb_follow', 'IK_Strertch']
+            check_props = ['IK_follow', 'root/parent', 'FK_limb_follow', 'IK_Stretch']
             for obj in bpy.data.objects:
                 if type(obj.data) != bpy.types.Armature:
                     continue

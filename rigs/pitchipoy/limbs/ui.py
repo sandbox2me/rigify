@@ -128,7 +128,7 @@ def create_script( bones, limb_type=None):
             pole,
             'IK/FK',
             'rubber_tweak',
-            'IK_Strertch',
+            'IK_Stretch',
             'pole_vector',
             'FK_limb_follow'
         )
@@ -144,7 +144,7 @@ def create_script( bones, limb_type=None):
             pole,
             'IK/FK',
             'rubber_tweak',
-            'IK_Strertch',
+            'IK_Stretch',
             'pole_vector',
             'FK_limb_follow'
         )
@@ -160,7 +160,7 @@ def create_script( bones, limb_type=None):
             pole,
             'IK/FK',
             'rubber_tweak',
-            'IK_Strertch',
+            'IK_Stretch',
             'pole_vector',
             'FK_limb_follow'
         )

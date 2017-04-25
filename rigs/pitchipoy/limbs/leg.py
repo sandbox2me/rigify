@@ -245,8 +245,8 @@ def create_leg( cls, bones ):
     #pb_parent = pb[ bones['parent'] ]
     pb_parent = pb[bones['main_parent']]
     
-    pb_parent['IK_Strertch'] = 1.0
-    prop = rna_idprop_ui_prop_get( pb_parent, 'IK_Strertch', create=True )
+    pb_parent['IK_Stretch'] = 1.0
+    prop = rna_idprop_ui_prop_get( pb_parent, 'IK_Stretch', create=True )
     prop["min"]         = 0.0
     prop["max"]         = 1.0
     prop["soft_min"]    = 0.0
