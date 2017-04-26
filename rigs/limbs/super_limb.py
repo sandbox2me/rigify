@@ -752,7 +752,7 @@ def create_sample(obj):
 
     bpy.ops.object.mode_set(mode='OBJECT')
     pbone = obj.pose.bones[bones['upper_arm.L']]
-    pbone.rigify_type = 'pitchipoy.limbs.super_limb'
+    pbone.rigify_type = 'limbs.super_limb'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False

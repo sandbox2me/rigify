@@ -329,7 +329,7 @@ def create_sample(obj):
  
     bpy.ops.object.mode_set(mode='OBJECT')
     pbone = obj.pose.bones[bones['Bone']]
-    pbone.rigify_type = 'pitchipoy.simple_tentacle'
+    pbone.rigify_type = 'limbs.simple_tentacle'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False

@@ -1062,7 +1062,7 @@ def create_sample(obj):
 
     bpy.ops.object.mode_set(mode='OBJECT')
     pbone = obj.pose.bones[bones['upper_arm.L']]
-    pbone.rigify_type = 'pitchipoy.limbs.super_limb'
+    pbone.rigify_type = 'limbs.super_limb'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False
@@ -1135,7 +1135,7 @@ def create_sample(obj):
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'YXZ'
     pbone = obj.pose.bones[bones['f_index.01.L']]
-    pbone.rigify_type = 'pitchipoy.simple_tentacle'
+    pbone.rigify_type = 'limbs.simple_tentacle'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False
@@ -1154,7 +1154,7 @@ def create_sample(obj):
     except AttributeError:
         pass
     pbone = obj.pose.bones[bones['thumb.01.L']]
-    pbone.rigify_type = 'pitchipoy.simple_tentacle'
+    pbone.rigify_type = 'limbs.simple_tentacle'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False
@@ -1173,7 +1173,7 @@ def create_sample(obj):
     except AttributeError:
         pass
     pbone = obj.pose.bones[bones['f_middle.01.L']]
-    pbone.rigify_type = 'pitchipoy.simple_tentacle'
+    pbone.rigify_type = 'limbs.simple_tentacle'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False
@@ -1192,7 +1192,7 @@ def create_sample(obj):
     except AttributeError:
         pass
     pbone = obj.pose.bones[bones['f_ring.01.L']]
-    pbone.rigify_type = 'pitchipoy.simple_tentacle'
+    pbone.rigify_type = 'limbs.simple_tentacle'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False
@@ -1211,7 +1211,7 @@ def create_sample(obj):
     except AttributeError:
         pass
     pbone = obj.pose.bones[bones['f_pinky.01.L']]
-    pbone.rigify_type = 'pitchipoy.simple_tentacle'
+    pbone.rigify_type = 'limbs.simple_tentacle'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False
