@@ -6,7 +6,7 @@ from ...utils import strip_org, make_deformer_name, connected_children_names
 from ...utils import create_circle_widget, create_sphere_widget, create_widget, create_chain_widget
 from ...utils import MetarigError, make_mechanism_name, create_cube_widget
 from rna_prop_ui import rna_idprop_ui_prop_get
-from .limbs.limb_utils import get_bone_name
+from ..limbs.limb_utils import get_bone_name
 
 script = """
 controls = [%s]

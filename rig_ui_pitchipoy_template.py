@@ -310,6 +310,7 @@ def fk2ik_arm(obj, fk, ik):
     handi = obj.pose.bones[ik[2]]
 
     if 'auto_stretch' in handi.keys():
+        # This is kept for compatibility with legacy rigify Human
         # Stretch
         if handi['auto_stretch'] == 0.0:
             uarm['stretch_length'] = handi['stretch_length']
@@ -374,7 +375,7 @@ def ik2fk_arm(obj, fk, ik):
         match_pose_translation(handi, hand)
         match_pose_rotation(handi, hand)
         match_pose_scale(handi, hand)
-
+        print("snapping arm WITH pole")
         # Pole target position
         match_pole_target(uarmi, farmi, pole, uarm, (uarmi.length + farmi.length))
 
@@ -388,7 +389,7 @@ def ik2fk_arm(obj, fk, ik):
         match_pose_translation(uarmi, uarm)
         match_pose_rotation(uarmi, uarm)
         match_pose_scale(uarmi, uarm)
-
+        print("snapping arm WITHOUT pole")
         # Rotation Correction
         correct_rotation(uarmi, uarm)
 
@@ -408,6 +409,7 @@ def fk2ik_leg(obj, fk, ik):
     mfooti = obj.pose.bones[ik[3]]
 
     if 'auto_stretch' in footi.keys():
+        # This is kept for compatibility with legacy rigify Human
         # Stretch
         if footi['auto_stretch'] == 0.0:
             thigh['stretch_length'] = footi['stretch_length']
@@ -468,7 +470,6 @@ def ik2fk_leg(obj, fk, ik):
     footi    = obj.pose.bones[ik[2]]
     footroll = obj.pose.bones[ik[3]]
 
-    print(ik[6])
     main_parent = obj.pose.bones[ik[6]]
 
     if ik[4] != "" and main_parent['pole_vector']:
@@ -478,8 +479,6 @@ def ik2fk_leg(obj, fk, ik):
     mfooti   = obj.pose.bones[ik[5]]
 
     if (not pole) and (foot):
-        # Stretch
-        # footi['stretch_length'] = thigh['stretch_length']
 
         # Clear footroll
         set_pose_rotation(footroll, Matrix())
@@ -500,13 +499,13 @@ def ik2fk_leg(obj, fk, ik):
 
         # Rotation Correction
         correct_rotation(thighi,thigh)
-
-        # Pole target position
-        match_pole_target(thighi, shini, pole, thigh, (thighi.length + shini.length))
-
+        print("snapping leg withOUT pole")
+        
     else:
         # Stretch
-        # footi['stretch_length'] = thigh['stretch_length']
+        if 'stretch_lenght' in footi.keys() and 'stretch_lenght' in thigh.keys():
+            # Kept for compat with legacy rigify Human
+            footi['stretch_length'] = thigh['stretch_length']
 
         # Clear footroll
         set_pose_rotation(footroll, Matrix())
@@ -519,6 +518,11 @@ def ik2fk_leg(obj, fk, ik):
         set_pose_scale(footi, footmat)
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.mode_set(mode='POSE')
+        
+        print("snapping leg WITH pole")
+        # Pole target position
+        match_pole_target(thighi, shini, pole, thigh, (thighi.length + shini.length))
+
 
 ##############################
 ## IK/FK snapping operators ##
@@ -626,7 +630,7 @@ class Rigify_Leg_IK2FK(bpy.types.Operator):
     thigh_fk = bpy.props.StringProperty(name="Thigh FK Name")
     shin_fk  = bpy.props.StringProperty(name="Shin FK Name")
     mfoot_fk = bpy.props.StringProperty(name="MFoot FK Name")
-    foot_fk = bpy.props.StringProperty(name="Foot FK Name")
+    foot_fk = bpy.props.StringProperty(name="Foot FK Name", default="")
     thigh_ik = bpy.props.StringProperty(name="Thigh IK Name")
     shin_ik  = bpy.props.StringProperty(name="Shin IK Name")
     foot_ik  = bpy.props.StringProperty(name="Foot IK Name")
