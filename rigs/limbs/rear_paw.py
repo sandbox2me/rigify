@@ -1,9 +1,15 @@
 import bpy
 
 from .paw import Rig as pawRig
+from .paw import parameters_ui
+from .paw import add_parameters
+
+INTERFACE = True    # Include and set True if Rig is just an interface for a wrapper class
+                    # add_parameters and parameters_ui are unused for interface classes
 
 
 class Rig(pawRig):
+
     def __init__(self, obj, bone_name, params):
         super(Rig, self).__init__(obj, bone_name, params)
 

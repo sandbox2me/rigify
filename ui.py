@@ -464,6 +464,9 @@ class BONE_PT_rigify_buttons(bpy.types.Panel):
             id_store.rigify_types.remove(0)
 
         for r in rig_lists.rig_list:
+            rig = get_rig_type(r)
+            if hasattr(rig, 'INTERFACE') and rig.INTERFACE:
+                continue
             # collection = r.split('.')[0]  # UNUSED
             if collection_name == "All":
                 a = id_store.rigify_types.add()
