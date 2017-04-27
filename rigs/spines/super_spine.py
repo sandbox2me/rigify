@@ -847,41 +847,6 @@ class Rig:
             if self.tweak_layers:
                 pb[bone].bone.layers = self.tweak_layers
 
-    def bone_grouping(self, bones):
-        bpy.ops.object.mode_set(mode = 'OBJECT')
-        rig = self.obj
-        pb = rig.pose.bones
-        groups = {'Tweaks': 'THEME08', 'Torso': 'THEME03', 'Upper Body': 'THEME09'}
-
-        for g in groups:
-            if g not in rig.pose.bone_groups.keys():
-                bg = rig.pose.bone_groups.new(g)
-                bg.color_set = groups[g]
-
-        # tweaks group
-        controls =  [ bones['neck']['ctrl'],  bones['neck']['ctrl_neck'] ]
-        controls += [ bones['chest']['ctrl'], bones['hips']['ctrl']      ]
-        #controls += [ bones['pivot']['ctrl'] ]
-
-        if self.use_tail:
-            controls.extend(bones['tail']['ctrl'])
-
-        for ctrl in controls:
-            if ctrl:
-                pb[ctrl].bone_group = rig.pose.bone_groups['Torso']
-
-        pb[bones['pivot']['ctrl']].bone_group = rig.pose.bone_groups['Upper Body']
-
-        tweaks = bones['neck']['tweak']
-        tweaks += bones['chest']['tweak']
-        tweaks += bones['hips']['tweak']
-
-        if 'tail' in bones.keys():
-            tweaks += bones['tail']['tweak']
-
-        for twk in tweaks:
-            pb[twk].bone_group = rig.pose.bone_groups['Tweaks']
-
     def generate(self):
         # Torso Rig Anatomy:
         # Neck: all bones above neck point, last bone is head
@@ -937,8 +902,6 @@ class Rig:
 
         if self.use_tail:
             controls.extend(bones['tail']['ctrl'])
-
-        self.bone_grouping(bones)
 
         # Create UI
         controls_string = ", ".join(["'" + x + "'" for x in controls])

@@ -17,6 +17,8 @@ if is_selected(all_controls):
     layout.prop(pose_bones[jaw_ctrl_name],  '["%s"]', slider=True)
     layout.prop(pose_bones[eyes_ctrl_name], '["%s"]', slider=True)
 """
+
+
 class Rig:
     
     def __init__(self, obj, bone_name, params):
@@ -974,28 +976,6 @@ class Rig:
             'mch'    : mchs 
             }, tweak_unique
 
-    def bone_grouping(self, bones):
-        bpy.ops.object.mode_set(mode = 'OBJECT')
-        rig = self.obj
-        pb = rig.pose.bones
-        groups = {'Face Primary': 'THEME03', 'Face Secondary': 'THEME04'}
-
-        for g in groups:
-            if g not in rig.pose.bone_groups.keys():
-                bg = rig.pose.bone_groups.new(g)
-                bg.color_set = groups[g]
-
-        # Face Primary
-        ctrls=[]
-        for group in bones['ctrls']:
-            ctrls += bones['ctrls'][group]
-        for ctrl in ctrls:
-            pb[ctrl].bone_group = rig.pose.bone_groups['Face Primary']
-        # Face Secondary
-        tweaks = bones['tweaks']['all']
-        for twk in tweaks:
-            pb[twk].bone_group = rig.pose.bone_groups['Face Secondary']
-
     def generate(self):
         
         all_bones, tweak_unique = self.create_bones()
@@ -1013,8 +993,6 @@ class Rig:
         for group in all_controls:
             for bone in group:
                 all_ctrls.append( bone )
-
-        self.bone_grouping(all_bones)
 
         controls_string = ", ".join(["'" + x + "'" for x in all_ctrls])
         return [ script % (

@@ -42,19 +42,6 @@ class Rig:
         self.make_widget  = params.make_widget
         self.make_deform  = params.make_deform
 
-    def bone_grouping(self, bone):
-        bpy.ops.object.mode_set(mode = 'OBJECT')
-        rig = self.obj
-        pb = rig.pose.bones
-        groups = {'Extra': 'THEME04'}
-
-        for g in groups:
-            if g not in rig.pose.bone_groups.keys():
-                bg = rig.pose.bone_groups.new(g)
-                bg.color_set = groups[g]
-
-        pb[bone].bone_group = rig.pose.bone_groups['Extra']
-
     def generate(self):
         """ Generate the rig.
             Do NOT modify any of the original bones, except for adding constraints.
@@ -100,7 +87,6 @@ class Rig:
             else:
                 create_bone_widget(self.obj, bone)
 
-            self.bone_grouping(bone)
 
 def add_parameters(params):
     """ Add the parameters of this rig type to the
