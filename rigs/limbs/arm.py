@@ -39,7 +39,7 @@ class Rig:
             )[:3]  # The basic limb is the first 3 bones
 
         self.segments = params.segments
-        self.bbones  = params.bbones
+        self.bbones = params.bbones
         self.limb_type = params.limb_type
         self.rot_axis = params.rotation_axis
 
@@ -244,25 +244,25 @@ class Rig:
         eb = self.obj.data.edit_bones
 
         def_bones = []
-        for i,org in enumerate(org_bones):
+        for i, org in enumerate(org_bones):
             if i < len(org_bones) - 1:
                 # Create segments if specified
-                for j in range( self.segments ):
-                    name = get_bone_name( strip_org(org), 'def' )
-                    def_name = copy_bone( self.obj, org, name )
+                for j in range(self.segments):
+                    name = get_bone_name(strip_org(org), 'def')
+                    def_name = copy_bone(self.obj, org, name)
 
-                    eb[ def_name ].length /= self.segments
+                    eb[def_name].length /= self.segments
 
                     # If we have more than one segments, place the 2nd and
                     # onwards on the tail of the previous bone
                     if j > 0:
-                         put_bone(self.obj, def_name, eb[ def_bones[-1] ].tail)
+                        put_bone(self.obj, def_name, eb[ def_bones[-1] ].tail)
 
-                    def_bones += [ def_name ]
+                    def_bones += [def_name]
             else:
-                name     = get_bone_name( strip_org(org), 'def' )
-                def_name = copy_bone( self.obj, org, name )
-                def_bones.append( def_name )
+                name = get_bone_name(strip_org(org), 'def')
+                def_name = copy_bone(self.obj, org, name)
+                def_bones.append(def_name)
 
         # Parent deform bones
         for i,b in enumerate( def_bones ):
@@ -294,9 +294,9 @@ class Rig:
         for bone in def_bones[:-1]:
             self.obj.data.bones[bone].bbone_segments = self.bbones
 
-        self.obj.data.bones[ def_bones[0]  ].bbone_in  = 0.0
+        self.obj.data.bones[ def_bones[0]  ].bbone_in = 0.0
         self.obj.data.bones[ def_bones[-2] ].bbone_out = 0.0
-        self.obj.data.bones[ def_bones[-1] ].bbone_in  = 0.0
+        self.obj.data.bones[ def_bones[-1] ].bbone_in = 0.0
         self.obj.data.bones[ def_bones[-1] ].bbone_out = 0.0
 
 

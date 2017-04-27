@@ -25,10 +25,11 @@ class Rig:
 
         eb = obj.data.edit_bones
 
-        self.obj          = obj
-        self.org_bones    = [bone_name] + connected_children_names(obj, bone_name)
-        self.params       = params
-        self.spine_length = sum( [ eb[b].length for b in self.org_bones ] )
+        self.obj = obj
+        self.org_bones = [bone_name] + connected_children_names(obj, bone_name)
+        self.params = params
+        self.spine_length = sum([eb[b].length for b in self.org_bones])
+        self.bbones = params.bbones
 
         # Check if user provided the positions of the neck and pivot
         # if params.neck_pos and params.pivot_pos:
@@ -121,7 +122,7 @@ class Rig:
             tail_vec = v * self.obj.matrix_world
             eb.tail[:] = eb.head + tail_vec
 
-    def create_pivot( self, bones = None, pivot = None):
+    def create_pivot(self, bones=None, pivot=None):
         """ Create the pivot control and mechanism bones """
 
         org_bones  = self.org_bones
@@ -212,14 +213,25 @@ class Rig:
     def create_deform(self):
         org_bones = self.org_bones
 
-        bpy.ops.object.mode_set(mode ='EDIT')
+        bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
         def_bones = []
-        for org in org_bones:
-            def_name = make_deformer_name( strip_org( org ) )
-            def_name = copy_bone( self.obj, org, def_name )
-            def_bones.append( def_name )
+        for o in org_bones:
+            def_name = make_deformer_name(strip_org(o))
+            def_name = copy_bone(self.obj, o, def_name)
+            def_bones.append(def_name)
+
+        bpy.ops.object.mode_set(mode='POSE')
+        # Create bbone segments
+        for bone in def_bones:
+            self.obj.data.bones[bone].bbone_segments = self.bbones
+
+        # self.obj.data.bones[ bones['def'][0]].bbone_in = 0.0
+        # self.obj.data.bones[ bones['def'][-1]].bbone_out = 0.0
+        self.obj.data.bones[def_bones[0]].bbone_in = 1.0
+        self.obj.data.bones[def_bones[-1]].bbone_out = 1.0
+        bpy.ops.object.mode_set(mode='EDIT')
 
         return def_bones
 
@@ -702,7 +714,7 @@ class Rig:
         for p in [k for k in constraint.keys() if k in dir(const)]:
             setattr(const, p, constraint[p])
 
-    def constrain_bones( self, bones ):
+    def constrain_bones(self, bones):
         # DEF bones
 
         deform = bones['def']
@@ -898,13 +910,17 @@ class Rig:
         def_pb = pb[deform[0]]
         ctrl_start = pb[bones['chain']['ctrl'][0]]
         ctrl_end = pb[bones['chain']['ctrl'][-1]]
+        mch_start = pb[bones['chain']['mch'][0]]
+        mch_end = pb[bones['chain']['mch_ctrl'][-1]]
 
         if 'bbone_custom_handle_start' in dir(def_pb) and 'bbone_custom_handle_end' in dir(def_pb):
-            def_pb.bbone_custom_handle_start = ctrl_start
-            def_pb.bbone_custom_handle_end = ctrl_end
+            # def_pb.bbone_custom_handle_start = ctrl_start
+            # def_pb.bbone_custom_handle_end = ctrl_end
+            def_pb.bbone_custom_handle_start = mch_start
+            def_pb.bbone_custom_handle_end = mch_end
             def_pb.use_bbone_custom_handles = True
 
-    def create_drivers( self, bones ):
+    def create_drivers(self, bones):
         bpy.ops.object.mode_set(mode ='OBJECT')
         pb = self.obj.pose.bones
 
@@ -947,16 +963,9 @@ class Rig:
             drv_modifier.coefficients[0] = 1.0
             drv_modifier.coefficients[1] = -1.0
 
-    def locks_and_widgets( self, bones ):
-        bpy.ops.object.mode_set(mode ='OBJECT')
+    def locks_and_widgets(self, bones):
+        bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
-
-        # deform bones bbone segements
-        for bone in bones['def']:
-            self.obj.data.bones[bone].bbone_segments = 3
-
-        self.obj.data.bones[ bones['def'][0]  ].bbone_in  = 0.0
-        self.obj.data.bones[ bones['def'][-1] ].bbone_out = 0.0
 
         #Locks
         mch_ctrl = bones['chain']['mch_ctrl']
@@ -1029,13 +1038,6 @@ class Rig:
         return
 
 
-        # deform bones bbone segements
-        for bone in bones['def'][:-1]:
-            self.obj.data.bones[bone].bbone_segments = 8
-
-        self.obj.data.bones[ bones['def'][0]  ].bbone_in  = 0.0
-        self.obj.data.bones[ bones['def'][-2] ].bbone_out = 0.0
-
         # Locks
         tweaks =  bones['neck']['tweak'] + bones['chest']['tweak']
         tweaks += bones['hips']['tweak']
@@ -1091,11 +1093,11 @@ class Rig:
 
         # place widgets on correct bones
         chest_widget_loc = pb[ bones['chest']['mch_wgt'] ]
-        pb[ bones['chest']['ctrl'] ].custom_shape_transform = chest_widget_loc
+        pb[bones['chest']['ctrl'] ].custom_shape_transform = chest_widget_loc
 
-        hips_widget_loc = pb[ bones['hips']['mch_wgt'] ]
+        hips_widget_loc = pb[bones['hips']['mch_wgt']]
         if 'tail' in bones.keys():
-            hips_widget_loc = bones['def'][self.tail_pos -1]
+            hips_widget_loc = bones['def'][self.tail_pos - 1]
 
         pb[ bones['hips']['ctrl'] ].custom_shape_transform = hips_widget_loc
 
@@ -1138,7 +1140,7 @@ class Rig:
             # lower_torso_bones = [ strip_org(b) for b in bone_chains['lower'] ]
             # tail_bones        = [ strip_org(b) for b in bone_chains['tail' ] ]
 
-        chain_bones = [ strip_org(b) for b in self.org_bones ]
+        chain_bones = [strip_org(b) for b in self.org_bones]
 
             # bones = {}
             #
@@ -1176,7 +1178,6 @@ class Rig:
             # self.create_drivers(    bones )
             # self.locks_and_widgets( bones )
 
-
         self.parent_bones(bones)
         self.constrain_bones(bones)
         self.stick_to_bendy_bones(bones)
@@ -1203,16 +1204,10 @@ class Rig:
             )]
 
 
-def add_parameters( params ):
+def add_parameters(params):
     """ Add the parameters of this rig type to the
         RigifyParameters PropertyGroup
     """
-    # params.control_num = bpy.props.IntProperty(
-    #     name           = 'control_number',
-    #     default        = 1,
-    #     min            = 0,
-    #     description    = 'Number of parent controls (max: num of bones /2)'
-    # )
 
     items = [
         ('auto', 'Auto', ''),
@@ -1230,6 +1225,13 @@ def add_parameters( params ):
     params.conv_bone = bpy.props.StringProperty(
         name = 'Convergence bone',
         default = ''
+    )
+
+    params.bbones = bpy.props.IntProperty(
+        name        = 'bbone segments',
+        default     = 10,
+        min         = 1,
+        description = 'Number of segments'
     )
 
     # params.neck_pos = bpy.props.IntProperty(
@@ -1290,6 +1292,9 @@ def parameters_ui(layout, params):
     row.prop(params, "tweak_axis", expand=True)
     # for i,axis in enumerate( [ 'x', 'y', 'z' ] ):
     #     row.prop(params, "tweak_axis", index=i, toggle=True, text=axis)
+
+    r = layout.row()
+    r.prop(params, "bbones")
 
     r = layout.row()
     r.prop_search(params, 'conv_bone', pb, "bones", text="Convergence Bone")
