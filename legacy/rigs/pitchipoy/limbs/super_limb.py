@@ -14,11 +14,13 @@ from   rna_prop_ui     import rna_idprop_ui_prop_get
 from   ..super_widgets import create_ikarrow_widget
 from   math            import trunc
 
+
 class Rig:
+
     def __init__(self, obj, bone_name, params):
-        """ Initialize torso rig and key rig properties """
-        self.obj       = obj
-        self.params    = params
+        """ Initialize super_limb rig and key rig properties """
+        self.obj = obj
+        self.params = params
 
         if params.limb_type != 'paw':
             self.org_bones = list(
@@ -29,10 +31,10 @@ class Rig:
                 [bone_name] + connected_children_names(obj, bone_name)
                 )[:4]  # The basic limb is the first 4 bones for a paw
 
-        self.segments  = params.segments
-        self.bbones    = params.bbones
+        self.segments = params.segments
+        self.bbones = params.bbones
         self.limb_type = params.limb_type
-        self.rot_axis  = params.rotation_axis
+        self.rot_axis = params.rotation_axis
 
         # Assign values to tweak/FK layers props if opted by user
         if params.tweak_extra_layers:
@@ -45,7 +47,7 @@ class Rig:
         else:
             self.fk_layers = None
 
-    def create_parent( self ):
+    def create_parent(self):
         org_bones = self.org_bones
         
         bpy.ops.object.mode_set(mode ='EDIT')
