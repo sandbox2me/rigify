@@ -130,15 +130,29 @@ class DATA_PT_rigify_layer_names(bpy.types.Panel):
                     col.label(text="Bottom Row:")
             if (i % 8) == 0:
                 col = layout.column()
-            row = col.row(align=True)
-            icon = 'RESTRICT_VIEW_OFF' if arm.layers[i] else 'RESTRICT_VIEW_ON'
-            row.prop(arm, "layers", index=i, text="", toggle=True, icon=icon)
-            #row.prop(arm, "layers", index=i, text="Layer %d" % (i + 1), toggle=True, icon=icon)
-            row.prop(rigify_layer, "name", text="")
-            row.prop(rigify_layer, "row", text="UI Row")
-            icon = 'RADIOBUT_ON' if rigify_layer.set else 'RADIOBUT_OFF'
-            row.prop(rigify_layer, "set", text="", toggle=True, icon=icon)
-            row.prop(rigify_layer, "group", text="Bone Group")
+            if i != 28:
+                row = col.row(align=True)
+                icon = 'RESTRICT_VIEW_OFF' if arm.layers[i] else 'RESTRICT_VIEW_ON'
+                row.prop(arm, "layers", index=i, text="", toggle=True, icon=icon)
+                #row.prop(arm, "layers", index=i, text="Layer %d" % (i + 1), toggle=True, icon=icon)
+                row.prop(rigify_layer, "name", text="")
+                row.prop(rigify_layer, "row", text="UI Row")
+                icon = 'RADIOBUT_ON' if rigify_layer.set else 'RADIOBUT_OFF'
+                row.prop(rigify_layer, "set", text="", toggle=True, icon=icon)
+                row.prop(rigify_layer, "group", text="Bone Group")
+            else:
+                row = col.row(align=True)
+
+                icon = 'RESTRICT_VIEW_OFF' if arm.layers[i] else 'RESTRICT_VIEW_ON'
+                row.prop(arm, "layers", index=i, text="", toggle=True, icon=icon)
+                # row.prop(arm, "layers", index=i, text="Layer %d" % (i + 1), toggle=True, icon=icon)
+                row1 = row.split(align=True).row(align=True)
+                row1.prop(rigify_layer, "name", text="")
+                row1.prop(rigify_layer, "row", text="UI Row")
+                row1.enabled = False
+                icon = 'RADIOBUT_ON' if rigify_layer.set else 'RADIOBUT_OFF'
+                row.prop(rigify_layer, "set", text="", toggle=True, icon=icon)
+                row.prop(rigify_layer, "group", text="Bone Group")
             if rigify_layer.group == 0:
                 row.label(text='None')
             else:
@@ -146,8 +160,10 @@ class DATA_PT_rigify_layer_names(bpy.types.Panel):
 
         col = layout.column()
         col.label(text="Reserved:")
-        reserved_names = {28: 'Root', 29: 'DEF', 30: 'MCH', 31: 'ORG'}
-        for i in range(28, 32):
+        # reserved_names = {28: 'Root', 29: 'DEF', 30: 'MCH', 31: 'ORG'}
+        reserved_names = {29: 'DEF', 30: 'MCH', 31: 'ORG'}
+        # for i in range(28, 32):
+        for i in range(29, 32):
             row = col.row(align=True)
             icon = 'RESTRICT_VIEW_OFF' if arm.layers[i] else 'RESTRICT_VIEW_ON'
             row.prop(arm, "layers", index=i, text="", toggle=True, icon=icon)

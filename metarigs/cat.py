@@ -6,7 +6,7 @@ def create(obj):
     bpy.ops.object.mode_set(mode='EDIT')
     arm = obj.data
 
-    for i in range(28):
+    for i in range(29):
         arm.rigify_layers.add()
 
     arm.rigify_layers[0].name = "Face"
@@ -65,6 +65,8 @@ def create(obj):
     arm.rigify_layers[26].row = 1
     arm.rigify_layers[27].name = " "
     arm.rigify_layers[27].row = 1
+    arm.rigify_layers[28].name = "Root"
+    arm.rigify_layers[28].row = 16
 
     bones = {}
 
