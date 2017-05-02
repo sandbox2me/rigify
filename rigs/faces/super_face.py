@@ -2370,6 +2370,7 @@ def create_sample(obj):
         bone.select_tail = True
         arm.edit_bones.active = bone
 
+
 def create_square_widget(rig, bone_name, size=1.0, bone_transform_name=None):
     obj = create_widget(rig, bone_name, bone_transform_name)
     if obj is not None:

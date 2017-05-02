@@ -517,6 +517,7 @@ class Rig:
                 idx = org_bones.index(b)
                 org_parent = org_bones[idx-1]
                 eb[b].parent = eb[org_parent]
+        eb[org_bones[-1]].parent = eb[org_bones[-2]]
 
     def make_constraint(self, bone, constraint):
         bpy.ops.object.mode_set(mode='OBJECT')
