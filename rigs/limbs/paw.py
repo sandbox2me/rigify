@@ -4,14 +4,13 @@ from .limb_utils import *
 from mathutils import Vector
 from ...utils import copy_bone, flip_bone, put_bone, create_cube_widget
 from ...utils import strip_org, make_deformer_name, create_widget
-from ...utils import create_circle_widget, create_sphere_widget
+from ...utils import create_circle_widget, create_sphere_widget, create_line_widget
 from ...utils import MetarigError, make_mechanism_name, org
 from ...utils import create_limb_widget, connected_children_names
 from rna_prop_ui import rna_idprop_ui_prop_get
 from ..widgets import create_ikarrow_widget, create_gear_widget
 from ..widgets import create_foot_widget, create_ballsocket_widget
 from math import trunc, pi
-
 
 extra_script = """
 controls = [%s]
@@ -58,7 +57,7 @@ class Rig:
 
         org_bones = self.org_bones
 
-        bpy.ops.object.mode_set(mode ='EDIT')
+        bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
         name = get_bone_name( strip_org( org_bones[0] ), 'mch', 'parent' )
@@ -132,14 +131,7 @@ class Rig:
 
         # Create and parent mch and ctrl tweaks
         for i,org in enumerate(org_bones):
-
-            #if (self.limb_type == 'paw'):
-            #    idx_stop = len(org_bones)
-            #else:
-            #    idx_stop = len(org_bones) - 1
-
             if i < len(org_bones) - 1:
-            # if i < idx_stop:
                 # Create segments if specified
                 for j in range( self.segments ):
                     # MCH
@@ -194,10 +186,6 @@ class Rig:
 
         # Contraints
 
-        # last_name = eb[eb.keys().index(org_bones[-1])+1].name
-        # tweaks['mch'] += [last_name]
-        # tweaks['ctrl'] += [last_name]
-
         for i,b in enumerate( tweaks['mch'] ):
             first  = 0
             middle = trunc( len( tweaks['mch'] ) / 3 )
@@ -224,7 +212,6 @@ class Rig:
                     factor        = self.segments * 2
                     dt_target_idx = last
 
-
                 # Use copy transforms constraints to position each bone
                 # exactly in the location respective to its index (between
                 # the two edges)
@@ -241,9 +228,6 @@ class Rig:
                     'constraint'  : 'DAMPED_TRACK',
                     'subtarget'   : tweaks['ctrl'][ dt_target_idx ],
                 })
-
-            # tweaks['mch'].pop()
-            # tweaks['ctrl'].pop()
 
         # Ctrl bones Locks and Widgets
         pb = self.obj.pose.bones
@@ -265,26 +249,25 @@ class Rig:
         eb = self.obj.data.edit_bones
 
         def_bones = []
-        for i,org in enumerate(org_bones):
-
+        for i, org in enumerate(org_bones):
             if i < len(org_bones) - 1:
                 # Create segments if specified
-                for j in range( self.segments ):
-                    name = get_bone_name( strip_org(org), 'def' )
-                    def_name = copy_bone( self.obj, org, name )
+                for j in range(self.segments):
+                    name = get_bone_name(strip_org(org), 'def')
+                    def_name = copy_bone(self.obj, org, name)
 
-                    eb[ def_name ].length /= self.segments
+                    eb[def_name].length /= self.segments
 
                     # If we have more than one segments, place the 2nd and
                     # onwards on the tail of the previous bone
                     if j > 0:
-                         put_bone(self.obj, def_name, eb[ def_bones[-1] ].tail)
+                        put_bone(self.obj, def_name, eb[ def_bones[-1] ].tail)
 
-                    def_bones += [ def_name ]
+                    def_bones += [def_name]
             else:
-                name     = get_bone_name( strip_org(org), 'def' )
-                def_name = copy_bone( self.obj, org, name )
-                def_bones.append( def_name )
+                name = get_bone_name(strip_org(org), 'def')
+                def_name = copy_bone(self.obj, org, name)
+                def_bones.append(def_name)
 
         # Parent deform bones
         for i,b in enumerate( def_bones ):
@@ -316,9 +299,9 @@ class Rig:
         for bone in def_bones[:-1]:
             self.obj.data.bones[bone].bbone_segments = self.bbones
 
-        self.obj.data.bones[ def_bones[0]  ].bbone_in  = 0.0
+        self.obj.data.bones[ def_bones[0]  ].bbone_in = 0.0
         self.obj.data.bones[ def_bones[-2] ].bbone_out = 0.0
-        self.obj.data.bones[ def_bones[-1] ].bbone_in  = 0.0
+        self.obj.data.bones[ def_bones[-1] ].bbone_in = 0.0
         self.obj.data.bones[ def_bones[-1] ].bbone_out = 0.0
 
 
@@ -392,23 +375,33 @@ class Rig:
         # Parenting
         eb[ ctrl    ].parent = eb[ parent ]
         eb[ mch_str ].parent = eb[ parent ]
-
         eb[ mch_ik  ].parent = eb[ ctrl   ]
 
         # Make standard pole target bone
         pole_name = get_bone_name(org_bones[0], 'ctrl', 'ik_target')
         elbow_vector = -(eb[org_bones[0]].z_axis + eb[org_bones[1]].z_axis)
         elbow_vector.normalize()
-        elbow_vector *= eb[org_bones[0]].length/2
+        # elbow_vector *= eb[org_bones[0]].length/2
+        elbow_vector *= (eb[org_bones[1]].tail - eb[org_bones[0]].head).length/2
         pole_target = copy_bone(self.obj, org_bones[0], pole_name)
         eb[pole_target].parent = eb[mch_str]
-        eb[pole_target].tail = eb[org_bones[0]].tail
+        #eb[pole_target].tail = eb[org_bones[0]].tail
         eb[pole_target].head = eb[org_bones[0]].tail + elbow_vector
+        eb[pole_target].tail = eb[pole_target].head - elbow_vector/8
+        eb[pole_target].roll = 0.0
 
-        make_constraint( self, mch_ik, {
-            'constraint'  : 'IK',
-            'subtarget'   : mch_target,
-            'chain_count' : 2,
+        # Make visual pole
+        vispole_name = 'VIS_' + get_bone_name(org_bones[0], 'ctrl', 'ik_pole')
+        vispole = copy_bone(self.obj, org_bones[1], vispole_name)
+        eb[vispole].tail = eb[vispole].head + Vector((0.0, 0.0, eb[org_bones[1]].length/10))
+        eb[vispole].use_connect = False
+        eb[vispole].hide_select = True
+        eb[vispole].parent = None
+
+        make_constraint(self, mch_ik, {
+            'constraint': 'IK',
+            'subtarget': mch_target,
+            'chain_count': 2,
         })
 
         make_constraint(self, mch_ik, {
@@ -417,7 +410,22 @@ class Rig:
             'chain_count': 2,
         })
 
+        # VIS pole constraints
+        make_constraint(self, vispole, {
+            'constraint': 'COPY_LOCATION',
+            'name': 'copy_loc',
+            'subtarget': org_bones[1],
+        })
+
         pb = self.obj.pose.bones
+
+        make_constraint(self, vispole, {
+            'constraint': 'STRETCH_TO',
+            'name': 'stretch_to',
+            'subtarget': pole_target,
+            'volume': 'NO_VOLUME',
+            'rest_length': pb[vispole].length
+        })
 
         pb[mch_ik].constraints[-1].pole_target = self.obj
         pb[mch_ik].constraints[-1].pole_subtarget = pole_target
@@ -432,14 +440,16 @@ class Rig:
                setattr( pb[ mch_ik ], 'lock_ik_' + axis, True )
 
         # Locks and Widget
-        pb[ctrl].lock_rotation = True, False, True
-        create_ikarrow_widget(self.obj, ctrl, bone_transform_name=None)
+        pb[ ctrl ].lock_rotation = True, False, True
+        create_ikarrow_widget( self.obj, ctrl, bone_transform_name=None )
         create_sphere_widget(self.obj, pole_target, bone_transform_name=None)
+        create_line_widget(self.obj, vispole)
 
         return {'ctrl': {'limb': ctrl, 'ik_target': pole_target},
                  'mch_ik': mch_ik,
                  'mch_target': mch_target,
-                 'mch_str': mch_str
+                 'mch_str': mch_str,
+                 'visuals': {'vispole': vispole}
         }
 
     def create_fk(self, parent):
@@ -448,42 +458,42 @@ class Rig:
 
         org_bones.pop()
 
-        bpy.ops.object.mode_set(mode ='EDIT')
+        bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
         ctrls = []
 
         for o in org_bones:
-            bone = copy_bone( self.obj, o, get_bone_name( o, 'ctrl', 'fk' ) )
-            ctrls.append( bone )
+            bone = copy_bone(self.obj, o, get_bone_name( o, 'ctrl', 'fk'))
+            ctrls.append(bone)
 
         # MCH
         mch = copy_bone(
-            self.obj, org_bones[-1], get_bone_name( o, 'mch', 'fk' )
+            self.obj, org_bones[-1], get_bone_name(o, 'mch', 'fk')
         )
 
-        eb[ mch ].length /= 4
+        eb[mch].length /= 4
 
         # Parenting
-        eb[ ctrls[0] ].parent      = eb[ parent   ]
-        eb[ ctrls[1] ].parent      = eb[ ctrls[0] ]
-        eb[ ctrls[1] ].use_connect = True
-        eb[ ctrls[2] ].parent      = eb[ mch      ]
-        eb[ mch      ].parent      = eb[ ctrls[1] ]
-        eb[ mch      ].use_connect = True
+        eb[ctrls[0]].parent = eb[parent]
+        eb[ctrls[1]].parent = eb[ctrls[0]]
+        eb[ctrls[1]].use_connect = True
+        eb[ctrls[2]].parent = eb[mch]
+        eb[mch].parent = eb[ctrls[1]]
+        eb[mch].use_connect = True
 
         # Constrain MCH's scale to root
-        make_constraint( self, mch, {
-            'constraint'  : 'COPY_SCALE',
-            'subtarget'   : 'root'
+        make_constraint(self, mch, {
+            'constraint': 'COPY_SCALE',
+            'subtarget': 'root'
         })
 
         # Locks and widgets
         pb = self.obj.pose.bones
-        pb[ ctrls[2] ].lock_location = True, True, True
+        pb[ctrls[2]].lock_location = True, True, True
 
-        create_limb_widget( self.obj, ctrls[0] )
-        create_limb_widget( self.obj, ctrls[1] )
+        create_limb_widget(self.obj, ctrls[0])
+        create_limb_widget(self.obj, ctrls[1])
 
         create_circle_widget(self.obj, ctrls[2], radius=0.4, head_tail=0.0)
 
@@ -491,7 +501,7 @@ class Rig:
             if self.fk_layers:
                 pb[c].bone.layers = self.fk_layers
 
-        return { 'ctrl' : ctrls, 'mch' : mch }
+        return {'ctrl': ctrls, 'mch': mch}
 
     def org_parenting_and_switch(self, org_bones, ik, fk, parent):
         bpy.ops.object.mode_set(mode='EDIT')
@@ -521,7 +531,7 @@ class Rig:
         iks += [ik[k] for k in ['mch_ik', 'mch_target']]
 
         for o, i, f in zip(org_bones, iks, fk):
-            make_constraint(self, o, {
+            make_constraint( self, o, {
                 'constraint': 'COPY_TRANSFORMS',
                 'subtarget': i
             })
@@ -542,7 +552,6 @@ class Rig:
                 pb_parent.path_from_id() + '[' + '"' + prop.name + '"' + ']'
 
     def create_paw(self, bones):
-
         org_bones = list(
             [self.org_bones[0]] + connected_children_names(self.obj, self.org_bones[0])
         )
@@ -584,7 +593,7 @@ class Rig:
             paw_parent = None
 
         # Create heel control bone
-        heel = get_bone_name( org_bones[2], 'ctrl', 'heel_ik' )
+        heel = get_bone_name(org_bones[2], 'ctrl', 'heel_ik')
         heel = copy_bone( self.obj, org_bones[2], heel )
 
         # clear parent
@@ -724,7 +733,6 @@ class Rig:
                 'head_tail'   : 1
             })
 
-
             # Find IK/FK switch property
             pb   = self.obj.pose.bones
             #prop = rna_idprop_ui_prop_get( pb[ bones['parent'] ], 'IK/FK' )
@@ -765,7 +773,7 @@ class Rig:
 
     def create_drivers(self, bones):
 
-        bpy.ops.object.mode_set(mode ='OBJECT')
+        bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
 
         ctrl = pb[bones['ik']['mch_foot'][0]]
@@ -803,6 +811,25 @@ class Rig:
                 drv_modifier.coefficients[0] = 1.0
                 drv_modifier.coefficients[1] = -1.0
 
+                # vis-pole hide driver
+                vispole = pb[bones['ik']['visuals']['vispole']]
+                drv = vispole.bone.driver_add("hide").driver
+                drv.type = 'AVERAGE'
+                var = drv.variables.new()
+                var.name = prop
+                var.type = "SINGLE_PROP"
+                var.targets[0].id = self.obj
+                var.targets[0].data_path = \
+                    owner.path_from_id() + '[' + '"' + prop + '"' + ']'
+
+                drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
+
+                drv_modifier.mode = 'POLYNOMIAL'
+                drv_modifier.poly_order = 1
+                drv_modifier.coefficients[0] = 1.0
+                drv_modifier.coefficients[1] = -1.0
+
+                # arrow hide driver
                 pole_target = pb[bones['ik']['ctrl']['limb']]
                 drv = pole_target.bone.driver_add("hide").driver
                 drv.type = 'AVERAGE'
@@ -888,32 +915,15 @@ class Rig:
                     drv_modifier.coefficients[1] = -1.0
 
             elif len(ctrl.constraints) > 1:
-                owner[prop]=0.0
-                rna_prop = rna_idprop_ui_prop_get(owner, prop, create=True )
+                owner[prop] = 0.0
+                rna_prop = rna_idprop_ui_prop_get(owner, prop, create=True)
                 rna_prop["min"]         = 0.0
                 rna_prop["max"]         = 1.0
                 rna_prop["soft_min"]    = 0.0
                 rna_prop["soft_max"]    = 1.0
                 rna_prop["description"] = prop
 
-                # drv = ctrl.constraints[ 0 ].driver_add("influence").driver
-                # drv.type = 'AVERAGE'
-                #
-                # var = drv.variables.new()
-                # var.name = prop
-                # var.type = "SINGLE_PROP"
-                # var.targets[0].id = self.obj
-                # var.targets[0].data_path = \
-                # ctrl.path_from_id() + '['+ '"' + prop + '"' + ']'
-                #
-                # drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
-                #
-                # drv_modifier.mode            = 'POLYNOMIAL'
-                # drv_modifier.poly_order      = 1
-                # drv_modifier.coefficients[0] = 1.0
-                # drv_modifier.coefficients[1] = -1.0
-
-                drv = ctrl.constraints[ 1 ].driver_add("influence").driver
+                drv = ctrl.constraints[1].driver_add("influence").driver
                 drv.type = 'AVERAGE'
 
                 var = drv.variables.new()

@@ -55,6 +55,7 @@ class Rig:
             self.fk_layers = None
 
     def create_parent(self):
+
         org_bones = self.org_bones
 
         bpy.ops.object.mode_set(mode='EDIT')
@@ -501,7 +502,7 @@ class Rig:
         # re-parent ORGs in a connected chain
         for i, o in enumerate(org_bones):
             if i > 0:
-                eb[o].parent = eb[ org_bones[i-1] ]
+                eb[o].parent = eb[org_bones[i-1]]
                 if i <= len(org_bones)-1:
                     eb[o].use_connect = True
 
@@ -615,7 +616,6 @@ class Rig:
             'head_tail'   : 1.0
         })
 
-
         # Constrain mch ik stretch bone to the ik control
         make_constraint( self, bones['ik']['mch_str'], {
             'constraint'  : 'DAMPED_TRACK',
@@ -667,7 +667,7 @@ class Rig:
         var.type = "SINGLE_PROP"
         var.targets[0].id = self.obj
         var.targets[0].data_path = \
-            pb_parent.path_from_id() + '['+ '"' + prop.name + '"' + ']'
+            pb_parent.path_from_id() + '[' + '"' + prop.name + '"' + ']'
 
         drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
 
