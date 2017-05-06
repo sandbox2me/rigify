@@ -376,13 +376,23 @@ class Rig:
 
         # Make standard pole target bone
         pole_name = get_bone_name(org_bones[0], 'ctrl', 'ik_target')
-        elbow_vector = -(eb[org_bones[0]].z_axis + eb[org_bones[1]].z_axis)
-        elbow_vector.normalize()
-        # elbow_vector *= eb[org_bones[0]].length/2
-        elbow_vector *= (eb[org_bones[1]].tail - eb[org_bones[0]].head).length
         pole_target = copy_bone(self.obj, org_bones[0], pole_name)
+
+        lo_vector = eb[org_bones[1]].tail - eb[org_bones[1]].head
+        tot_vector = eb[org_bones[0]].head - eb[org_bones[1]].tail
+        tot_vector.normalize()
+        elbow_vector = lo_vector.dot(tot_vector)*tot_vector - lo_vector    # elbow_vec as regression of lo on tot
+        elbow_vector.normalize()
+        elbow_vector *= (eb[org_bones[1]].tail - eb[org_bones[0]].head).length
+        z_vector = eb[org_bones[0]].z_axis + eb[org_bones[1]].z_axis
+        alfa = elbow_vector.angle(z_vector)
+
+        if alfa > pi/2:
+            pole_angle = -pi/2
+        else:
+            pole_angle = pi/2
+
         eb[pole_target].parent = eb[mch_str]
-        #eb[pole_target].tail = eb[org_bones[0]].tail
         eb[pole_target].head = eb[org_bones[0]].tail + elbow_vector
         eb[pole_target].tail = eb[pole_target].head - elbow_vector/8
         eb[pole_target].roll = 0.0
@@ -401,7 +411,7 @@ class Rig:
             'chain_count': 2,
         })
 
-        make_constraint(self, mch_ik, {
+        make_constraint(self, mch_ik, {     # 2_nd IK for pole targeted chain
             'constraint': 'IK',
             'subtarget': mch_target,
             'chain_count': 2,
@@ -426,7 +436,7 @@ class Rig:
 
         pb[mch_ik].constraints[-1].pole_target = self.obj
         pb[mch_ik].constraints[-1].pole_subtarget = pole_target
-        pb[mch_ik].constraints[-1].pole_angle = -pi/2
+        pb[mch_ik].constraints[-1].pole_angle = pole_angle
 
         pb[ mch_ik ].ik_stretch = 0.1
         pb[ ctrl   ].ik_stretch = 0.1
@@ -960,23 +970,23 @@ class Rig:
                 drv_modifier.coefficients[1] = -1.0
 
                 # arrow hide driver
-                pole_target = pb[bones['ik']['ctrl']['limb']]
-                drv = pole_target.bone.driver_add("hide").driver
-                drv.type = 'AVERAGE'
-
-                var = drv.variables.new()
-                var.name = prop
-                var.type = "SINGLE_PROP"
-                var.targets[0].id = self.obj
-                var.targets[0].data_path = \
-                    owner.path_from_id() + '[' + '"' + prop + '"' + ']'
-
-                drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
-
-                drv_modifier.mode = 'POLYNOMIAL'
-                drv_modifier.poly_order = 1
-                drv_modifier.coefficients[0] = 0.0
-                drv_modifier.coefficients[1] = 1.0
+                # pole_target = pb[bones['ik']['ctrl']['limb']]
+                # drv = pole_target.bone.driver_add("hide").driver
+                # drv.type = 'AVERAGE'
+                #
+                # var = drv.variables.new()
+                # var.name = prop
+                # var.type = "SINGLE_PROP"
+                # var.targets[0].id = self.obj
+                # var.targets[0].data_path = \
+                #     owner.path_from_id() + '[' + '"' + prop + '"' + ']'
+                #
+                # drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
+                #
+                # drv_modifier.mode = 'POLYNOMIAL'
+                # drv_modifier.poly_order = 1
+                # drv_modifier.coefficients[0] = 0.0
+                # drv_modifier.coefficients[1] = 1.0
 
                 for cns in mch_ik.constraints:
                     if 'IK' in cns.type:
