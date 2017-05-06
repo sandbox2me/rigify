@@ -3,6 +3,7 @@ from mathutils import Vector
 from ...utils import copy_bone, flip_bone, put_bone, org, align_bone_y_axis, align_bone_x_axis, align_bone_z_axis
 from ...utils import strip_org, make_deformer_name, connected_children_names 
 from ...utils import create_circle_widget, create_sphere_widget, create_widget
+from ..widgets import create_ballsocket_widget
 from ...utils import MetarigError, make_mechanism_name, create_cube_widget
 from rna_prop_ui import rna_idprop_ui_prop_get
 
@@ -193,19 +194,18 @@ class Rig:
 
             if len(neck_bones) > 3:
 
-                # Neck pivot position
-                if (len(neck_bones)-1) % 2:     # odd num of neck bones (head excluded)
-                    center_bone = org(neck_bones[int((len(neck_bones))/2) - 1])
-                    head_position = (eb[center_bone].head + eb[center_bone].tail)/2
-                else:
-                    center_bone = org(neck_bones[int((len(neck_bones)-1)/2) - 1])
-                    head_position = eb[center_bone].tail
-
                 # Create neck bend control
                 neck_pivot = copy_bone(self.obj, org(neck_bones[0]), 'neck_pivot')
                 neck_pivot_eb = eb[neck_pivot]
-                neck_pivot_eb.head = head_position
-                # neck_pivot_eb.tail = head_position + (neck_eb.tail - neck_eb.head)/2
+
+                # Neck pivot position
+                if (len(neck_bones)-1) % 2:     # odd num of neck bones (head excluded)
+                    center_bone = org(neck_bones[int((len(neck_bones))/2) - 1])
+                    neck_pivot_eb.head = (eb[center_bone].head + eb[center_bone].tail)/2
+                else:
+                    center_bone = org(neck_bones[int((len(neck_bones)-1)/2) - 1])
+                    neck_pivot_eb.head = eb[center_bone].tail
+
                 align_bone_y_axis(self.obj, neck_pivot, eb[neck].y_axis)
                 align_bone_x_axis(self.obj, neck_pivot, eb[neck].x_axis)
                 eb[neck_pivot].length = eb[neck].length / 2
@@ -239,6 +239,7 @@ class Rig:
                 eb[mch_name].length /= 4
                 align_bone_y_axis(self.obj, mch_name, eb[neck].y_axis)
                 align_bone_x_axis(self.obj, mch_name, eb[neck].x_axis)
+                eb[mch_name].use_inherit_scale = False
                 mch += [mch_name]
 
             # Tweak bones
@@ -348,7 +349,7 @@ class Rig:
     def create_tail(self, tail_bones):
         bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
-        # org_bones = self.org_bones
+        org_bones = self.org_bones
 
         ctrl_chain = []
         for i in range(len(tail_bones)):
@@ -372,6 +373,18 @@ class Rig:
         )
         flip_bone(self.obj, main_ctrl_bone)
 
+        mch = []
+        tail_first = org_bones[self.tail_pos-1]
+        mch_rot_tail = copy_bone(
+                self.obj,
+                org(tail_first),
+                make_mechanism_name("ROT-tail")
+            )
+
+        self.orient_bone(eb[mch_rot_tail], 'y', eb[tail_first].length)
+        put_bone(self.obj, mch_rot_tail, eb[tail_first].tail)
+        mch.append(mch_rot_tail)
+
         tweak_chain = []
         for i in range(len(tail_bones)):
             name = tail_bones[i]
@@ -394,7 +407,7 @@ class Rig:
         return {
             'ctrl': ctrl_chain,
             'ctrl_tail': main_ctrl_bone,
-            'mch': [],
+            'mch': mch,
             'tweak': tweak_chain,
             'original_names': tail_bones
         }
@@ -426,6 +439,7 @@ class Rig:
             tail_ctrl = bones['tail']['ctrl']
             for i, b in enumerate(tail_ctrl[:-1]):
                 eb[b].parent = eb[tail_ctrl[i+1]]
+            eb[tail_ctrl[-1]].parent = eb[bones['tail']['mch'][-1]]
 
         if bones['neck']['ctrl_neck']:
             # MCH stretch => neck ctrl
@@ -478,7 +492,7 @@ class Rig:
         eb[bones['chest']['mch_wgt']].parent = eb[ bones['chest']['mch'][-1]]
         eb[bones['hips']['mch_wgt']].parent = eb[ bones['hips']['mch'][0]]
 
-        # Tweaks
+        # Neck Tweaks
         if bones['neck']['tweak']:
             # Neck tweaks
             for i, twk in enumerate( bones['neck']['tweak']):
@@ -501,6 +515,11 @@ class Rig:
             else:
                 eb[twk].parent = eb[bones['hips']['mch'][i-1]]
 
+        # Tail mchs
+        if self.use_tail:
+            mch_rot_tail = bones['tail']['mch'][-1]
+            eb[mch_rot_tail].parent = eb[bones['hips']['tweak'][0]]
+
         # Tail tweaks
         if self.use_tail:
             for i, twk in enumerate(bones['tail']['tweak']):
@@ -513,8 +532,6 @@ class Rig:
         tweaks = []
         if self.use_tail:
             tweaks += bones['tail']['tweak']
-        else:
-            tweaks = []
 
         tweaks += bones['hips']['tweak'] + bones['chest']['tweak']
         if self.use_head:
@@ -587,7 +604,7 @@ class Rig:
                             'constraint': 'COPY_LOCATION',
                             'subtarget': org(l['original_names'][j+1]),
                             'influence': 1.0
-                        } )
+                        })
                     else:
                         nfactor = float((j + 1) / len(mch))
                         self.make_constraint(b, {
@@ -610,6 +627,13 @@ class Rig:
                             'target_space': 'LOCAL'
                         })
 
+                    if len(bones['neck']['original_names']) > 3:
+                        self.make_constraint(b, {
+                            'constraint': 'COPY_SCALE',
+                            'subtarget': org(l['original_names'][j+1]),
+                            'influence': 1.0
+                        })
+
                 else:
                     factor = float(1 / len(l['tweak']))
                     self.make_constraint(b, {
@@ -623,6 +647,7 @@ class Rig:
         # Tail ctrls
         if self.use_tail:
             tail_ctrl = bones['tail']['ctrl']
+            tail_ctrl.append(bones['tail']['ctrl_tail'])
 
             for i, b in enumerate(tail_ctrl[:-1]):
                 self.make_constraint(b, {
@@ -631,19 +656,16 @@ class Rig:
                     'influence': 1.0,
                     'use_y': False,
                     'use_z': False,
+                    'use_offset': True,
                     'owner_space': 'LOCAL',
                     'target_space': 'LOCAL'
                 })
 
-            b = tail_ctrl[-1]
+            b = bones['tail']['mch'][-1]
             self.make_constraint(b, {
                 'constraint': 'COPY_ROTATION',
-                'subtarget': bones['tail']['ctrl_tail'],
+                'subtarget': bones['pivot']['ctrl'],
                 'influence': 1.0,
-                'use_y': False,
-                'use_z': False,
-                'owner_space': 'LOCAL',
-                'target_space': 'LOCAL'
             })
 
         # MCH pivot
@@ -656,10 +678,10 @@ class Rig:
 
         # DEF bones
         deform = bones['def']
+        tweaks = []
         if self.use_tail:
-            tweaks = bones['tail']['tweak']
-        else:
-            tweaks = []
+            tweaks += bones['tail']['tweak']
+
         tweaks += bones['hips']['tweak'] + bones['chest']['tweak']
         if self.use_head:
             tweaks += bones['neck']['tweak'] + [bones['neck']['ctrl']]
@@ -673,10 +695,17 @@ class Rig:
             })
 
             if tidx != len(tweaks) - 1:
-                self.make_constraint(d, {
-                    'constraint': 'DAMPED_TRACK',
-                    'subtarget': tweaks[tidx + 1],
-                })
+                if self.use_tail and t in bones['tail']['tweak']:
+                    self.make_constraint(d, {
+                        'constraint': 'DAMPED_TRACK',
+                        'subtarget': tweaks[tidx + 1],
+                        'track_axis': 'TRACK_NEGATIVE_Y'
+                    })
+                else:
+                    self.make_constraint(d, {
+                        'constraint': 'DAMPED_TRACK',
+                        'subtarget': tweaks[tidx + 1],
+                    })
 
                 self.make_constraint(d, {
                     'constraint': 'STRETCH_TO',
@@ -799,7 +828,12 @@ class Rig:
 
         if self.use_tail and bones['tail']['ctrl']:
             gen_ctrls.extend(bones['tail']['ctrl'])
-            gen_ctrls.append(bones['tail']['ctrl_tail'])
+            # gen_ctrls.append(bones['tail']['ctrl_tail'])
+            create_ballsocket_widget(
+                self.obj,
+                bones['tail']['ctrl_tail'],
+                bone_transform_name=None
+            )
 
         for bone in gen_ctrls:
             create_circle_widget(
