@@ -12,9 +12,12 @@ controls = [%s]
 torso    = '%s'
 
 if is_selected( controls ):
-    layout.prop( pose_bones[ torso ], '["%s"]', slider = True )
-    layout.prop( pose_bones[ torso ], '["%s"]', slider = True )
-    layout.prop( pose_bones[ torso ], '["%s"]', slider = True )
+    if hasattr(pose_bones[torso],'["%s"]'):
+        layout.prop( pose_bones[ torso ], '["%s"]', slider = True )
+    if hasattr(pose_bones[torso],'["%s"]'):
+        layout.prop( pose_bones[ torso ], '["%s"]', slider = True )
+    if hasattr(pose_bones[torso],'["%s"]'):
+        layout.prop( pose_bones[ torso ], '["%s"]', slider = True )
 """
 
 
@@ -744,15 +747,18 @@ class Rig:
         # Setting the torso's props
         torso = pb[bones['pivot']['ctrl']]
 
-        if bones['neck']['mch_neck']:
-            props = ["head_follow", "neck_follow", "tail_follow"]
-            owners = [bones['neck']['mch_head'], bones['neck']['mch_neck'], bones['tail']['mch_tail']]
-        elif self.use_head:
-            props = ["head_follow"]
-            owners = [bones['neck']['mch_head']]
-        else:
-            props = []
-            owners = []
+        props = []
+        owners = []
+
+        if self.use_head:
+            props += ["head_follow"]
+            owners += [bones['neck']['mch_head']]
+            if bones['neck']['mch_neck']:
+                props += ["neck_follow"]
+                owners += [bones['neck']['mch_neck']]
+        elif self.use_tail:
+            props += ["tail_follow"]
+            owners += [bones['tail']['mch_tail']]
 
         for prop in props:
             if prop == 'neck_follow':
@@ -963,17 +969,17 @@ class Rig:
             controls.extend(bones['tail']['ctrl'])
 
         # Create UI
-        if self.use_head:
-            controls_string = ", ".join(["'" + x + "'" for x in controls])
-            return [script % (
-                controls_string,
-                bones['pivot']['ctrl'],
-                'head_follow',
-                'neck_follow',
-                'tail_follow'
-                )]
-        else:
-            return ['']
+        controls_string = ", ".join(["'" + x + "'" for x in controls])
+        return [script % (
+            controls_string,
+            bones['pivot']['ctrl'],
+            'head_follow',
+            'head_follow',
+            'neck_follow',
+            'neck_follow',
+            'tail_follow',
+            'tail_follow',
+            )]
 
 
 def add_parameters(params):
