@@ -14,7 +14,7 @@ class Rig:
         self.org_bones = [bone_name] + connected_children_names(obj, bone_name)
         self.params = params
 
-        self.copy_rotaion_axes = params.copy_rotaion_axes
+        self.copy_rotation_axes = params.copy_rotation_axes
         
         if params.tweak_extra_layers:
             self.tweak_layers = list( params.tweak_layers )
@@ -186,7 +186,7 @@ class Rig:
                 con.target       = self.obj
                 con.subtarget    = ctrls[ ctrls.index(ctrl) - 1 ]
                 for i, prop in enumerate( [ 'use_x', 'use_y', 'use_z' ] ):
-                    if self.copy_rotaion_axes[i]:
+                    if self.copy_rotation_axes[i]:
                         setattr( con, prop, True )
                     else:
                         setattr( con, prop, False )
@@ -222,7 +222,7 @@ def add_parameters(params):
     """ Add the parameters of this rig type to the
         RigifyParameters PropertyGroup
     """
-    params.copy_rotaion_axes = bpy.props.BoolVectorProperty(
+    params.copy_rotation_axes = bpy.props.BoolVectorProperty(
         size        = 3,
         description = "Layers for the tweak controls to be on",
         default     = tuple( [ i == 0 for i in range(0, 3) ] )
@@ -250,7 +250,7 @@ def parameters_ui(layout, params):
     col = r.column(align=True)
     row = col.row(align=True)
     for i,axis in enumerate( [ 'x', 'y', 'z' ] ):
-        row.prop(params, "copy_rotaion_axes", index=i, toggle=True, text=axis)
+        row.prop(params, "copy_rotation_axes", index=i, toggle=True, text=axis)
 
     r = layout.row()
     r.prop(params, "tweak_extra_layers")

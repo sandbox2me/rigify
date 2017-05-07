@@ -33,6 +33,8 @@ class Rig:
         self.params = params
         self.spine_length = sum([eb[b].length for b in self.org_bones])
 
+        self.copy_rotation_axes = params.copy_rotation_axes
+
         # Check if user provided the pivot position
         if params.pivot_pos:
             self.pivot_pos = params.pivot_pos
@@ -658,8 +660,9 @@ class Rig:
                     'constraint': 'COPY_ROTATION',
                     'subtarget': tail_ctrl[i+1],
                     'influence': 1.0,
-                    'use_y': False,
-                    'use_z': False,
+                    'use_x': self.copy_rotation_axes[0],
+                    'use_y': self.copy_rotation_axes[1],
+                    'use_z': self.copy_rotation_axes[2],
                     'use_offset': True,
                     'owner_space': 'LOCAL',
                     'target_space': 'LOCAL'
@@ -1000,6 +1003,12 @@ def add_parameters(params):
         description  = 'Position of the torso control and pivot point'
     )
 
+    params.copy_rotation_axes = bpy.props.BoolVectorProperty(
+        size=3,
+        description="Layers for the tweak controls to be on",
+        default=tuple([i == 0 for i in range(0, 3)])
+    )
+
     params.tail_pos = bpy.props.IntProperty(
         name        = 'tail_position',
         default     = 0,
@@ -1049,6 +1058,12 @@ def parameters_ui(layout, params):
 
     r = layout.row()
     r.prop(params, "tail_pos")
+
+    r = layout.row()
+    col = r.column(align=True)
+    row = col.row(align=True)
+    for i, axis in enumerate(['x', 'y', 'z']):
+        row.prop(params, "copy_rotation_axes", index=i, toggle=True, text=axis)
 
     r = layout.row()
     r.prop(params, "tweak_extra_layers")
