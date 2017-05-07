@@ -18,6 +18,7 @@ ctrl    = '%s'
 
 if is_selected( controls ):
     layout.prop( pose_bones[ ctrl ], '["%s"]')
+    layout.prop( pose_bones[ ctrl ], '["%s"]')
     if '%s' in pose_bones[ctrl].keys():
         layout.prop( pose_bones[ ctrl ], '["%s"]', slider = True )
 """
@@ -395,7 +396,6 @@ class Rig:
         else:
             pole_angle = pi/2
 
-        eb[pole_target].parent = eb[mch_str]
         eb[pole_target].head = eb[org_bones[0]].tail + elbow_vector
         eb[pole_target].tail = eb[pole_target].head - elbow_vector/8
         eb[pole_target].roll = 0.0
@@ -571,6 +571,8 @@ class Rig:
         bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
+        pole_target = get_bone_name(org_bones[0], 'ctrl', 'ik_target')
+
         # Create IK paw control
         ctrl = get_bone_name( org_bones[2], 'ctrl', 'ik' )
         ctrl = copy_bone( self.obj, org_bones[2], ctrl )
@@ -584,6 +586,12 @@ class Rig:
         eb[ctrl_socket].tail = eb[ctrl_socket].head + 0.8*(eb[ctrl_socket].tail-eb[ctrl_socket].head)
         eb[ctrl_socket].parent = None
         eb[ctrl].parent = eb[ctrl_socket]
+
+        # MCH for pole ik control
+        ctrl_pole_socket = copy_bone(self.obj, org_bones[2], get_bone_name(org_bones[2], 'mch', 'pole_ik_socket'))
+        eb[ctrl_pole_socket].tail = eb[ctrl_pole_socket].head + 0.8 * (eb[ctrl_pole_socket].tail - eb[ctrl_pole_socket].head)
+        eb[ctrl_pole_socket].parent = None
+        eb[pole_target].parent = eb[ctrl_pole_socket]
 
         ctrl_root = copy_bone(self.obj, org_bones[2], get_bone_name( org_bones[2], 'mch', 'ik_root'))
         eb[ctrl_root].tail = eb[ctrl_root].head + 0.7*(eb[ctrl_root].tail-eb[ctrl_root].head)
@@ -602,7 +610,7 @@ class Rig:
         else:
             paw_parent = None
 
-        # Create heel control bone
+        # Create heel ctrl bone
         heel = get_bone_name(org_bones[2], 'ctrl', 'heel_ik')
         heel = copy_bone( self.obj, org_bones[2], heel )
 
@@ -633,11 +641,21 @@ class Rig:
             'subtarget'   : ctrl_root,
         })
 
+        make_constraint(self, ctrl_pole_socket, {
+            'constraint': 'COPY_TRANSFORMS',
+            'subtarget': ctrl_root,
+        })
+
         if paw_parent:
             make_constraint( self, ctrl_socket, {
                 'constraint'  : 'COPY_TRANSFORMS',
                 'subtarget'   : ctrl_parent,
                 'influence'   : 0.0,
+            })
+
+            make_constraint(self, ctrl_pole_socket, {
+                'constraint': 'COPY_TRANSFORMS',
+                'subtarget': ctrl_parent,
             })
 
         # Constrain mch target bone to the ik control and mch stretch
@@ -775,9 +793,9 @@ class Rig:
         bones['ik']['ctrl']['terminal'] += [ heel, ctrl ]
 
         if paw_parent:
-            bones['ik']['mch_foot'] = [ctrl_socket, ctrl_root, ctrl_parent]
+            bones['ik']['mch_foot'] = [ctrl_socket, ctrl_pole_socket, ctrl_root, ctrl_parent]
         else:
-            bones['ik']['mch_foot'] = [ctrl_socket, ctrl_root]
+            bones['ik']['mch_foot'] = [ctrl_socket, ctrl_pole_socket, ctrl_root]
 
         return bones
 
@@ -787,11 +805,12 @@ class Rig:
         pb = self.obj.pose.bones
 
         ctrl = pb[bones['ik']['mch_foot'][0]]
+        ctrl_pole = pb[bones['ik']['mch_foot'][1]]
 
         #owner = pb[bones['ik']['ctrl']['limb']]
         owner = pb[bones['main_parent']]
 
-        props = ["IK_follow", "root/parent", "pole_vector"]
+        props = ["IK_follow", "root/parent", "pole_vector", "pole_follow"]
 
         for prop in props:
 
@@ -803,6 +822,7 @@ class Rig:
                 pole_prop["description"] = prop
                 mch_ik = pb[bones['ik']['mch_ik']]
 
+                # ik target hide driver
                 pole_target = pb[bones['ik']['ctrl']['ik_target']]
                 drv = pole_target.bone.driver_add("hide").driver
                 drv.type = 'AVERAGE'
@@ -924,16 +944,7 @@ class Rig:
                     drv_modifier.coefficients[0] = 1.0
                     drv_modifier.coefficients[1] = -1.0
 
-            elif len(ctrl.constraints) > 1:
-                owner[prop] = 0.0
-                rna_prop = rna_idprop_ui_prop_get(owner, prop, create=True)
-                rna_prop["min"]         = 0.0
-                rna_prop["max"]         = 1.0
-                rna_prop["soft_min"]    = 0.0
-                rna_prop["soft_max"]    = 1.0
-                rna_prop["description"] = prop
-
-                drv = ctrl.constraints[1].driver_add("influence").driver
+                drv = ctrl_pole.constraints[0].driver_add("mute").driver
                 drv.type = 'AVERAGE'
 
                 var = drv.variables.new()
@@ -942,6 +953,71 @@ class Rig:
                 var.targets[0].id = self.obj
                 var.targets[0].data_path = \
                     owner.path_from_id() + '[' + '"' + prop + '"' + ']'
+
+                drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
+
+                drv_modifier.mode = 'POLYNOMIAL'
+                drv_modifier.poly_order = 1
+                drv_modifier.coefficients[0] = 1.0
+                drv_modifier.coefficients[1] = -1.0
+
+                if len(ctrl_pole.constraints) > 1:
+                    drv = ctrl_pole.constraints[1].driver_add("mute").driver
+                    drv.type = 'AVERAGE'
+
+                    var = drv.variables.new()
+                    var.name = prop
+                    var.type = "SINGLE_PROP"
+                    var.targets[0].id = self.obj
+                    var.targets[0].data_path = \
+                        owner.path_from_id() + '[' + '"' + prop + '"' + ']'
+
+                    drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
+
+                    drv_modifier.mode = 'POLYNOMIAL'
+                    drv_modifier.poly_order = 1
+                    drv_modifier.coefficients[0] = 1.0
+                    drv_modifier.coefficients[1] = -1.0
+
+            elif prop == 'root/parent':
+                if len(ctrl.constraints) > 1:
+                    owner[prop] = 0.0
+                    rna_prop = rna_idprop_ui_prop_get(owner, prop, create=True)
+                    rna_prop["min"]         = 0.0
+                    rna_prop["max"]         = 1.0
+                    rna_prop["soft_min"]    = 0.0
+                    rna_prop["soft_max"]    = 1.0
+                    rna_prop["description"] = prop
+
+                    drv = ctrl.constraints[1].driver_add("influence").driver
+                    drv.type = 'AVERAGE'
+
+                    var = drv.variables.new()
+                    var.name = prop
+                    var.type = "SINGLE_PROP"
+                    var.targets[0].id = self.obj
+                    var.targets[0].data_path = \
+                        owner.path_from_id() + '[' + '"' + prop + '"' + ']'
+
+            elif prop == 'pole_follow':
+                if len(ctrl_pole.constraints) > 1:
+                    owner[prop] = 0.0
+                    rna_prop = rna_idprop_ui_prop_get(owner, prop, create=True)
+                    rna_prop["min"] = 0.0
+                    rna_prop["max"] = 1.0
+                    rna_prop["soft_min"] = 0.0
+                    rna_prop["soft_max"] = 1.0
+                    rna_prop["description"] = prop
+
+                    drv = ctrl_pole.constraints[1].driver_add("influence").driver
+                    drv.type = 'AVERAGE'
+
+                    var = drv.variables.new()
+                    var.name = prop
+                    var.type = "SINGLE_PROP"
+                    var.targets[0].id = self.obj
+                    var.targets[0].data_path = \
+                        owner.path_from_id() + '[' + '"' + prop + '"' + ']'
 
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
@@ -976,7 +1052,7 @@ class Rig:
         controls_string = ", ".join(["'" + x + "'" for x in controls])
 
         script = create_script(bones, 'paw')
-        script += extra_script % (controls_string, bones['main_parent'], 'IK_follow', 'root/parent','root/parent')
+        script += extra_script % (controls_string, bones['main_parent'], 'IK_follow', 'pole_follow', 'root/parent','root/parent')
 
         return [script]
 
