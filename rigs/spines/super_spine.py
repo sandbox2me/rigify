@@ -14,6 +14,7 @@ torso    = '%s'
 if is_selected( controls ):
     layout.prop( pose_bones[ torso ], '["%s"]', slider = True )
     layout.prop( pose_bones[ torso ], '["%s"]', slider = True )
+    layout.prop( pose_bones[ torso ], '["%s"]', slider = True )
 """
 
 
@@ -373,7 +374,7 @@ class Rig:
         )
         flip_bone(self.obj, main_ctrl_bone)
 
-        mch = []
+        mch_tail = ''
         tail_first = org_bones[self.tail_pos-1]
         mch_rot_tail = copy_bone(
                 self.obj,
@@ -383,7 +384,7 @@ class Rig:
 
         self.orient_bone(eb[mch_rot_tail], 'y', eb[tail_first].length)
         put_bone(self.obj, mch_rot_tail, eb[tail_first].tail)
-        mch.append(mch_rot_tail)
+        mch_tail = mch_rot_tail
 
         tweak_chain = []
         for i in range(len(tail_bones)):
@@ -407,7 +408,7 @@ class Rig:
         return {
             'ctrl': ctrl_chain,
             'ctrl_tail': main_ctrl_bone,
-            'mch': mch,
+            'mch_tail': mch_tail,
             'tweak': tweak_chain,
             'original_names': tail_bones
         }
@@ -439,7 +440,7 @@ class Rig:
             tail_ctrl = bones['tail']['ctrl']
             for i, b in enumerate(tail_ctrl[:-1]):
                 eb[b].parent = eb[tail_ctrl[i+1]]
-            eb[tail_ctrl[-1]].parent = eb[bones['tail']['mch'][-1]]
+            eb[tail_ctrl[-1]].parent = eb[bones['tail']['mch_tail']]
 
         if bones['neck']['ctrl_neck']:
             # MCH stretch => neck ctrl
@@ -517,7 +518,7 @@ class Rig:
 
         # Tail mchs
         if self.use_tail:
-            mch_rot_tail = bones['tail']['mch'][-1]
+            mch_rot_tail = bones['tail']['mch_tail']
             eb[mch_rot_tail].parent = eb[bones['hips']['tweak'][0]]
 
         # Tail tweaks
@@ -661,7 +662,7 @@ class Rig:
                     'target_space': 'LOCAL'
                 })
 
-            b = bones['tail']['mch'][-1]
+            b = bones['tail']['mch_tail']
             self.make_constraint(b, {
                 'constraint': 'COPY_ROTATION',
                 'subtarget': bones['pivot']['ctrl'],
@@ -744,8 +745,8 @@ class Rig:
         torso = pb[bones['pivot']['ctrl']]
 
         if bones['neck']['mch_neck']:
-            props = ["head_follow", "neck_follow"]
-            owners = [bones['neck']['mch_head'], bones['neck']['mch_neck']]
+            props = ["head_follow", "neck_follow", "tail_follow"]
+            owners = [bones['neck']['mch_head'], bones['neck']['mch_neck'], bones['tail']['mch_tail']]
         elif self.use_head:
             props = ["head_follow"]
             owners = [bones['neck']['mch_head']]
@@ -968,7 +969,8 @@ class Rig:
                 controls_string,
                 bones['pivot']['ctrl'],
                 'head_follow',
-                'neck_follow'
+                'neck_follow',
+                'tail_follow'
                 )]
         else:
             return ['']
