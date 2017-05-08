@@ -310,6 +310,10 @@ def unregister():
 
     bpy.utils.unregister_class(RigifyName)
     bpy.utils.unregister_class(RigifyParameters)
+
+    bpy.utils.unregister_class(RigifyColorSet)
+    bpy.utils.unregister_class(RigifySelectionColors)
+
     bpy.utils.unregister_class(RigifyArmatureLayer)
     bpy.utils.unregister_class(RigifyPreferences)
 
