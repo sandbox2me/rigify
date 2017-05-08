@@ -759,7 +759,7 @@ class Rig:
             if bones['neck']['mch_neck']:
                 props += ["neck_follow"]
                 owners += [bones['neck']['mch_neck']]
-        elif self.use_tail:
+        if self.use_tail:
             props += ["tail_follow"]
             owners += [bones['tail']['mch_tail']]
 
