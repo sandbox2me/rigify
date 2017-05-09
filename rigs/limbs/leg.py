@@ -790,7 +790,7 @@ class Rig:
 
             make_constraint(self, ctrl_pole_socket, {
                 'constraint': 'COPY_TRANSFORMS',
-                'subtarget': ctrl_parent,
+                'subtarget': bones['ik']['mch_target'],
             })
 
         # Constrain mch target bone to the ik control and mch stretch
