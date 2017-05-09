@@ -38,7 +38,7 @@ class Rig:
 
         # Check if user provided the pivot position
         if params.pivot_pos:
-            self.pivot_pos = params.pivot_pos
+            self.pivot_pos = params.pivot_pos + 1
         else:
             raise MetarigError(
                 "RIGIFY ERROR: please specify pivot bone position"
@@ -91,17 +91,17 @@ class Rig:
 
             if self.use_head:
                 neck_bones = self.org_bones[neck_index::]
-                upper_torso_bones = self.org_bones[pivot_index + 1:neck_index]
+                upper_torso_bones = self.org_bones[pivot_index :neck_index]
             else:
                 neck_bones = []
-                upper_torso_bones = self.org_bones[pivot_index + 1::]
+                upper_torso_bones = self.org_bones[pivot_index ::]
 
             tail_bones = []
             if tail_index:
-                lower_torso_bones = self.org_bones[tail_index + 1:pivot_index + 1]
+                lower_torso_bones = self.org_bones[tail_index + 1:pivot_index ]
                 tail_bones = self.org_bones[:tail_index+1]
             else:
-                lower_torso_bones = self.org_bones[:pivot_index + 1]
+                lower_torso_bones = self.org_bones[:pivot_index ]
 
             return {
                 'neck': neck_bones,
@@ -129,7 +129,7 @@ class Rig:
     def create_pivot(self, pivot):
         """ Create the pivot control and mechanism bones """
         org_bones = self.org_bones
-        pivot_name = org_bones[pivot]
+        pivot_name = org_bones[pivot-1]
 
         bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
@@ -149,6 +149,8 @@ class Rig:
         mch_eb.length /= 4
 
         # Positioning pivot in a more usable location for animators
+        # if self.use_tail and self.tail_pos > 0:
+        #     pivot_loc = eb[org_bones[pivot-1]].head
         if self.use_tail and self.tail_pos > 0:
             first_torso_bone = self.tail_pos
             pivot_loc = (eb[org_bones[first_torso_bone]].head + eb[org_bones[first_torso_bone]].tail)/2
