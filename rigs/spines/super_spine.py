@@ -72,7 +72,7 @@ class Rig:
         if self.use_tail:
             min_bone_number += 2
 
-        if len(self.org_bones) <= min_bone_number:
+        if len(self.org_bones) < min_bone_number:
             raise MetarigError(
                 "RIGIFY ERROR: invalid rig structure on %s" % (strip_org(bone_name))
             )
@@ -92,17 +92,17 @@ class Rig:
 
             if self.use_head:
                 neck_bones = self.org_bones[neck_index::]
-                upper_torso_bones = self.org_bones[pivot_index:neck_index]
+                upper_torso_bones = self.org_bones[pivot_index + 1:neck_index]
             else:
                 neck_bones = []
-                upper_torso_bones = self.org_bones[pivot_index::]
+                upper_torso_bones = self.org_bones[pivot_index + 1::]
 
             tail_bones = []
             if tail_index:
-                lower_torso_bones = self.org_bones[tail_index+1:pivot_index]
+                lower_torso_bones = self.org_bones[tail_index + 1:pivot_index + 1]
                 tail_bones = self.org_bones[:tail_index+1]
             else:
-                lower_torso_bones = self.org_bones[:pivot_index]
+                lower_torso_bones = self.org_bones[:pivot_index + 1]
 
             return {
                 'neck': neck_bones,
@@ -1066,12 +1066,14 @@ def parameters_ui(layout, params):
 
     r = layout.row()
     r.prop(params, "tail_pos")
+    r.enabled = params.use_tail
 
     r = layout.row()
     col = r.column(align=True)
     row = col.row(align=True)
     for i, axis in enumerate(['x', 'y', 'z']):
         row.prop(params, "copy_rotation_axes", index=i, toggle=True, text=axis)
+    r.enabled = params.use_tail
 
     r = layout.row()
     r.prop(params, "tweak_extra_layers")
