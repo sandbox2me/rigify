@@ -65,8 +65,14 @@ class Rig:
         else:
             self.tweak_layers = None
 
-        # Report error of user created less than the minimum of 4 bones for rig
-        if len(self.org_bones) <= 4:
+        # Report error of user created less than the minimum of bones for rig
+        min_bone_number = 3
+        if self.use_head:
+            min_bone_number += 1
+        if self.use_tail:
+            min_bone_number += 2
+
+        if len(self.org_bones) <= min_bone_number:
             raise MetarigError(
                 "RIGIFY ERROR: invalid rig structure on %s" % (strip_org(bone_name))
             )
@@ -144,8 +150,9 @@ class Rig:
         mch_eb.length /= 4
 
         # Positioning pivot in a more usable location for animators
-        if hasattr(self, 'tail_pos') and self.tail_pos > 0:
-            pivot_loc = eb[org_bones[pivot-1]].head
+        if self.use_tail and self.tail_pos > 0:
+            first_torso_bone = self.tail_pos
+            pivot_loc = (eb[org_bones[first_torso_bone]].head + eb[org_bones[first_torso_bone]].tail)/2
         else:
             pivot_loc = (eb[org_bones[0]].head + eb[org_bones[0]].tail) / 2
 
@@ -272,19 +279,19 @@ class Rig:
     def create_chest(self, chest_bones):
         org_bones = self.org_bones
 
-        bpy.ops.object.mode_set(mode ='EDIT')
+        bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
         # get total spine length
 
         # Create chest control bone
-        chest = copy_bone( self.obj, org( chest_bones[0] ), 'chest' )
-        self.orient_bone( eb[chest], 'y', self.spine_length / 3 )
+        chest = copy_bone(self.obj, org(chest_bones[0]), 'chest')
+        self.orient_bone(eb[chest], 'y', self.spine_length / 3)
 
         # create chest mch_wgt
         mch_wgt = copy_bone(
-            self.obj, org( chest_bones[-1] ),
-            make_mechanism_name( 'WGT-chest' )
+            self.obj, org(chest_bones[-1]),
+            make_mechanism_name('WGT-chest')
         )
 
         # Create mch and twk bones
@@ -468,7 +475,7 @@ class Rig:
             # Neck mch
             eb[bones['neck']['mch_head']].parent = eb[bones['neck']['ctrl_neck']]
         elif self.use_head:
-            eb[bones['neck']['mch_head']].parent = eb[bones['chest']['ctrl']]
+            eb[bones['neck']['mch_head']].parent = eb[bones['chest']['mch'][-1]]
 
         for i, b in enumerate([eb[n] for n in bones['neck']['mch']]):
             b.parent = eb[bones['neck']['mch_str']]
