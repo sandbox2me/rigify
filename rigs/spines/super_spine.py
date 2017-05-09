@@ -129,7 +129,7 @@ class Rig:
     def create_pivot(self, pivot):
         """ Create the pivot control and mechanism bones """
         org_bones = self.org_bones
-        pivot_name = org_bones[pivot-1]
+        pivot_name = org_bones[pivot]
 
         bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
@@ -317,11 +317,11 @@ class Rig:
     def create_hips(self, hip_bones):
         org_bones = self.org_bones
 
-        bpy.ops.object.mode_set(mode ='EDIT')
+        bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
         # Create hips control bone
-        hips = copy_bone( self.obj, org(hip_bones[-1]), 'hips' )
+        hips = copy_bone(self.obj, org(hip_bones[-1]), 'hips')
         self.orient_bone(
             eb[hips],
             'y',
@@ -332,7 +332,7 @@ class Rig:
         # create hips mch_wgt
         mch_wgt = copy_bone(
             self.obj, org(hip_bones[0]),
-            make_mechanism_name( 'WGT-hips' )
+            make_mechanism_name('WGT-hips')
         )
 
         # Create mch and tweak bones
@@ -435,12 +435,6 @@ class Rig:
                 eb[b].parent = eb[bones['def'][i-1]]    # to previous
                 eb[b].use_connect = True
 
-        # # Remove parenting for tail bones + final hip bone
-        # if self.use_tail:
-        #     for i, b in enumerate(bones['def']):
-        #         if i < len(bones['tail']['ctrl'])+1:
-        #             eb[b].parent = None
-
         # Parent control bones
         # Head control => MCH-rotation_head
         if self.use_head:
@@ -501,8 +495,8 @@ class Rig:
         eb[bones['pivot']['mch']].parent = eb[bones['chest']['mch'][0]]
 
         # MCH widgets
-        eb[bones['chest']['mch_wgt']].parent = eb[ bones['chest']['mch'][-1]]
-        eb[bones['hips']['mch_wgt']].parent = eb[ bones['hips']['mch'][0]]
+        eb[bones['chest']['mch_wgt']].parent = eb[bones['chest']['mch'][-1]]
+        eb[bones['hips']['mch_wgt']].parent = eb[bones['hips']['mch'][0]]
 
         # Neck Tweaks
         if bones['neck']['tweak']:
@@ -558,7 +552,6 @@ class Rig:
                 eb[b].parent = eb[org_parent]
             else:
                 eb[b].parent = eb[twk]
-
 
         if self.use_head:
             eb[org_bones[-1]].parent = eb[bones['neck']['ctrl']]
