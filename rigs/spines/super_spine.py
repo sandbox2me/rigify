@@ -185,11 +185,11 @@ class Rig:
                 'mch_head': '',
                 'mch': [],
                 'tweak': [],
-                'neck_pivot': '',
+                'neck_bend': '',
                 'original_names': neck_bones
             }
 
-        neck, neck_pivot = '', ''
+        neck, neck_bend = '', ''
         if len(neck_bones) >= 2:
             # Create neck control
             neck = copy_bone(self.obj, org(neck_bones[0]), 'neck')
@@ -201,20 +201,20 @@ class Rig:
             if len(neck_bones) > 3:
 
                 # Create neck bend control
-                neck_pivot = copy_bone(self.obj, org(neck_bones[0]), 'neck_pivot')
-                neck_pivot_eb = eb[neck_pivot]
+                neck_bend = copy_bone(self.obj, org(neck_bones[0]), 'neck_bend')
+                neck_bend_eb = eb[neck_bend]
 
                 # Neck pivot position
                 if (len(neck_bones)-1) % 2:     # odd num of neck bones (head excluded)
                     center_bone = org(neck_bones[int((len(neck_bones))/2) - 1])
-                    neck_pivot_eb.head = (eb[center_bone].head + eb[center_bone].tail)/2
+                    neck_bend_eb.head = (eb[center_bone].head + eb[center_bone].tail)/2
                 else:
                     center_bone = org(neck_bones[int((len(neck_bones)-1)/2) - 1])
-                    neck_pivot_eb.head = eb[center_bone].tail
+                    neck_bend_eb.head = eb[center_bone].tail
 
-                align_bone_y_axis(self.obj, neck_pivot, eb[neck].y_axis)
-                align_bone_x_axis(self.obj, neck_pivot, eb[neck].x_axis)
-                eb[neck_pivot].length = eb[neck].length / 2
+                align_bone_y_axis(self.obj, neck_bend, eb[neck].y_axis)
+                align_bone_x_axis(self.obj, neck_bend, eb[neck].x_axis)
+                eb[neck_bend].length = eb[neck].length / 2
 
         # Create head control
         head = copy_bone(self.obj, org(neck_bones[-1]), 'head')
@@ -265,7 +265,7 @@ class Rig:
             'mch_head': mch_head,
             'mch': mch,
             'tweak': twk,
-            'neck_pivot': neck_pivot,
+            'neck_bend': neck_bend,
             'original_names': neck_bones
         }
 
@@ -375,7 +375,7 @@ class Rig:
         main_ctrl_bone = copy_bone(
             self.obj,
             org(name),
-            strip_org(name)
+            strip_org(name) + "_master"
         )
         flip_bone(self.obj, main_ctrl_bone)
 
@@ -455,9 +455,9 @@ class Rig:
             eb[bones['neck']['ctrl_neck']].parent = eb[bones['neck']['mch_neck']]
 
             # Neck pivot => MCH-rotation_neck
-            if bones['neck']['neck_pivot']:
-                # eb[bones['neck']['neck_pivot']].parent = eb[bones['neck']['ctrl_neck']]
-                eb[bones['neck']['neck_pivot']].parent = eb[bones['neck']['mch_str']]
+            if bones['neck']['neck_bend']:
+                # eb[bones['neck']['neck_bend']].parent = eb[bones['neck']['ctrl_neck']]
+                eb[bones['neck']['neck_bend']].parent = eb[bones['neck']['mch_str']]
 
         # Parent hips and chest controls to torso
         eb[bones['chest']['ctrl']].parent = eb[bones['pivot']['ctrl']]
@@ -623,10 +623,10 @@ class Rig:
                     xval = (j+1)*step
                     influence = 2*xval - xval**2    #parabolic influence of pivot
 
-                    if bones['neck']['neck_pivot']:
+                    if bones['neck']['neck_bend']:
                         self.make_constraint(b, {
                             'constraint': 'COPY_LOCATION',
-                            'subtarget': l['neck_pivot'],
+                            'subtarget': l['neck_bend'],
                             'influence': influence,
                             'use_offset': True,
                             'owner_space': 'LOCAL',
@@ -721,10 +721,10 @@ class Rig:
 
         pb = self.obj.pose.bones
 
-        if bones['neck']['neck_pivot']:
-            pb[bones['neck']['neck_pivot']].rotation_mode = 'ZXY'
-            pb[bones['neck']['neck_pivot']].lock_rotation[0] = True
-            pb[bones['neck']['neck_pivot']].lock_rotation[2] = True
+        if bones['neck']['neck_bend']:
+            pb[bones['neck']['neck_bend']].rotation_mode = 'ZXY'
+            pb[bones['neck']['neck_bend']].lock_rotation[0] = True
+            pb[bones['neck']['neck_bend']].lock_rotation[2] = True
 
         for t in tweaks:
             if t != bones['neck']['ctrl']:
@@ -812,8 +812,9 @@ class Rig:
         tweaks = bones['neck']['tweak'] + bones['chest']['tweak']
         tweaks += bones['hips']['tweak']
 
-        if 'tail' in bones.keys():
+        if self.use_tail:
             tweaks += bones['tail']['tweak']
+            pb[bones['tail']['ctrl_tail']].lock_location = True, True, True
 
         # Tweak bones locks
         for bone in tweaks:
@@ -870,7 +871,7 @@ class Rig:
                 bone_transform_name=None
             )
 
-        if bones['neck']['neck_pivot']:
+        if bones['neck']['neck_bend']:
             # Neck pivot widget
             if len(bones['neck']['mch']) == 0:
                 radius = 0.5
@@ -878,7 +879,7 @@ class Rig:
                 radius = 1/(2*len(bones['neck']['mch']))
             create_circle_widget(
                 self.obj,
-                bones['neck']['neck_pivot'],
+                bones['neck']['neck_bend'],
                 radius=radius,
                 head_tail=0.0,
                 with_line=False,

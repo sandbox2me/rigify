@@ -766,6 +766,12 @@ class Rig:
             #prop = rna_idprop_ui_prop_get( pb[ bones['parent'] ], 'IK/FK' )
             prop = rna_idprop_ui_prop_get(pb[bones['fk']['ctrl'][-1]], 'IK/FK')
 
+            # Modify rotation mode for ik and tweak controls
+            pb[bones['ik']['ctrl']['limb']].rotation_mode = 'ZXY'
+
+            for b in bones['tweak']['ctrl']:
+                pb[b].rotation_mode = 'ZXY'
+
             # Add driver to limit scale constraint influence
             b        = org_bones[3]
             drv      = pb[b].constraints[-1].driver_add("influence").driver
