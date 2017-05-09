@@ -123,9 +123,13 @@ class Rig:
         def_parent = deformer(strip_org(org_parent))
 
         # Switch parent
+        if def_parent in eb.keys():
+            parent_to = def_parent
+        else:
+            parent_to = org_parent
         for o in self.org_bones:
-            eb[o].parent = eb[def_parent]
-        eb[ctrl].parent = eb[def_parent]
+            eb[o].parent = eb[parent_to]
+        eb[ctrl].parent = eb[parent_to]
 
         # Constraints
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -145,7 +149,7 @@ class Rig:
             con = pb[b].constraints.new('COPY_SCALE')
             con.name = "copy_scale"
             con.target = self.obj
-            con.subtarget = def_parent
+            con.subtarget = parent_to
             con.target_space = 'WORLD'
             con.owner_space = 'WORLD'
             con.influence = 1
