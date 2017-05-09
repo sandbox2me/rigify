@@ -32,8 +32,9 @@ class Rig:
         self.org_bones = [bone_name] + connected_children_names(obj, bone_name)
         self.params = params
         self.spine_length = sum([eb[b].length for b in self.org_bones])
-
         self.copy_rotation_axes = params.copy_rotation_axes
+        self.use_head = params.use_head
+        self.use_tail = params.use_tail
 
         # Check if user provided the pivot position
         if params.pivot_pos:
@@ -44,18 +45,16 @@ class Rig:
             )
 
         # Check if neck is lower than pivot
-        if params.neck_pos <= params.pivot_pos and params.neck_pos != 0:
+        if self.use_head and params.neck_pos <= params.pivot_pos and params.neck_pos != 0:
             raise MetarigError(
                 "RIGIFY ERROR: Neck cannot be below or the same as pivot. (use 0 for no neck)"
             )
         else:
             self.neck_pos = params.neck_pos
 
-        self.use_head = params.use_head
         if not self.use_head:
             self.neck_pos = len(self.org_bones)
 
-        self.use_tail = params.use_tail
         if self.use_tail and self.pivot_pos - 2 > 0:
             self.tail_pos = params.tail_pos
 
@@ -1020,7 +1019,7 @@ def add_parameters(params):
     params.tail_pos = bpy.props.IntProperty(
         name        = 'tail_position',
         default     = 0,
-        min         = 0,
+        min         = 2,
         description = 'Where the tail starts'
     )
 
