@@ -383,7 +383,7 @@ class Rig:
         main_ctrl_bone = copy_bone(
             self.obj,
             org(name),
-            strip_org(name) + "_master"
+            strip_org(name).split('.')[0] + "_master"
         )
         flip_bone(self.obj, main_ctrl_bone)
 
@@ -448,6 +448,7 @@ class Rig:
             for i, b in enumerate(tail_ctrl[:-1]):
                 eb[b].parent = eb[tail_ctrl[i+1]]
             eb[tail_ctrl[-1]].parent = eb[bones['tail']['mch_tail']]
+            eb[bones['tail']['ctrl_tail']].parent = eb[org_bones[self.tail_pos]]
 
         if bones['neck']['ctrl_neck']:
             # MCH stretch => neck ctrl
