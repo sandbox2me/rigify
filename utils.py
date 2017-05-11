@@ -405,6 +405,8 @@ def create_widget(rig, bone_name, bone_transform_name=None):
 
         # Move object to bone position and set layers
         obj_to_bone(obj, rig, bone_transform_name)
+        if 'WGTS' in bpy.data.objects.keys():
+            obj.parent = bpy.data.objects['WGTS']
         obj.layers = WGT_LAYERS
 
         return obj

@@ -263,6 +263,13 @@ def generate_rig(context, metarig):
     obj.data["rig_id"] = rig_id
 
     t.tick("Create root bone: ")
+
+    # Create Group widget
+    mesh = bpy.data.meshes.new("WGTS")
+    wgts_obj = bpy.data.objects.new("WGTS", mesh)
+    scene.objects.link(wgts_obj)
+    t.tick("Create main WGTS: ")
+
     #----------------------------------
     try:
         # Collect/initialize all the rigs.

@@ -643,31 +643,33 @@ class Rig:
         })
 
         # Constrain mch ik stretch bone to the ik control
-        make_constraint( self, bones['ik']['mch_str'], {
-            'constraint'  : 'DAMPED_TRACK',
-            'subtarget'   : ctrl,
+        make_constraint(self, bones['ik']['mch_str'], {
+            'constraint': 'DAMPED_TRACK',
+            'subtarget': ctrl,
         })
-        make_constraint( self, bones['ik']['mch_str'], {
-            'constraint'  : 'STRETCH_TO',
-            'subtarget'   : ctrl,
+        make_constraint(self, bones['ik']['mch_str'], {
+            'constraint': 'STRETCH_TO',
+            'subtarget': ctrl,
         })
-        make_constraint( self, bones['ik']['mch_str'], {
-            'constraint'  : 'LIMIT_SCALE',
-            'use_min_y'   : True,
-            'use_max_y'   : True,
-            'max_y'       : 1.05,
-            'owner_space' : 'LOCAL'
+        make_constraint(self, bones['ik']['mch_str'], {
+            'constraint': 'LIMIT_SCALE',
+            'use_min_y': True,
+            'use_max_y': True,
+            'max_y': 1.05,
+            'owner_space': 'LOCAL'
+        })
+        make_constraint(self, mch_main_parent, {
+            'constraint': 'COPY_ROTATION',
+            'subtarget': org_bones[0]
         })
 
-        make_constraint( self, mch_main_parent, {
-            'constraint'  : 'COPY_ROTATION',
-            'subtarget'   : org_bones[0]
-        })
+        pb = self.obj.pose.bones
 
         # Create ik/fk switch property
-        pb = self.obj.pose.bones
-        #pb_parent = pb[ bones['parent'] ]
         pb_parent = pb[bones['main_parent']]
+        pb_parent.lock_location = True, True, True
+        pb_parent.lock_rotation = True, True, True
+        pb_parent.lock_scale = True, True, True
 
         # Modify rotation mode for ik and tweak controls
         pb[bones['ik']['ctrl']['limb']].rotation_mode = 'ZXY'
@@ -697,8 +699,8 @@ class Rig:
 
         drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
 
-        drv_modifier.mode            = 'POLYNOMIAL'
-        drv_modifier.poly_order      = 1
+        drv_modifier.mode = 'POLYNOMIAL'
+        drv_modifier.poly_order = 1
         drv_modifier.coefficients[0] = 1.0
         drv_modifier.coefficients[1] = -1.0
 

@@ -820,8 +820,10 @@ class Rig:
         })
 
         # Create ik/fk switch property
-        #pb_parent = pb[ bones['parent'] ]
         pb_parent = pb[bones['main_parent']]
+        pb_parent.lock_location = True, True, True
+        pb_parent.lock_rotation = True, True, True
+        pb_parent.lock_scale = True, True, True
 
         pb_parent['IK_Stretch'] = 1.0
         prop = rna_idprop_ui_prop_get(pb_parent, 'IK_Stretch', create=True)
@@ -845,8 +847,8 @@ class Rig:
 
         drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
 
-        drv_modifier.mode            = 'POLYNOMIAL'
-        drv_modifier.poly_order      = 1
+        drv_modifier.mode = 'POLYNOMIAL'
+        drv_modifier.poly_order = 1
         drv_modifier.coefficients[0] = 1.0
         drv_modifier.coefficients[1] = -1.0
 
@@ -854,9 +856,9 @@ class Rig:
         create_foot_widget(self.obj, ctrl, bone_transform_name=None)
 
         # Create heel ctrl locks
-        pb[ heel ].lock_location = True, True, True
-        pb[ heel ].lock_rotation = False, False, True
-        pb[ heel ].lock_scale    = True, True, True
+        pb[heel].lock_location = True, True, True
+        pb[heel].lock_rotation = False, False, True
+        pb[heel].lock_scale = True, True, True
 
         # Add ballsocket widget to heel
         create_ballsocket_widget(self.obj, heel, bone_transform_name=None)
@@ -864,32 +866,30 @@ class Rig:
         bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
-        if len( org_bones ) >= 4:
+        if len(org_bones) >= 4:
             # Create toes control bone
-            toes = get_bone_name( org_bones[3], 'ctrl' )
-            toes = copy_bone( self.obj, org_bones[3], toes )
+            toes = get_bone_name(org_bones[3], 'ctrl')
+            toes = copy_bone(self.obj, org_bones[3], toes)
 
-            eb[ toes ].use_connect = False
-            eb[ toes ].parent      = eb[ org_bones[3] ]
+            eb[toes].use_connect = False
+            eb[toes].parent = eb[org_bones[3]]
 
             # Constrain toes def bones
-            make_constraint( self, bones['def'][-2], {
-                'constraint'  : 'DAMPED_TRACK',
-                'subtarget'   : toes
+            make_constraint(self, bones['def'][-2], {
+                'constraint': 'DAMPED_TRACK',
+                'subtarget': toes
             })
-            make_constraint( self, bones['def'][-2], {
-                'constraint'  : 'STRETCH_TO',
-                'subtarget'   : toes
+            make_constraint(self, bones['def'][-2], {
+                'constraint': 'STRETCH_TO',
+                'subtarget': toes
             })
-
-            make_constraint( self, bones['def'][-1], {
-                'constraint'  : 'COPY_TRANSFORMS',
-                'subtarget'   : toes
+            make_constraint(self, bones['def'][-1], {
+                'constraint': 'COPY_TRANSFORMS',
+                'subtarget': toes
             })
 
             # Find IK/FK switch property
-            pb   = self.obj.pose.bones
-            #prop = rna_idprop_ui_prop_get( pb[ bones['parent'] ], 'IK/FK' )
+            pb = self.obj.pose.bones
             prop = rna_idprop_ui_prop_get( pb[bones['fk']['ctrl'][-1]], 'IK/FK' )
 
             # Modify rotation mode for ik and tweak controls
@@ -899,8 +899,8 @@ class Rig:
                 pb[b].rotation_mode = 'ZXY'
 
             # Add driver to limit scale constraint influence
-            b        = org_bones[3]
-            drv      = pb[b].constraints[-1].driver_add("influence").driver
+            b = org_bones[3]
+            drv = pb[b].constraints[-1].driver_add("influence").driver
             drv.type = 'AVERAGE'
 
             var = drv.variables.new()
@@ -912,15 +912,15 @@ class Rig:
 
             drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
 
-            drv_modifier.mode            = 'POLYNOMIAL'
-            drv_modifier.poly_order      = 1
+            drv_modifier.mode = 'POLYNOMIAL'
+            drv_modifier.poly_order = 1
             drv_modifier.coefficients[0] = 1.0
             drv_modifier.coefficients[1] = -1.0
 
             # Create toe circle widget
             create_circle_widget(self.obj, toes, radius=0.4, head_tail=0.5)
 
-            bones['ik']['ctrl']['terminal'] += [ toes ]
+            bones['ik']['ctrl']['terminal'] += [toes]
 
         bones['ik']['ctrl']['terminal'] += [ heel, ctrl ]
         if leg_parent:

@@ -684,9 +684,13 @@ class Rig:
             'owner_space' : 'LOCAL'
         })
 
-        # Create ik/fk switch property
         pb = self.obj.pose.bones
+
+        # Create ik/fk switch property
         pb_parent = pb[bones['main_parent']]
+        pb_parent.lock_location = True, True, True
+        pb_parent.lock_rotation = True, True, True
+        pb_parent.lock_scale = True, True, True
 
         pb_parent['IK_Stretch'] = 1.0
         prop = rna_idprop_ui_prop_get(pb_parent, 'IK_Stretch', create=True)
