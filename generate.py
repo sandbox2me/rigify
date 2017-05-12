@@ -265,10 +265,15 @@ def generate_rig(context, metarig):
     t.tick("Create root bone: ")
 
     # Create Group widget
-    mesh = bpy.data.meshes.new("WGTS")
-    wgts_obj = bpy.data.objects.new("WGTS", mesh)
-    scene.objects.link(wgts_obj)
-    t.tick("Create main WGTS: ")
+    wgts_group_name = "WGTS"
+    if wgts_group_name not in scene.objects:
+        if wgts_group_name in bpy.data.objects:
+            bpy.data.objects[wgts_group_name].user_clear()
+            bpy.data.objects.remove(bpy.data.objects[wgts_group_name])
+        mesh = bpy.data.meshes.new(wgts_group_name)
+        wgts_obj = bpy.data.objects.new(wgts_group_name, mesh)
+        scene.objects.link(wgts_obj)
+        t.tick("Create main WGTS: ")
 
     #----------------------------------
     try:
