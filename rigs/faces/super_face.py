@@ -73,7 +73,7 @@ class Rig:
     def create_deformation(self):
         org_bones = self.org_bones
         
-        bpy.ops.object.mode_set(mode ='EDIT')
+        bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
         
         def_bones = []
@@ -111,24 +111,25 @@ class Rig:
         org_bones = self.org_bones
 
         ## create control bones
-        bpy.ops.object.mode_set(mode ='EDIT')
+        bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
-        eyeL_ctrl_name = strip_org( bones['eyes'][0] )
-        eyeR_ctrl_name = strip_org( bones['eyes'][1] )
-        
-        eyeL_ctrl_name = copy_bone( self.obj, bones['eyes'][0],  eyeL_ctrl_name )
-        eyeR_ctrl_name = copy_bone( self.obj, bones['eyes'][1],  eyeR_ctrl_name )
-        eyes_ctrl_name = copy_bone( self.obj, bones['eyes'][0], 'eyes'          )
-        
-        eyeL_ctrl_e = eb[ eyeL_ctrl_name ]
-        eyeR_ctrl_e = eb[ eyeR_ctrl_name ]
-        eyes_ctrl_e = eb[ 'eyes' ]
+        eyeL_ctrl_name = strip_org(bones['eyes'][0])
+        eyeR_ctrl_name = strip_org(bones['eyes'][1])
+
+        eyeL_ctrl_name = copy_bone(self.obj, bones['eyes'][0], eyeL_ctrl_name)
+        eyeR_ctrl_name = copy_bone(self.obj, bones['eyes'][1], eyeR_ctrl_name)
+        eyes_ctrl_name = copy_bone(self.obj, bones['eyes'][0], 'eyes')
+
+        eyeL_ctrl_e = eb[eyeL_ctrl_name]
+        eyeR_ctrl_e = eb[eyeR_ctrl_name]
+        eyes_ctrl_e = eb['eyes']
 
         # eyes ctrls
         eyeL_e = eb[bones['eyes'][0]]
         eyeR_e = eb[bones['eyes'][1]]
 
+        interpupillary_distance = eyeL_e.head - eyeR_e.head
         distance = (eyeL_e.head - eyeR_e.head) * 3
         distance = distance.cross((0, 0, 1))
 
@@ -137,7 +138,8 @@ class Rig:
         eyes_ctrl_e.head[:] =  ( eyeL_ctrl_e.head + eyeR_ctrl_e.head ) / 2
         
         for bone in [ eyeL_ctrl_e, eyeR_ctrl_e, eyes_ctrl_e ]:
-            bone.tail[:] = bone.head + Vector( [ 0, 0, eyeL_e.length * 1.35 ] )
+            # bone.tail[:] = bone.head + Vector( [ 0, 0, eyeL_e.length * 1.35 ] )
+            bone.tail[:] = bone.head + Vector([0, 0, interpupillary_distance.length * 0.3144])
 
         ## Widget for transforming the both eyes
         eye_master_names = []

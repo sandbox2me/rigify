@@ -31,7 +31,7 @@ class Rig:
         self.obj = obj
         self.org_bones = [bone_name] + connected_children_names(obj, bone_name)
         self.params = params
-        self.spine_length = sum([eb[b].length for b in self.org_bones])
+        # self.spine_length = sum([eb[b].length for b in self.org_bones])
         self.copy_rotation_axes = params.copy_rotation_axes
         self.use_head = params.use_head
         self.use_tail = params.use_tail
@@ -103,6 +103,10 @@ class Rig:
             else:
                 lower_torso_bones = self.org_bones[:pivot_index ]
 
+            torso_bones = upper_torso_bones + lower_torso_bones
+            eb = self.obj.data.edit_bones
+            self.spine_length = sum([eb[b].length for b in torso_bones])
+
             return {
                 'neck': neck_bones,
                 'upper': upper_torso_bones,
@@ -139,7 +143,7 @@ class Rig:
         ctrl_name = copy_bone(self.obj, pivot_name, torso_name)
         ctrl_eb = eb[ctrl_name]
 
-        self.orient_bone(ctrl_eb, 'y', self.spine_length / 2.5)
+        self.orient_bone(ctrl_eb, 'y', self.spine_length * 0.6)
 
         # Create mch_pivot
         mch_name = make_mechanism_name('pivot')
@@ -839,20 +843,29 @@ class Rig:
             bones['hips']['ctrl']
         ]
 
+        tail_ctrls = []
         if self.use_tail and bones['tail']['ctrl']:
+            tail_ctrls = bones['tail']['ctrl'] + [bones['tail']['ctrl_tail']]
             gen_ctrls.extend(bones['tail']['ctrl'])
-            # gen_ctrls.append(bones['tail']['ctrl_tail'])
+
             create_ballsocket_widget(
                 self.obj,
                 bones['tail']['ctrl_tail'],
+                size=0.7,
                 bone_transform_name=None
             )
 
         for bone in gen_ctrls:
+
+            if bone in tail_ctrls:
+                radius = 0.5
+            else:
+                radius = 1.0
+
             create_circle_widget(
                 self.obj,
                 bone,
-                radius=1.0,
+                radius=radius,
                 head_tail=0.75,
                 with_line=False,
                 bone_transform_name=None

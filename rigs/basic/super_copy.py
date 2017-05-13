@@ -83,7 +83,7 @@ class Rig:
 
             # Create control widget
             if self.make_widget:
-                create_circle_widget(self.obj, bone, radius = 0.5 )
+                create_circle_widget(self.obj, bone, radius=0.5)
             else:
                 create_bone_widget(self.obj, bone)
 
@@ -118,6 +118,7 @@ def parameters_ui(layout, params):
     r.prop(params, "make_control")
     r = layout.row()
     r.prop(params, "make_widget")
+    r.enabled = params.make_control
     r = layout.row()
     r.prop(params, "make_deform")
 
@@ -140,7 +141,7 @@ def create_sample(obj):
 
     bpy.ops.object.mode_set(mode='OBJECT')
     pbone = obj.pose.bones[bones['Bone']]
-    pbone.rigify_type = 'basic.copy'
+    pbone.rigify_type = 'basic.super_copy'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False

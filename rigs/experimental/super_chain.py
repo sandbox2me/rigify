@@ -185,29 +185,29 @@ class Rig:
 
         # Create torso control bone
         torso_name = 'torso'
-        ctrl_name  = copy_bone(self.obj, pivot_name, torso_name)
-        ctrl_eb    = eb[ ctrl_name ]
+        ctrl_name = copy_bone(self.obj, pivot_name, torso_name)
+        ctrl_eb = eb[ctrl_name]
 
         self.orient_bone( ctrl_eb, 'y', self.spine_length / 2.5 )
 
         # Create mch_pivot
         mch_name = make_mechanism_name( 'pivot' )
         mch_name = copy_bone(self.obj, ctrl_name, mch_name)
-        mch_eb   = eb[ mch_name ]
+        mch_eb = eb[mch_name]
 
         mch_eb.length /= 4
 
         # Positioning pivot in a more usable location for animators
-        if hasattr(self,'tail_pos') and self.tail_pos > 0:
-            pivot_loc = eb[ org_bones[pivot-1]].head
+        if hasattr(self, 'tail_pos') and self.tail_pos > 0:
+            pivot_loc = eb[org_bones[pivot-1]].head
         else:
-            pivot_loc = ( eb[ org_bones[0]].head + eb[ org_bones[0]].tail ) / 2
+            pivot_loc = (eb[org_bones[0]].head + eb[org_bones[0]].tail) / 2
 
-        put_bone( self.obj, ctrl_name, pivot_loc )
+        put_bone(self.obj, ctrl_name, pivot_loc)
 
         return {
-            'ctrl' : ctrl_name,
-            'mch'  : mch_name
+            'ctrl': ctrl_name,
+            'mch': mch_name
         }
 
     def create_deform(self):
@@ -227,10 +227,12 @@ class Rig:
         for bone in def_bones:
             self.obj.data.bones[bone].bbone_segments = self.bbones
 
-        # self.obj.data.bones[ bones['def'][0]].bbone_in = 0.0
-        # self.obj.data.bones[ bones['def'][-1]].bbone_out = 0.0
-        self.obj.data.bones[def_bones[0]].bbone_in = 1.0
-        self.obj.data.bones[def_bones[-1]].bbone_out = 1.0
+        if not self.SINGLE_BONE:
+            self.obj.data.bones[def_bones[0]].bbone_in = 0.0
+            self.obj.data.bones[def_bones[-1]].bbone_out = 0.0
+        else:
+            self.obj.data.bones[def_bones[0]].bbone_in = 1.0
+            self.obj.data.bones[def_bones[-1]].bbone_out = 1.0
         bpy.ops.object.mode_set(mode='EDIT')
 
         return def_bones
@@ -914,10 +916,12 @@ class Rig:
         mch_end = pb[bones['chain']['mch_ctrl'][-1]]
 
         if 'bbone_custom_handle_start' in dir(def_pb) and 'bbone_custom_handle_end' in dir(def_pb):
-            # def_pb.bbone_custom_handle_start = ctrl_start
-            # def_pb.bbone_custom_handle_end = ctrl_end
-            def_pb.bbone_custom_handle_start = mch_start
-            def_pb.bbone_custom_handle_end = mch_end
+            if not self.SINGLE_BONE:
+                def_pb.bbone_custom_handle_start = ctrl_start
+                def_pb.bbone_custom_handle_end = ctrl_end
+            else:
+                def_pb.bbone_custom_handle_start = mch_start
+                def_pb.bbone_custom_handle_end = mch_end
             def_pb.use_bbone_custom_handles = True
 
     def create_drivers(self, bones):
@@ -1162,10 +1166,10 @@ class Rig:
         bones['chain'] = self.create_chain()
 
         # Adjust Roll in SINGLE_BONE case
-        if self.SINGLE_BONE:
-            all_bones = bones['chain']['mch'] + bones['chain']['mch_ctrl'] + bones['chain']['ctrl'] + bones['def']
-            for b in all_bones:
-                eb[b].roll = -pi / 2
+        #if self.SINGLE_BONE:
+        all_bones = bones['chain']['mch'] + bones['chain']['mch_ctrl'] + bones['chain']['ctrl'] + bones['def']
+        for b in all_bones:
+            eb[b].roll = -pi / 2
 
         #Todo create pivot-like controls
 

@@ -1212,7 +1212,7 @@ def create(obj):
     pbone.rotation_mode = 'QUATERNION'
     pbone.bone.layers = [False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     pbone = obj.pose.bones[bones['pelvis.L']]
-    pbone.rigify_type = 'basic.copy'
+    pbone.rigify_type = 'basic.super_copy'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False
@@ -1224,7 +1224,7 @@ def create(obj):
     except AttributeError:
         pass
     pbone = obj.pose.bones[bones['pelvis.R']]
-    pbone.rigify_type = 'basic.copy'
+    pbone.rigify_type = 'basic.super_copy'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False
@@ -1364,21 +1364,29 @@ def create(obj):
     pbone.rotation_mode = 'QUATERNION'
     pbone.bone.layers = [False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     pbone = obj.pose.bones[bones['shoulder.L']]
-    pbone.rigify_type = 'basic.copy'
+    pbone.rigify_type = 'basic.super_copy'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'YXZ'
     pbone.bone.layers = [False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+    try:
+        pbone.rigify_parameters.make_widget = False
+    except AttributeError:
+        pass
     pbone = obj.pose.bones[bones['shoulder.R']]
-    pbone.rigify_type = 'basic.copy'
+    pbone.rigify_type = 'basic.super_copy'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'YXZ'
     pbone.bone.layers = [False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+    try:
+        pbone.rigify_parameters.make_widget = False
+    except AttributeError:
+        pass
     pbone = obj.pose.bones[bones['breast.L']]
     pbone.rigify_type = 'basic.super_copy'
     pbone.lock_location = (False, False, False)

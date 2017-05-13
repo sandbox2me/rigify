@@ -80,7 +80,8 @@ def create_teeth_widget(rig, bone_name, size=1.0, bone_transform_name=None):
         return obj
     else:
         return None
-        
+
+
 def create_face_widget(rig, bone_name, size=1.0, bone_transform_name=None):
     obj = create_widget(rig, bone_name, bone_transform_name)
     if obj is not None:
@@ -129,6 +130,7 @@ def create_hand_widget(rig, bone_name, size=1.0, bone_transform_name=None):
     else:
         return None
 
+
 def create_foot_widget(rig, bone_name, size=1.0, bone_transform_name=None):
     # Create hand widget
     obj = create_widget(rig, bone_name, bone_transform_name)
@@ -146,6 +148,7 @@ def create_foot_widget(rig, bone_name, size=1.0, bone_transform_name=None):
         return obj
     else:
         return None
+
 
 def create_ballsocket_widget(rig, bone_name, size=1.0, bone_transform_name=None):
     obj = create_widget(rig, bone_name, bone_transform_name)

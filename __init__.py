@@ -20,9 +20,9 @@
 
 bl_info = {
     "name": "Rigify",
-    "version": (0, 4),
-    "author": "Nathan Vegdahl",
-    "blender": (2, 66, 0),
+    "version": (0, 5),
+    "author": "Nathan Vegdahl, Lucio Rossi, Ivan Cappiello",
+    "blender": (2, 78, 0),
     "description": "Automatic rigging from building-block components",
     "location": "Armature properties, Bone properties, View3d tools panel, Armature Add menu",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.5/Py/"

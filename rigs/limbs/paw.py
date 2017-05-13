@@ -351,18 +351,18 @@ class Rig:
     def create_ik(self, parent):
         org_bones = self.org_bones
 
-        bpy.ops.object.mode_set(mode ='EDIT')
+        bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
-        ctrl       = get_bone_name( org_bones[0], 'ctrl', 'ik'        )
-        mch_ik     = get_bone_name( org_bones[0], 'mch',  'ik'        )
-        mch_target = get_bone_name( org_bones[0], 'mch',  'ik_target' )
+        ctrl = get_bone_name(org_bones[0], 'ctrl', 'ik')
+        mch_ik = get_bone_name(org_bones[0], 'mch', 'ik')
+        mch_target = get_bone_name(org_bones[0], 'mch', 'ik_target')
 
-        for o, ik in zip( org_bones, [ ctrl, mch_ik, mch_target ] ):
-            bone = copy_bone( self.obj, o, ik )
+        for o, ik in zip(org_bones, [ctrl, mch_ik, mch_target]):
+            bone = copy_bone(self.obj, o, ik)
 
-            if org_bones.index(o) == len( org_bones ) - 1:
-                eb[ bone ].length /= 4
+            if org_bones.index(o) == len(org_bones) - 1:
+                eb[bone].length /= 4
 
         # Create MCH Stretch
         mch_str = copy_bone(
@@ -574,12 +574,12 @@ class Rig:
         pole_target = get_bone_name(org_bones[0], 'ctrl', 'ik_target')
 
         # Create IK paw control
-        ctrl = get_bone_name( org_bones[2], 'ctrl', 'ik' )
-        ctrl = copy_bone( self.obj, org_bones[2], ctrl )
+        ctrl = get_bone_name(org_bones[2], 'ctrl', 'ik')
+        ctrl = copy_bone(self.obj, org_bones[2], ctrl)
 
         # clear parent (so that rigify will parent to root)
-        eb[ ctrl ].parent      = None
-        eb[ ctrl ].use_connect = False
+        eb[ctrl].parent = None
+        eb[ctrl].use_connect = False
 
         # MCH for ik control
         ctrl_socket = copy_bone(self.obj, org_bones[2], get_bone_name( org_bones[2], 'mch', 'ik_socket'))
@@ -628,9 +628,9 @@ class Rig:
         eb[ bones['ik']['mch_target'] ].use_connect = False
 
         # Reset control position and orientation
-        l = eb[ ctrl ].length
-        orient_bone( self, eb[ ctrl ], 'y', reverse = True )
-        eb[ ctrl ].length = l
+        l = eb[ctrl].length
+        orient_bone(self, eb[ctrl], 'y', reverse=True)
+        eb[ctrl].length = eb[org_bones[-1]].length
 
         # Set up constraints
 
