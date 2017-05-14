@@ -17,7 +17,7 @@ class Rig:
         self.copy_rotation_axes = params.copy_rotation_axes
         
         if params.tweak_extra_layers:
-            self.tweak_layers = list( params.tweak_layers )
+            self.tweak_layers = list(params.tweak_layers)
         else:
             self.tweak_layers = None
         
@@ -183,16 +183,16 @@ class Rig:
             # Control bones' constraints
             if ctrl != ctrls[0]:
                 con = pb[ctrl].constraints.new('COPY_ROTATION')
-                con.target       = self.obj
-                con.subtarget    = ctrls[ ctrls.index(ctrl) - 1 ]
-                for i, prop in enumerate( [ 'use_x', 'use_y', 'use_z' ] ):
+                con.target = self.obj
+                con.subtarget = ctrls[ctrls.index(ctrl) - 1]
+                for i, prop in enumerate(['use_x', 'use_y', 'use_z']):
                     if self.copy_rotation_axes[i]:
-                        setattr( con, prop, True )
+                        setattr(con, prop, True)
                     else:
-                        setattr( con, prop, False )
-                con.use_offset   = True
+                        setattr(con, prop, False)
+                con.use_offset = True
                 con.target_space = 'LOCAL'
-                con.owner_space  = 'LOCAL'
+                con.owner_space = 'LOCAL'
 
     def generate(self):
         bpy.ops.object.mode_set(mode ='EDIT')
@@ -223,9 +223,9 @@ def add_parameters(params):
         RigifyParameters PropertyGroup
     """
     params.copy_rotation_axes = bpy.props.BoolVectorProperty(
-        size        = 3,
-        description = "Layers for the tweak controls to be on",
-        default     = tuple( [ i == 0 for i in range(0, 3) ] )
+        size=3,
+        description="Automation axes",
+        default=tuple([i == 0 for i in range(0, 3)])
         )
     
     # Setting up extra tweak layers

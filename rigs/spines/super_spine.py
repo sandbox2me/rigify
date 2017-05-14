@@ -1021,7 +1021,7 @@ def add_parameters(params):
 
     params.copy_rotation_axes = bpy.props.BoolVectorProperty(
         size=3,
-        description="Layers for the tweak controls to be on",
+        description="Automation axes",
         default=tuple([i == 0 for i in range(0, 3)])
     )
 
@@ -1062,8 +1062,8 @@ def parameters_ui(layout, params):
     """ Create the ui for the rig parameters."""
 
     r = layout.row(align=True)
-    r.prop(params, "use_head", toggle=True)
-    r.prop(params, "use_tail", toggle=True)
+    r.prop(params, "use_head", toggle=True, text="Head")
+    r.prop(params, "use_tail", toggle=True, text="Tail")
 
     r = layout.row()
     r.prop(params, "neck_pos")
