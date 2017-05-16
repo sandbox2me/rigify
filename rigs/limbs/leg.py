@@ -728,8 +728,9 @@ class Rig:
 
         pb = self.obj.pose.bones
         for i,b in enumerate([ rock1_mch, rock2_mch ]):
-            head_tail = pb[b].head - pb[tmp_heel].head
-            if '.L' in b:
+            # head_tail = pb[b].head - pb[tmp_heel].head
+            heel_x_orientation = pb[tmp_heel].y_axis[0]
+            if heel_x_orientation > 0:
                 if not i:
                     min_y = 0
                     max_y = math.radians(360)
