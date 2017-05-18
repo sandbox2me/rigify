@@ -9,7 +9,7 @@ from ...utils import strip_org, make_deformer_name, create_widget
 from ...utils import create_circle_widget, create_sphere_widget, create_line_widget
 from ...utils import MetarigError, make_mechanism_name, org
 from ...utils import create_limb_widget, connected_children_names
-from ...utils import align_bone_y_axis, align_bone_x_axis, align_bone_roll
+from ...utils import align_bone_y_axis, align_bone_x_axis, align_bone_z_axis
 from rna_prop_ui import rna_idprop_ui_prop_get
 from ..widgets import create_ikarrow_widget
 from math import trunc, pi
@@ -20,7 +20,8 @@ ctrl    = '%s'
 
 if is_selected( controls ):
     layout.prop( pose_bones[ ctrl ], '["%s"]')
-    layout.prop( pose_bones[ ctrl ], '["%s"]')
+    if '%s' in pose_bones[ctrl].keys():
+        layout.prop( pose_bones[ ctrl ], '["%s"]', slider = True )
     if '%s' in pose_bones[ctrl].keys():
         layout.prop( pose_bones[ ctrl ], '["%s"]', slider = True )
 """
@@ -55,6 +56,59 @@ class Rig:
             self.fk_layers = list(params.fk_layers)
         else:
             self.fk_layers = None
+
+    def orient_org_bones(self):
+
+        bpy.ops.object.mode_set(mode='EDIT')
+        eb = self.obj.data.edit_bones
+
+        thigh = self.org_bones[0]
+        org_bones = list(
+            [thigh] + connected_children_names(self.obj, thigh)
+        )  # All the provided orgs
+
+        # Get heel bone
+        heel = ''
+        for b in self.obj.data.bones[org_bones[2]].children:
+            if not b.use_connect and not b.children:
+                heel = b.name
+        if heel:
+            org_bones.append(heel)
+
+        org_thigh = eb[org_bones[0]]
+        org_shin = eb[org_bones[1]]
+        org_foot = eb[org_bones[2]]
+        org_toe = eb[org_bones[3]]
+        org_heel = eb[org_bones[4]]
+
+        # Orient thigh and shin bones
+        chain_y_axis = org_thigh.y_axis + org_shin.y_axis
+        chain_rot_axis = org_thigh.y_axis.cross(chain_y_axis).normalized()  # ik-plane normal axis (rotation)
+
+        if self.rot_axis == 'x':
+            align_bone_x_axis(self.obj, org_thigh.name, chain_rot_axis)
+            align_bone_x_axis(self.obj, org_shin.name, chain_rot_axis)
+        elif self.rot_axis == 'z':
+            align_bone_z_axis(self.obj, org_thigh.name, chain_rot_axis)
+            align_bone_z_axis(self.obj, org_shin.name, chain_rot_axis)
+        else:
+            raise MetarigError(message='IK on %s has forbidden rotation axis (Y)' % self.org_bones[0])
+
+        # Orient foot and toe
+        foot_projection_on_xy = Vector((org_foot.y_axis[0], org_foot.y_axis[1], 0))
+        foot_x = foot_projection_on_xy.cross(Vector((0, 0, -1))).normalized()
+
+        if self.rot_axis == 'x':
+            align_bone_x_axis(self.obj, org_foot.name, foot_x)
+            align_bone_x_axis(self.obj, org_toe.name, -foot_x)
+        elif self.rot_axis == 'z':
+            align_bone_z_axis(self.obj, org_foot.name, foot_x)
+            align_bone_z_axis(self.obj, org_toe.name, -foot_x)
+        else:
+            raise MetarigError(message='IK on %s has forbidden rotation axis (Y)' % self.org_bones[0])
+
+        # Orient heel
+        align_bone_z_axis(self.obj, org_heel.name, Vector((0, 0, 1)))
 
     def create_parent(self):
 
@@ -351,9 +405,9 @@ class Rig:
         bpy.ops.object.mode_set(mode ='EDIT')
         eb = self.obj.data.edit_bones
 
-        ctrl       = get_bone_name( org_bones[0], 'ctrl', 'ik'        )
-        mch_ik     = get_bone_name( org_bones[0], 'mch',  'ik'        )
-        mch_target = get_bone_name( org_bones[0], 'mch',  'ik_target' )
+        ctrl = get_bone_name(org_bones[0], 'ctrl', 'ik')
+        mch_ik = get_bone_name(org_bones[0], 'mch', 'ik')
+        mch_target = get_bone_name(org_bones[0], 'mch', 'ik_target')
 
         for o, ik in zip( org_bones, [ ctrl, mch_ik, mch_target ] ):
             bone = copy_bone( self.obj, o, ik )
@@ -371,9 +425,9 @@ class Rig:
         eb[ mch_str ].tail = eb[ org_bones[-1] ].head
 
         # Parenting
-        eb[ ctrl    ].parent = eb[ parent ]
-        eb[ mch_str ].parent = eb[ parent ]
-        eb[ mch_ik  ].parent = eb[ ctrl   ]
+        eb[ctrl].parent = eb[parent]
+        eb[mch_str].parent = eb[parent]
+        eb[mch_ik].parent = eb[ctrl]
 
         # Make standard pole target bone
         pole_name = get_bone_name(org_bones[0], 'ctrl', 'ik_target')
@@ -382,16 +436,24 @@ class Rig:
         lo_vector = eb[org_bones[1]].tail - eb[org_bones[1]].head
         tot_vector = eb[org_bones[0]].head - eb[org_bones[1]].tail
         tot_vector.normalize()
-        elbow_vector = lo_vector.dot(tot_vector)*tot_vector - lo_vector    # elbow_vec as regression of lo on tot
+        elbow_vector = lo_vector.dot(tot_vector)*tot_vector - lo_vector    # elbow_vec as rejection of lo on tot
         elbow_vector.normalize()
         elbow_vector *= (eb[org_bones[1]].tail - eb[org_bones[0]].head).length
-        z_vector = eb[org_bones[0]].z_axis + eb[org_bones[1]].z_axis
-        alfa = elbow_vector.angle(z_vector)
+
+        if self.rot_axis == 'x':
+            z_vector = eb[org_bones[0]].z_axis + eb[org_bones[1]].z_axis
+            alfa = elbow_vector.angle(z_vector)
+        elif self.rot_axis == 'z':
+            x_vector = eb[org_bones[0]].x_axis + eb[org_bones[1]].x_axis
+            alfa = elbow_vector.angle(x_vector)
 
         if alfa > pi/2:
             pole_angle = -pi/2
         else:
             pole_angle = pi/2
+
+        if self.rot_axis == 'z':
+            pole_angle = 0
 
         eb[pole_target].head = eb[org_bones[0]].tail + elbow_vector
         eb[pole_target].tail = eb[pole_target].head - elbow_vector/8
@@ -447,16 +509,20 @@ class Rig:
                setattr( pb[ mch_ik ], 'lock_ik_' + axis, True )
 
         # Locks and Widget
-        pb[ ctrl ].lock_rotation = True, False, True
-        create_ikarrow_widget( self.obj, ctrl, bone_transform_name=None )
+        pb[ctrl].lock_rotation = True, False, True
+        if self.rot_axis == 'x':
+            roll = 0
+        else:
+            roll = pi/2
+        create_ikarrow_widget(self.obj, ctrl, bone_transform_name=None, roll=roll)
         create_sphere_widget(self.obj, pole_target, bone_transform_name=None)
         create_line_widget(self.obj, vispole)
 
         return {'ctrl': {'limb': ctrl, 'ik_target': pole_target},
-                 'mch_ik': mch_ik,
-                 'mch_target': mch_target,
-                 'mch_str': mch_str,
-                 'visuals': {'vispole': vispole}
+                'mch_ik': mch_ik,
+                'mch_target': mch_target,
+                'mch_str': mch_str,
+                'visuals': {'vispole': vispole}
         }
 
     def create_fk(self, parent):
@@ -578,12 +644,12 @@ class Rig:
         pole_target = get_bone_name(org_bones[0], 'ctrl', 'ik_target')
 
         # Create IK leg control
-        ctrl = get_bone_name( org_bones[2], 'ctrl', 'ik' )
-        ctrl = copy_bone( self.obj, org_bones[2], ctrl )
+        ctrl = get_bone_name(org_bones[2], 'ctrl', 'ik')
+        ctrl = copy_bone(self.obj, org_bones[2], ctrl)
 
         # clear parent (so that rigify will parent to root)
-        eb[ ctrl ].parent      = None
-        eb[ ctrl ].use_connect = False
+        eb[ctrl].parent = None
+        eb[ctrl].use_connect = False
 
         # MCH for ik control
         ctrl_socket = copy_bone(self.obj, org_bones[2], get_bone_name( org_bones[2], 'mch', 'ik_socket'))
@@ -616,12 +682,15 @@ class Rig:
 
         # Create heel ctrl bone
         heel = get_bone_name(org_bones[2], 'ctrl', 'heel_ik')
-        heel = copy_bone( self.obj, org_bones[2], heel )
-        # orient_bone( self, eb[ heel ], 'y', 0.5 )
+        heel = copy_bone(self.obj, org_bones[2], heel)
+
         ax = eb[org_bones[2]].head - eb[org_bones[2]].tail
         ax[2] = 0
         align_bone_y_axis(self.obj, heel, ax)
-        align_bone_x_axis(self.obj, heel, eb[org_bones[2]].x_axis)
+        if self.rot_axis == 'x':
+            align_bone_x_axis(self.obj, heel, eb[org_bones[2]].x_axis)
+        elif self.rot_axis == 'z':
+            align_bone_z_axis(self.obj, heel, eb[org_bones[2]].z_axis)
         eb[heel].length = eb[org_bones[2]].length / 2
 
         # Reset control position and orientation
@@ -640,32 +709,35 @@ class Rig:
 
         # Get the tmp heel (floating unconnected without children)
         tmp_heel = ""
-        for b in self.obj.data.bones[ org_bones[2] ].children:
+        for b in self.obj.data.bones[org_bones[2]].children:
             if not b.use_connect and not b.children:
                 tmp_heel = b.name
 
         # roll1 MCH bone
-        roll1_mch = get_bone_name( tmp_heel, 'mch', 'roll' )
-        roll1_mch = copy_bone( self.obj, org_bones[2], roll1_mch )
+        roll1_mch = get_bone_name(tmp_heel, 'mch', 'roll')
+        roll1_mch = copy_bone(self.obj, org_bones[2], roll1_mch)
 
         # clear parent
-        eb[ roll1_mch ].use_connect = False
-        eb[ roll1_mch ].parent      = None
+        eb[roll1_mch].use_connect = False
+        eb[roll1_mch].parent = None
 
-        flip_bone( self.obj, roll1_mch )
-        align_bone_x_axis(self.obj, roll1_mch, eb[org_bones[2]].x_axis)
+        flip_bone(self.obj, roll1_mch)
+        if self.rot_axis == 'x':
+            align_bone_x_axis(self.obj, roll1_mch, eb[org_bones[2]].x_axis)
+        elif self.rot_axis == 'z':
+            align_bone_z_axis(self.obj, roll1_mch, eb[org_bones[2]].z_axis)
 
         # Create 2nd roll mch, and two rock mch bones
-        roll2_mch = get_bone_name( tmp_heel, 'mch', 'roll' )
-        roll2_mch = copy_bone( self.obj, org_bones[3], roll2_mch )
+        roll2_mch = get_bone_name(tmp_heel, 'mch', 'roll')
+        roll2_mch = copy_bone(self.obj, org_bones[3], roll2_mch)
 
-        eb[ roll2_mch ].use_connect = False
-        eb[ roll2_mch ].parent      = None
+        eb[roll2_mch].use_connect = False
+        eb[roll2_mch].parent = None
 
         put_bone(
             self.obj,
             roll2_mch,
-            ( eb[ tmp_heel ].head + eb[ tmp_heel ].tail ) / 2
+            (eb[tmp_heel].head + eb[tmp_heel].tail) / 2
         )
 
         eb[ roll2_mch ].length /= 4
@@ -704,32 +776,61 @@ class Rig:
             'owner_space'  : 'LOCAL',
             'target_space' : 'LOCAL'
         })
-        make_constraint( self, roll1_mch, {
-            'constraint'  : 'LIMIT_ROTATION',
-            'use_limit_x' : True,
-            'max_x'       : math.radians(360),
-            'owner_space' : 'LOCAL'
-        })
-        make_constraint( self, roll2_mch, {
-            'constraint'   : 'COPY_ROTATION',
-            'subtarget'    : heel,
-            'use_y'        : False,
-            'use_z'        : False,
-            'invert_x'     : True,
-            'owner_space'  : 'LOCAL',
-            'target_space' : 'LOCAL'
-        })
-        make_constraint( self, roll2_mch, {
-            'constraint'  : 'LIMIT_ROTATION',
-            'use_limit_x' : True,
-            'max_x'       : math.radians(360),
-            'owner_space' : 'LOCAL'
-        })
+
+        if self.rot_axis == 'x':
+            make_constraint(self, roll1_mch, {
+                'constraint': 'LIMIT_ROTATION',
+                'use_limit_x': True,
+                'max_x': math.radians(360),
+                'owner_space': 'LOCAL'
+            })
+            make_constraint(self, roll2_mch, {
+                'constraint': 'COPY_ROTATION',
+                'subtarget': heel,
+                'use_y': False,
+                'use_z': False,
+                'invert_x': True,
+                'owner_space': 'LOCAL',
+                'target_space': 'LOCAL'
+            })
+            make_constraint(self, roll2_mch, {
+                'constraint': 'LIMIT_ROTATION',
+                'use_limit_x': True,
+                'max_x': math.radians(360),
+                'owner_space': 'LOCAL'
+            })
+
+        elif self.rot_axis == 'z':
+            make_constraint(self, roll1_mch, {
+                'constraint': 'LIMIT_ROTATION',
+                'use_limit_z': True,
+                'max_z': math.radians(360),
+                'owner_space': 'LOCAL'
+            })
+            make_constraint(self, roll2_mch, {
+                'constraint': 'COPY_ROTATION',
+                'subtarget': heel,
+                'use_y': False,
+                'use_x': False,
+                'invert_z': True,
+                'owner_space': 'LOCAL',
+                'target_space': 'LOCAL'
+            })
+            make_constraint(self, roll2_mch, {
+                'constraint': 'LIMIT_ROTATION',
+                'use_limit_z': True,
+                'max_z': math.radians(360),
+                'owner_space': 'LOCAL'
+            })
 
         pb = self.obj.pose.bones
-        for i,b in enumerate([ rock1_mch, rock2_mch ]):
-            # head_tail = pb[b].head - pb[tmp_heel].head
-            heel_x_orientation = pb[tmp_heel].y_axis[0]
+        if self.rot_axis == 'x':
+            ik_rot_axis = pb[org_bones[0]].x_axis
+        elif self.rot_axis == 'z':
+            ik_rot_axis = pb[org_bones[0]].z_axis
+        heel_x_orientation = pb[tmp_heel].y_axis.dot(ik_rot_axis)
+        for i, b in enumerate([rock1_mch, rock2_mch]):
+            # heel_x_orientation = pb[tmp_heel].y_axis[0]
             if heel_x_orientation > 0:
                 if not i:
                     min_y = 0
@@ -858,7 +959,10 @@ class Rig:
 
         # Create heel ctrl locks
         pb[heel].lock_location = True, True, True
-        pb[heel].lock_rotation = False, False, True
+        if self.rot_axis == 'x':
+            pb[heel].lock_rotation = False, False, True
+        elif self.rot_axis == 'z':
+            pb[heel].lock_rotation = True, False, False
         pb[heel].lock_scale = True, True, True
 
         # Add ballsocket widget to heel
@@ -924,6 +1028,7 @@ class Rig:
             bones['ik']['ctrl']['terminal'] += [toes]
 
         bones['ik']['ctrl']['terminal'] += [ heel, ctrl ]
+
         if leg_parent:
             bones['ik']['mch_foot'] = [ctrl_socket, ctrl_pole_socket, ctrl_root, ctrl_parent]
         else:
@@ -1155,6 +1260,9 @@ class Rig:
         bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
+        # Adjust org-bones rotation
+        self.orient_org_bones()
+
         # Clear parents for org bones
         for bone in self.org_bones[1:]:
             eb[bone].use_connect = False
@@ -1184,7 +1292,8 @@ class Rig:
         controls_string = ", ".join(["'" + x + "'" for x in controls])
 
         script = create_script(bones, 'leg')
-        script += extra_script % (controls_string, bones['main_parent'], 'IK_follow', 'pole_follow', 'root/parent', 'root/parent')
+        script += extra_script % (controls_string, bones['main_parent'], 'IK_follow',
+                                  'pole_follow', 'pole_follow', 'root/parent', 'root/parent')
 
         return [script]
 
@@ -1196,7 +1305,6 @@ def add_parameters(params):
 
     items = [
         ('x', 'X', ''),
-        ('y', 'Y', ''),
         ('z', 'Z', '')
     ]
     params.rotation_axis = bpy.props.EnumProperty(
@@ -1248,9 +1356,6 @@ def add_parameters(params):
 
 def parameters_ui(layout, params):
     """ Create the ui for the rig parameters."""
-
-    # r = layout.row()
-    # r.prop(params, "limb_type")
 
     r = layout.row()
     r.prop(params, "rotation_axis")

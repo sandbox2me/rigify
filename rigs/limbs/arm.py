@@ -1,17 +1,17 @@
 import bpy, re
 from ..widgets import create_hand_widget, create_gear_widget
-from   .ui             import create_script
-from   .limb_utils     import *
-from   mathutils       import Vector
-from   ...utils       import copy_bone, flip_bone, put_bone, create_cube_widget
-from   ...utils       import strip_org, make_deformer_name, create_widget
-from   ...utils       import create_circle_widget, create_sphere_widget, create_line_widget
-from   ...utils       import MetarigError, make_mechanism_name, org
-from   ...utils       import create_limb_widget, connected_children_names
-from   ...utils       import align_bone_y_axis
-from   rna_prop_ui     import rna_idprop_ui_prop_get
-from   ..widgets import create_ikarrow_widget
-from   math            import trunc, pi
+from .ui             import create_script
+from .limb_utils     import *
+from mathutils       import Vector
+from ...utils       import copy_bone, flip_bone, put_bone, create_cube_widget
+from ...utils       import strip_org, make_deformer_name, create_widget
+from ...utils       import create_circle_widget, create_sphere_widget, create_line_widget
+from ...utils       import MetarigError, make_mechanism_name, org
+from ...utils       import create_limb_widget, connected_children_names
+from ...utils       import align_bone_y_axis, align_bone_x_axis, align_bone_z_axis
+from rna_prop_ui import rna_idprop_ui_prop_get
+from ..widgets import create_ikarrow_widget
+from math import trunc, pi
 
 extra_script = """
 controls = [%s]
@@ -19,7 +19,8 @@ ctrl    = '%s'
 
 if is_selected( controls ):
     layout.prop( pose_bones[ ctrl ], '["%s"]')
-    layout.prop( pose_bones[ ctrl ], '["%s"]')
+    if '%s' in pose_bones[ctrl].keys():
+        layout.prop( pose_bones[ ctrl ], '["%s"]', slider = True )
     if '%s' in pose_bones[ctrl].keys():
         layout.prop( pose_bones[ ctrl ], '["%s"]', slider = True )
 """
@@ -54,6 +55,35 @@ class Rig:
             self.fk_layers = list(params.fk_layers)
         else:
             self.fk_layers = None
+
+    def orient_org_bones(self):
+
+        bpy.ops.object.mode_set(mode='EDIT')
+        eb = self.obj.data.edit_bones
+
+        thigh = self.org_bones[0]
+        org_bones = list(
+            [thigh] + connected_children_names(self.obj, thigh)
+        )  # All the provided orgs
+
+        org_uarm = eb[org_bones[0]]
+        org_farm = eb[org_bones[1]]
+        org_hand = eb[org_bones[2]]
+
+        # Orient uarm farm and hand bones
+        chain_y_axis = org_uarm.y_axis + org_farm.y_axis
+        chain_rot_axis = org_uarm.y_axis.cross(chain_y_axis).normalized()  # ik-plane normal axis (rotation)
+
+        if self.rot_axis == 'x':
+            align_bone_x_axis(self.obj, org_uarm.name, chain_rot_axis)
+            align_bone_x_axis(self.obj, org_farm.name, chain_rot_axis)
+            align_bone_x_axis(self.obj, org_hand.name, chain_rot_axis)
+        elif self.rot_axis == 'z':
+            align_bone_z_axis(self.obj, org_uarm.name, chain_rot_axis)
+            align_bone_z_axis(self.obj, org_farm.name, chain_rot_axis)
+            align_bone_z_axis(self.obj, org_hand.name, chain_rot_axis)
+        else:
+            raise MetarigError(message='IK on %s has forbidden rotation axis (Y)' % self.org_bones[0])
 
     def create_parent(self):
 
@@ -446,16 +476,20 @@ class Rig:
                setattr( pb[ mch_ik ], 'lock_ik_' + axis, True )
 
         # Locks and Widget
-        pb[ ctrl ].lock_rotation = True, False, True
-        create_ikarrow_widget( self.obj, ctrl, bone_transform_name=None )
+        pb[ctrl].lock_rotation = True, False, True
+        if self.rot_axis == 'x':
+            roll = 0
+        else:
+            roll = pi/2
+        create_ikarrow_widget(self.obj, ctrl, bone_transform_name=None, roll=roll)
         create_sphere_widget(self.obj, pole_target, bone_transform_name=None)
         create_line_widget(self.obj, vispole)
 
         return {'ctrl': {'limb': ctrl, 'ik_target': pole_target},
-                 'mch_ik': mch_ik,
-                 'mch_target': mch_target,
-                 'mch_str': mch_str,
-                 'visuals': {'vispole': vispole}
+                'mch_ik': mch_ik,
+                'mch_target': mch_target,
+                'mch_str': mch_str,
+                'visuals': {'vispole': vispole}
         }
 
     def create_fk(self, parent):
@@ -939,6 +973,9 @@ class Rig:
         bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
+        # Adjust org-bones rotation
+        self.orient_org_bones()
+
         # Clear parents for org bones
         for bone in self.org_bones[1:]:
             eb[bone].use_connect = False
@@ -968,7 +1005,8 @@ class Rig:
         controls_string = ", ".join(["'" + x + "'" for x in controls])
 
         script = create_script(bones, 'arm')
-        script += extra_script % (controls_string, bones['main_parent'], 'IK_follow', 'pole_follow', 'root/parent', 'root/parent')
+        script += extra_script % (controls_string, bones['main_parent'], 'IK_follow',
+                                  'pole_follow', 'pole_follow', 'root/parent', 'root/parent')
 
         return [script]
 
@@ -980,7 +1018,6 @@ def add_parameters(params):
 
     items = [
         ('x', 'X', ''),
-        ('y', 'Y', ''),
         ('z', 'Z', '')
     ]
     params.rotation_axis = bpy.props.EnumProperty(
@@ -1032,9 +1069,6 @@ def add_parameters(params):
 
 def parameters_ui(layout, params):
     """ Create the ui for the rig parameters."""
-
-    # r = layout.row()
-    # r.prop(params, "limb_type")
 
     r = layout.row()
     r.prop(params, "rotation_axis")
