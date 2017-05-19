@@ -68,7 +68,6 @@ class Rig:
 
         org_uarm = eb[org_bones[0]]
         org_farm = eb[org_bones[1]]
-        org_hand = eb[org_bones[2]]
 
         # Orient uarm farm and hand bones
         chain_y_axis = org_uarm.y_axis + org_farm.y_axis
@@ -77,11 +76,9 @@ class Rig:
         if self.rot_axis == 'x':
             align_bone_x_axis(self.obj, org_uarm.name, chain_rot_axis)
             align_bone_x_axis(self.obj, org_farm.name, chain_rot_axis)
-            align_bone_x_axis(self.obj, org_hand.name, chain_rot_axis)
         elif self.rot_axis == 'z':
             align_bone_z_axis(self.obj, org_uarm.name, chain_rot_axis)
             align_bone_z_axis(self.obj, org_farm.name, chain_rot_axis)
-            align_bone_z_axis(self.obj, org_hand.name, chain_rot_axis)
         else:
             raise MetarigError(message='IK on %s has forbidden rotation axis (Y)' % self.org_bones[0])
 

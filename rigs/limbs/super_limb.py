@@ -98,8 +98,8 @@ def parameters_ui(layout, params):
     r.prop(params, "limb_type")
 
     # UNCOMMENT THIS IF YOU WANT TO ENABLE IK ROTATION ON BONE Z AXIS
-    r = layout.row()
-    r.prop(params, "rotation_axis")
+    # r = layout.row()
+    # r.prop(params, "rotation_axis")
 
     r = layout.row()
     r.prop(params, "segments")
