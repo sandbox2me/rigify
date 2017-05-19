@@ -41,8 +41,9 @@ def add_parameters(params):
     )
 
     items = [
-        ('x', 'X', ''),
-        ('z', 'Z', '')
+        ('x', 'Auto-X', ''),
+        ('z', 'Auto-Z', ''),
+        ('manual', 'Manual', '')
     ]
     params.rotation_axis = bpy.props.EnumProperty(
         items   = items, 
@@ -98,8 +99,8 @@ def parameters_ui(layout, params):
     r.prop(params, "limb_type")
 
     # UNCOMMENT THIS IF YOU WANT TO ENABLE IK ROTATION ON BONE Z AXIS
-    # r = layout.row()
-    # r.prop(params, "rotation_axis")
+    r = layout.row()
+    r.prop(params, "rotation_axis")
 
     r = layout.row()
     r.prop(params, "segments")

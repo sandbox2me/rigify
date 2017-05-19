@@ -58,6 +58,9 @@ class Rig:
 
     def orient_org_bones(self):
 
+        if self.rot_axis == 'manual':
+            return
+
         bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
@@ -73,7 +76,7 @@ class Rig:
         chain_y_axis = org_uarm.y_axis + org_farm.y_axis
         chain_rot_axis = org_uarm.y_axis.cross(chain_y_axis).normalized()  # ik-plane normal axis (rotation)
 
-        if self.rot_axis == 'x':
+        if self.rot_axis == 'x' or self.rot_axis == 'manual':
             align_bone_x_axis(self.obj, org_uarm.name, chain_rot_axis)
             align_bone_x_axis(self.obj, org_farm.name, chain_rot_axis)
         elif self.rot_axis == 'z':
@@ -377,9 +380,9 @@ class Rig:
         bpy.ops.object.mode_set(mode ='EDIT')
         eb = self.obj.data.edit_bones
 
-        ctrl       = get_bone_name( org_bones[0], 'ctrl', 'ik'        )
-        mch_ik     = get_bone_name( org_bones[0], 'mch',  'ik'        )
-        mch_target = get_bone_name( org_bones[0], 'mch',  'ik_target' )
+        ctrl = get_bone_name(org_bones[0], 'ctrl', 'ik')
+        mch_ik = get_bone_name(org_bones[0], 'mch', 'ik')
+        mch_target = get_bone_name(org_bones[0], 'mch', 'ik_target')
 
         for o, ik in zip( org_bones, [ ctrl, mch_ik, mch_target ] ):
             bone = copy_bone( self.obj, o, ik )
@@ -397,9 +400,9 @@ class Rig:
         eb[ mch_str ].tail = eb[ org_bones[-1] ].head
 
         # Parenting
-        eb[ ctrl    ].parent = eb[ parent ]
-        eb[ mch_str ].parent = eb[ parent ]
-        eb[ mch_ik  ].parent = eb[ ctrl   ]
+        eb[ctrl].parent = eb[parent]
+        eb[mch_str].parent = eb[parent]
+        eb[mch_ik].parent = eb[ctrl]
 
         # Make standard pole target bone
         pole_name = get_bone_name(org_bones[0], 'ctrl', 'ik_target')
@@ -408,16 +411,24 @@ class Rig:
         lo_vector = eb[org_bones[1]].tail - eb[org_bones[1]].head
         tot_vector = eb[org_bones[0]].head - eb[org_bones[1]].tail
         tot_vector.normalize()
-        elbow_vector = lo_vector.dot(tot_vector)*tot_vector - lo_vector    # elbow_vec as regression of lo on tot
+        elbow_vector = lo_vector.dot(tot_vector)*tot_vector - lo_vector    # elbow_vec as rejection of lo on tot
         elbow_vector.normalize()
         elbow_vector *= (eb[org_bones[1]].tail - eb[org_bones[0]].head).length
-        z_vector = eb[org_bones[0]].z_axis + eb[org_bones[1]].z_axis
-        alfa = elbow_vector.angle(z_vector)
+
+        if self.rot_axis == 'x' or self.rot_axis == 'manual':
+            z_vector = eb[org_bones[0]].z_axis + eb[org_bones[1]].z_axis
+            alfa = elbow_vector.angle(z_vector)
+        elif self.rot_axis == 'z':
+            x_vector = eb[org_bones[0]].x_axis + eb[org_bones[1]].x_axis
+            alfa = elbow_vector.angle(x_vector)
 
         if alfa > pi/2:
             pole_angle = -pi/2
         else:
             pole_angle = pi/2
+
+        if self.rot_axis == 'z':
+            pole_angle = 0
 
         eb[pole_target].head = eb[org_bones[0]].tail + elbow_vector
         eb[pole_target].tail = eb[pole_target].head - elbow_vector/8
@@ -468,13 +479,15 @@ class Rig:
         pb[ ctrl   ].ik_stretch = 0.1
 
         # IK constraint Rotation locks
-        for axis in ['x','y','z']:
+        for axis in ['x', 'y', 'z']:
+            if axis == 'x' and self.rot_axis == 'manual':
+                continue
             if axis != self.rot_axis:
                setattr( pb[ mch_ik ], 'lock_ik_' + axis, True )
 
         # Locks and Widget
         pb[ctrl].lock_rotation = True, False, True
-        if self.rot_axis == 'x':
+        if self.rot_axis == 'x' or self.rot_axis == 'manual':
             roll = 0
         else:
             roll = pi/2
@@ -598,8 +611,8 @@ class Rig:
         ctrl = copy_bone(self.obj, org_bones[2], ctrl)
 
         # clear parent (so that rigify will parent to root)
-        eb[ ctrl ].parent      = None
-        eb[ ctrl ].use_connect = False
+        eb[ctrl].parent = None
+        eb[ctrl].use_connect = False
 
         # Parent
         eb[ bones['ik']['mch_target'] ].parent      = eb[ ctrl ]
@@ -1015,8 +1028,10 @@ def add_parameters(params):
 
     items = [
         ('x', 'X', ''),
-        ('z', 'Z', '')
+        ('z', 'Z', ''),
+        ('manual', 'Manual', '')
     ]
+
     params.rotation_axis = bpy.props.EnumProperty(
         items   = items,
         name    = "Rotation Axis",

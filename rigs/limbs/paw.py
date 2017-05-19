@@ -58,6 +58,9 @@ class Rig:
 
     def orient_org_bones(self):
 
+        if self.rot_axis == 'manual':
+            return
+
         bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
@@ -75,7 +78,7 @@ class Rig:
         chain_y_axis = org_thigh.y_axis + org_shin.y_axis
         chain_rot_axis = org_thigh.y_axis.cross(chain_y_axis).normalized()  # ik-plane normal axis (rotation)
 
-        if self.rot_axis == 'x':
+        if self.rot_axis == 'x' or self.rot_axis == 'manual':
             align_bone_x_axis(self.obj, org_thigh.name, chain_rot_axis)
             align_bone_x_axis(self.obj, org_shin.name, chain_rot_axis)
         elif self.rot_axis == 'z':
@@ -88,7 +91,7 @@ class Rig:
         foot_projection_on_xy = Vector((org_foot.y_axis[0], org_foot.y_axis[1], 0))
         foot_x = foot_projection_on_xy.cross(Vector((0, 0, -1))).normalized()
 
-        if self.rot_axis == 'x':
+        if self.rot_axis == 'x' or self.rot_axis == 'manual':
             align_bone_x_axis(self.obj, org_foot.name, foot_x)
             align_bone_x_axis(self.obj, org_toe.name, -foot_x)
         elif self.rot_axis == 'z':
@@ -432,7 +435,7 @@ class Rig:
         elbow_vector.normalize()
         elbow_vector *= (eb[org_bones[1]].tail - eb[org_bones[0]].head).length
 
-        if self.rot_axis == 'x':
+        if self.rot_axis == 'x' or self.rot_axis == 'manual':
             z_vector = eb[org_bones[0]].z_axis + eb[org_bones[1]].z_axis
             alfa = elbow_vector.angle(z_vector)
         elif self.rot_axis == 'z':
@@ -496,13 +499,15 @@ class Rig:
         pb[ ctrl   ].ik_stretch = 0.1
 
         # IK constraint Rotation locks
-        for axis in ['x','y','z']:
+        for axis in ['x', 'y', 'z']:
+            if axis == 'x' and self.rot_axis == 'manual':
+                continue
             if axis != self.rot_axis:
                setattr( pb[ mch_ik ], 'lock_ik_' + axis, True )
 
         # Locks and Widget
         pb[ctrl].lock_rotation = True, False, True
-        if self.rot_axis == 'x':
+        if self.rot_axis == 'x' or self.rot_axis == 'manual':
             roll = 0
         else:
             roll = pi/2
@@ -669,7 +674,7 @@ class Rig:
         heel = get_bone_name(org_bones[2], 'ctrl', 'heel_ik')
         heel = copy_bone(self.obj, org_bones[2], heel)
 
-        if self.rot_axis == 'x':
+        if self.rot_axis == 'x' or self.rot_axis == 'manual':
             align_bone_x_axis(self.obj, heel, eb[org_bones[2]].x_axis)
         elif self.rot_axis == 'z':
             align_bone_z_axis(self.obj, heel, eb[org_bones[2]].z_axis)
@@ -1138,7 +1143,8 @@ def add_parameters(params):
 
     items = [
         ('x', 'X', ''),
-        ('z', 'Z', '')
+        ('z', 'Z', ''),
+        ('manual', 'Manual', '')
     ]
     params.rotation_axis = bpy.props.EnumProperty(
         items   = items,
