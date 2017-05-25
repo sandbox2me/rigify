@@ -44,6 +44,7 @@ class Rig:
         self.bbones = params.bbones
         self.limb_type = params.limb_type
         self.rot_axis = params.rotation_axis
+        self.auto_align_extremity = params.auto_align_extremity
 
         # Assign values to tweak/FK layers props if opted by user
         if params.tweak_extra_layers:
@@ -58,7 +59,7 @@ class Rig:
 
     def orient_org_bones(self):
 
-        if self.rot_axis == 'manual':
+        if self.rot_axis != 'automatic':
             return
 
         bpy.ops.object.mode_set(mode='EDIT')
@@ -78,7 +79,7 @@ class Rig:
         chain_y_axis = org_thigh.y_axis + org_shin.y_axis
         chain_rot_axis = org_thigh.y_axis.cross(chain_y_axis).normalized()  # ik-plane normal axis (rotation)
 
-        if self.rot_axis == 'x' or self.rot_axis == 'manual':
+        if self.rot_axis == 'x' or self.rot_axis == 'automatic':
             align_bone_x_axis(self.obj, org_thigh.name, chain_rot_axis)
             align_bone_x_axis(self.obj, org_shin.name, chain_rot_axis)
         elif self.rot_axis == 'z':
@@ -91,14 +92,15 @@ class Rig:
         foot_projection_on_xy = Vector((org_foot.y_axis[0], org_foot.y_axis[1], 0))
         foot_x = foot_projection_on_xy.cross(Vector((0, 0, -1))).normalized()
 
-        if self.rot_axis == 'x' or self.rot_axis == 'manual':
-            align_bone_x_axis(self.obj, org_foot.name, foot_x)
-            align_bone_x_axis(self.obj, org_toe.name, -foot_x)
-        elif self.rot_axis == 'z':
-            align_bone_z_axis(self.obj, org_foot.name, foot_x)
-            align_bone_z_axis(self.obj, org_toe.name, -foot_x)
-        else:
-            raise MetarigError(message='IK on %s has forbidden rotation axis (Y)' % self.org_bones[0])
+        if self.auto_align_extremity:
+            if self.rot_axis == 'x' or self.rot_axis == 'automatic':
+                align_bone_x_axis(self.obj, org_foot.name, foot_x)
+                align_bone_x_axis(self.obj, org_toe.name, -foot_x)
+            elif self.rot_axis == 'z':
+                align_bone_z_axis(self.obj, org_foot.name, foot_x)
+                align_bone_z_axis(self.obj, org_toe.name, -foot_x)
+            else:
+                raise MetarigError(message='IK on %s has forbidden rotation axis (Y)' % self.org_bones[0])
 
     def create_parent(self):
 
@@ -435,7 +437,7 @@ class Rig:
         elbow_vector.normalize()
         elbow_vector *= (eb[org_bones[1]].tail - eb[org_bones[0]].head).length
 
-        if self.rot_axis == 'x' or self.rot_axis == 'manual':
+        if self.rot_axis == 'x' or self.rot_axis == 'automatic':
             z_vector = eb[org_bones[0]].z_axis + eb[org_bones[1]].z_axis
             alfa = elbow_vector.angle(z_vector)
         elif self.rot_axis == 'z':
@@ -499,15 +501,16 @@ class Rig:
         pb[ ctrl   ].ik_stretch = 0.1
 
         # IK constraint Rotation locks
-        for axis in ['x', 'y', 'z']:
-            if axis == 'x' and self.rot_axis == 'manual':
-                continue
-            if axis != self.rot_axis:
-               setattr( pb[ mch_ik ], 'lock_ik_' + axis, True )
+        if self.rot_axis == 'z':
+            pb[mch_ik].lock_ik_x = True
+            pb[mch_ik].lock_ik_y = True
+        else:
+            pb[mch_ik].lock_ik_y = True
+            pb[mch_ik].lock_ik_z = True
 
         # Locks and Widget
         pb[ctrl].lock_rotation = True, False, True
-        if self.rot_axis == 'x' or self.rot_axis == 'manual':
+        if self.rot_axis == 'x' or self.rot_axis == 'automatic':
             roll = 0
         else:
             roll = pi/2
@@ -674,7 +677,7 @@ class Rig:
         heel = get_bone_name(org_bones[2], 'ctrl', 'heel_ik')
         heel = copy_bone(self.obj, org_bones[2], heel)
 
-        if self.rot_axis == 'x' or self.rot_axis == 'manual':
+        if self.rot_axis == 'x' or self.rot_axis == 'automatic':
             align_bone_x_axis(self.obj, heel, eb[org_bones[2]].x_axis)
         elif self.rot_axis == 'z':
             align_bone_z_axis(self.obj, heel, eb[org_bones[2]].z_axis)
@@ -696,6 +699,27 @@ class Rig:
         l = eb[ctrl].length
         orient_bone(self, eb[ctrl], 'y', reverse=True)
         eb[ctrl].length = eb[org_bones[-1]].length
+
+        # make mch toe bone
+        toes_mch = get_bone_name(org_bones[3], 'mch')
+        toes_mch = copy_bone(self.obj, org_bones[3], toes_mch)
+
+        eb[toes_mch].use_connect = False
+        eb[toes_mch].parent = eb[ctrl]
+
+        eb[toes_mch].length /= 4
+
+        # make mch toe parent bone
+        toes_mch_parent = get_bone_name(org_bones[3], 'mch', 'parent')
+        toes_mch_parent = copy_bone(self.obj, org_bones[3], toes_mch_parent)
+
+        eb[toes_mch_parent].use_connect = False
+        eb[toes_mch_parent].parent = eb[org_bones[2]]
+
+        eb[toes_mch_parent].length /= 2
+
+        eb[org_bones[3]].use_connect = False
+        eb[org_bones[3]].parent = eb[toes_mch_parent]
 
         # Set up constraints
 
@@ -802,22 +826,19 @@ class Rig:
             toes = get_bone_name( org_bones[3], 'ctrl' )
             toes = copy_bone( self.obj, org_bones[3], toes )
 
-            eb[ toes ].use_connect = False
-            eb[ toes ].parent      = eb[ org_bones[3] ]
-
-            # Create toes mch bone
-            toes_mch = get_bone_name( org_bones[3], 'mch' )
-            toes_mch = copy_bone( self.obj, org_bones[3], toes_mch )
-
-            eb[ toes_mch ].use_connect = False
-            eb[ toes_mch ].parent      = eb[ ctrl ]
-
-            eb[ toes_mch ].length /= 4
+            eb[toes].use_connect = False
+            eb[toes].parent = eb[toes_mch_parent]
 
             # Constrain 4th ORG to toes MCH bone
-            make_constraint( self, org_bones[3], {
+            make_constraint( self, toes_mch_parent, {
                 'constraint'  : 'COPY_TRANSFORMS',
                 'subtarget'   : toes_mch
+            })
+
+            # Constrain 4th ORG to toes MCH bone
+            make_constraint(self, org_bones[3], {
+                'constraint': 'COPY_TRANSFORMS',
+                'subtarget': toes
             })
 
             make_constraint( self, bones['def'][-1], {
@@ -842,7 +863,8 @@ class Rig:
                 pb[b].rotation_mode = 'ZXY'
 
             # Add driver to limit scale constraint influence
-            b = org_bones[3]
+            # b = org_bones[3]
+            b = toes_mch_parent
             drv = pb[b].constraints[-1].driver_add("influence").driver
             drv.type = 'AVERAGE'
 
@@ -980,11 +1002,11 @@ class Rig:
 
                 owner[prop] = True
                 rna_prop = rna_idprop_ui_prop_get(owner, prop, create=True)
-                rna_prop["min"]         = False
-                rna_prop["max"]         = True
+                rna_prop["min"] = False
+                rna_prop["max"] = True
                 rna_prop["description"] = prop
 
-                drv = ctrl.constraints[ 0 ].driver_add("mute").driver
+                drv = ctrl.constraints[0].driver_add("mute").driver
                 drv.type = 'AVERAGE'
 
                 var = drv.variables.new()
@@ -996,8 +1018,8 @@ class Rig:
 
                 drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
 
-                drv_modifier.mode            = 'POLYNOMIAL'
-                drv_modifier.poly_order      = 1
+                drv_modifier.mode = 'POLYNOMIAL'
+                drv_modifier.poly_order = 1
                 drv_modifier.coefficients[0] = 1.0
                 drv_modifier.coefficients[1] = -1.0
 
@@ -1014,8 +1036,8 @@ class Rig:
 
                     drv_modifier = self.obj.animation_data.drivers[-1].modifiers[0]
 
-                    drv_modifier.mode            = 'POLYNOMIAL'
-                    drv_modifier.poly_order      = 1
+                    drv_modifier.mode = 'POLYNOMIAL'
+                    drv_modifier.poly_order = 1
                     drv_modifier.coefficients[0] = 1.0
                     drv_modifier.coefficients[1] = -1.0
 
@@ -1058,10 +1080,10 @@ class Rig:
                 if len(ctrl.constraints) > 1:
                     owner[prop] = 0.0
                     rna_prop = rna_idprop_ui_prop_get(owner, prop, create=True)
-                    rna_prop["min"]         = 0.0
-                    rna_prop["max"]         = 1.0
-                    rna_prop["soft_min"]    = 0.0
-                    rna_prop["soft_max"]    = 1.0
+                    rna_prop["min"] = 0.0
+                    rna_prop["max"] = 1.0
+                    rna_prop["soft_min"] = 0.0
+                    rna_prop["soft_max"] = 1.0
                     rna_prop["description"] = prop
 
                     drv = ctrl.constraints[1].driver_add("influence").driver
@@ -1142,14 +1164,21 @@ def add_parameters(params):
     """
 
     items = [
-        ('x', 'X', ''),
-        ('z', 'Z', ''),
-        ('manual', 'Manual', '')
+        ('x', 'Manual-X', ''),
+        ('z', 'Manual-Z', ''),
+        ('automatic', 'Automatic', '')
     ]
+
     params.rotation_axis = bpy.props.EnumProperty(
         items   = items,
         name    = "Rotation Axis",
         default = 'x'
+    )
+
+    params.auto_align_extremity = bpy.props.BoolProperty(
+        name='auto_align_extremity',
+        default=False,
+        description="Auto Align Extremity Bone"
     )
 
     params.segments = bpy.props.IntProperty(
@@ -1198,6 +1227,11 @@ def parameters_ui(layout, params):
 
     r = layout.row()
     r.prop(params, "rotation_axis")
+
+    if 'auto' in params.rotation_axis.lower():
+        r = layout.row()
+        text = "Auto align Claw"
+        r.prop(params, "auto_align_extremity", text=text)
 
     r = layout.row()
     r.prop(params, "segments")

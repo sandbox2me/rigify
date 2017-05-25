@@ -44,6 +44,7 @@ class Rig:
         self.bbones = params.bbones
         self.limb_type = params.limb_type
         self.rot_axis = params.rotation_axis
+        self.auto_align_extremity = params.auto_align_extremity
 
         # Assign values to tweak/FK layers props if opted by user
         if params.tweak_extra_layers:
@@ -58,7 +59,7 @@ class Rig:
 
     def orient_org_bones(self):
 
-        if self.rot_axis == 'manual':
+        if self.rot_axis != 'automatic':
             return
 
         bpy.ops.object.mode_set(mode='EDIT')
@@ -71,17 +72,22 @@ class Rig:
 
         org_uarm = eb[org_bones[0]]
         org_farm = eb[org_bones[1]]
+        org_hand = eb[org_bones[2]]
 
-        # Orient uarm farm and hand bones
+        # Orient uarm farm bones
         chain_y_axis = org_uarm.y_axis + org_farm.y_axis
         chain_rot_axis = org_uarm.y_axis.cross(chain_y_axis).normalized()  # ik-plane normal axis (rotation)
 
-        if self.rot_axis == 'x' or self.rot_axis == 'manual':
+        if self.rot_axis == 'x' or self.rot_axis == 'automatic':
             align_bone_x_axis(self.obj, org_uarm.name, chain_rot_axis)
             align_bone_x_axis(self.obj, org_farm.name, chain_rot_axis)
+            if self.auto_align_extremity:
+                align_bone_x_axis(self.obj, org_hand.name, chain_rot_axis)
         elif self.rot_axis == 'z':
             align_bone_z_axis(self.obj, org_uarm.name, chain_rot_axis)
             align_bone_z_axis(self.obj, org_farm.name, chain_rot_axis)
+            if self.auto_align_extremity:
+                align_bone_z_axis(self.obj, org_hand.name, chain_rot_axis)
         else:
             raise MetarigError(message='IK on %s has forbidden rotation axis (Y)' % self.org_bones[0])
 
@@ -415,7 +421,7 @@ class Rig:
         elbow_vector.normalize()
         elbow_vector *= (eb[org_bones[1]].tail - eb[org_bones[0]].head).length
 
-        if self.rot_axis == 'x' or self.rot_axis == 'manual':
+        if self.rot_axis == 'x' or self.rot_axis == 'automatic':
             z_vector = eb[org_bones[0]].z_axis + eb[org_bones[1]].z_axis
             alfa = elbow_vector.angle(z_vector)
         elif self.rot_axis == 'z':
@@ -479,15 +485,16 @@ class Rig:
         pb[ ctrl   ].ik_stretch = 0.1
 
         # IK constraint Rotation locks
-        for axis in ['x', 'y', 'z']:
-            if axis == 'x' and self.rot_axis == 'manual':
-                continue
-            if axis != self.rot_axis:
-               setattr( pb[ mch_ik ], 'lock_ik_' + axis, True )
+        if self.rot_axis == 'z':
+            pb[mch_ik].lock_ik_x = True
+            pb[mch_ik].lock_ik_y = True
+        else:
+            pb[mch_ik].lock_ik_y = True
+            pb[mch_ik].lock_ik_z = True
 
         # Locks and Widget
         pb[ctrl].lock_rotation = True, False, True
-        if self.rot_axis == 'x' or self.rot_axis == 'manual':
+        if self.rot_axis == 'x' or self.rot_axis == 'automatic':
             roll = 0
         else:
             roll = pi/2
@@ -1027,15 +1034,21 @@ def add_parameters(params):
     """
 
     items = [
-        ('x', 'X', ''),
-        ('z', 'Z', ''),
-        ('manual', 'Manual', '')
+        ('x', 'Manual-X', ''),
+        ('z', 'Manual-Z', ''),
+        ('automatic', 'Automatic', '')
     ]
 
     params.rotation_axis = bpy.props.EnumProperty(
         items   = items,
         name    = "Rotation Axis",
         default = 'x'
+    )
+
+    params.auto_align_extremity = bpy.BoolProperty(
+        name='auto_align_extremity',
+        default=False,
+        description="Auto Align Extremity Bone"
     )
 
     params.segments = bpy.props.IntProperty(
@@ -1084,6 +1097,11 @@ def parameters_ui(layout, params):
 
     r = layout.row()
     r.prop(params, "rotation_axis")
+
+    if 'auto' in params.rotation_axis.lower():
+        r = layout.row()
+        text = "Auto align Hand"
+        r.prop(params, "auto_align_extremity", text=text)
 
     r = layout.row()
     r.prop(params, "segments")
