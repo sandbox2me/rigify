@@ -24,6 +24,7 @@ from bpy.props import StringProperty
 from .utils import get_rig_type, MetarigError
 from .utils import write_metarig, write_widget
 from .utils import unique_name
+from .utils import upgradeMetarigTypes, outdated_types
 from . import rig_lists
 from . import generate
 
@@ -61,6 +62,16 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
 
             if show_warning:
                 layout.label(text=WARNING, icon='ERROR')
+
+            show_update_metarig = False
+            for b in obj.pose.bones:
+                if b.rigify_type in outdated_types.keys():
+                    show_update_metarig = True
+
+            if show_update_metarig:
+                layout.label(text="Some bones have old legacy rigify_type. Click to upgrade", icon='ERROR')
+                layout.operator("pose.rigify_upgrade_types", text="Upgrade")
+
 
         elif obj.mode == 'EDIT':
             # Build types list
@@ -614,6 +625,18 @@ class Generate(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class UpgradeMetarigTypes(bpy.types.Operator):
+    """Upgrades metarig bones rigify_types"""
+
+    bl_idname = "pose.rigify_upgrade_types"
+    bl_label = "Rigify Upgrade Metarig Types"
+    bl_options = {'UNDO'}
+
+    def execute(self, context):
+        upgradeMetarigTypes(context.object)
+        return {'FINISHED'}
+
+
 class Sample(bpy.types.Operator):
     """Create a sample metarig to be modified before generating """ \
     """the final rig"""
@@ -750,6 +773,7 @@ def register():
     bpy.utils.register_class(VIEW3D_PT_tools_rigify_dev)
     bpy.utils.register_class(LayerInit)
     bpy.utils.register_class(Generate)
+    bpy.utils.register_class(UpgradeMetarigTypes)
     bpy.utils.register_class(Sample)
     bpy.utils.register_class(EncodeMetarig)
     bpy.utils.register_class(EncodeMetarigSample)
@@ -775,6 +799,7 @@ def unregister():
     bpy.utils.unregister_class(VIEW3D_PT_tools_rigify_dev)
     bpy.utils.unregister_class(LayerInit)
     bpy.utils.unregister_class(Generate)
+    bpy.utils.unregister_class(UpgradeMetarigTypes)
     bpy.utils.unregister_class(Sample)
     bpy.utils.unregister_class(EncodeMetarig)
     bpy.utils.unregister_class(EncodeMetarigSample)
