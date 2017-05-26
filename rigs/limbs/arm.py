@@ -59,9 +59,6 @@ class Rig:
 
     def orient_org_bones(self):
 
-        if self.rot_axis != 'automatic':
-            return
-
         bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
@@ -74,22 +71,21 @@ class Rig:
         org_farm = eb[org_bones[1]]
         org_hand = eb[org_bones[2]]
 
+        if self.rot_axis != 'automatic':
+            if self.auto_align_extremity:
+                z_ground_projection = Vector((org_hand.z_axis[0], org_hand.z_axis[1], 0))
+                align_bone_z_axis(self.obj, org_hand.name, z_ground_projection.normalized())
+            return
+
         # Orient uarm farm bones
         chain_y_axis = org_uarm.y_axis + org_farm.y_axis
         chain_rot_axis = org_uarm.y_axis.cross(chain_y_axis).normalized()  # ik-plane normal axis (rotation)
 
-        if self.rot_axis == 'x' or self.rot_axis == 'automatic':
-            align_bone_x_axis(self.obj, org_uarm.name, chain_rot_axis)
-            align_bone_x_axis(self.obj, org_farm.name, chain_rot_axis)
-            if self.auto_align_extremity:
-                align_bone_x_axis(self.obj, org_hand.name, chain_rot_axis)
-        elif self.rot_axis == 'z':
-            align_bone_z_axis(self.obj, org_uarm.name, chain_rot_axis)
-            align_bone_z_axis(self.obj, org_farm.name, chain_rot_axis)
-            if self.auto_align_extremity:
-                align_bone_z_axis(self.obj, org_hand.name, chain_rot_axis)
-        else:
-            raise MetarigError(message='IK on %s has forbidden rotation axis (Y)' % self.org_bones[0])
+        align_bone_x_axis(self.obj, org_uarm.name, chain_rot_axis)
+        align_bone_x_axis(self.obj, org_farm.name, chain_rot_axis)
+
+        # Orient hand
+        align_bone_x_axis(self.obj, org_hand.name, chain_rot_axis)
 
     def create_parent(self):
 
@@ -1042,7 +1038,7 @@ def add_parameters(params):
     params.rotation_axis = bpy.props.EnumProperty(
         items   = items,
         name    = "Rotation Axis",
-        default = 'x'
+        default = 'automatic'
     )
 
     params.auto_align_extremity = bpy.BoolProperty(
@@ -1098,7 +1094,7 @@ def parameters_ui(layout, params):
     r = layout.row()
     r.prop(params, "rotation_axis")
 
-    if 'auto' in params.rotation_axis.lower():
+    if 'auto' not in params.rotation_axis.lower():
         r = layout.row()
         text = "Auto align Hand"
         r.prop(params, "auto_align_extremity", text=text)

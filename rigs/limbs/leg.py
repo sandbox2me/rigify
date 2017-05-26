@@ -60,9 +60,6 @@ class Rig:
 
     def orient_org_bones(self):
 
-        if self.rot_axis != 'automatic':
-            return
-
         bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
@@ -85,32 +82,33 @@ class Rig:
         org_toe = eb[org_bones[3]]
         org_heel = eb[org_bones[4]]
 
+        foot_projection_on_xy = Vector((org_foot.y_axis[0], org_foot.y_axis[1], 0))
+        foot_x = foot_projection_on_xy.cross(Vector((0, 0, -1))).normalized()
+
+        if self.rot_axis != 'automatic':
+
+            # Orient foot and toe
+            if self.auto_align_extremity:
+                if self.rot_axis == 'x':
+                    align_bone_x_axis(self.obj, org_foot.name, foot_x)
+                    align_bone_x_axis(self.obj, org_toe.name, -foot_x)
+                elif self.rot_axis == 'z':
+                    align_bone_z_axis(self.obj, org_foot.name, foot_x)
+                    align_bone_z_axis(self.obj, org_toe.name, -foot_x)
+                else:
+                    raise MetarigError(message='IK on %s has forbidden rotation axis (Y)' % self.org_bones[0])
+            return
+
         # Orient thigh and shin bones
         chain_y_axis = org_thigh.y_axis + org_shin.y_axis
         chain_rot_axis = org_thigh.y_axis.cross(chain_y_axis).normalized()  # ik-plane normal axis (rotation)
 
-        if self.rot_axis == 'x' or self.rot_axis == 'automatic':
-            align_bone_x_axis(self.obj, org_thigh.name, chain_rot_axis)
-            align_bone_x_axis(self.obj, org_shin.name, chain_rot_axis)
-        elif self.rot_axis == 'z':
-            align_bone_z_axis(self.obj, org_thigh.name, chain_rot_axis)
-            align_bone_z_axis(self.obj, org_shin.name, chain_rot_axis)
-        else:
-            raise MetarigError(message='IK on %s has forbidden rotation axis (Y)' % self.org_bones[0])
+        align_bone_x_axis(self.obj, org_thigh.name, chain_rot_axis)
+        align_bone_x_axis(self.obj, org_shin.name, chain_rot_axis)
 
         # Orient foot and toe
-        foot_projection_on_xy = Vector((org_foot.y_axis[0], org_foot.y_axis[1], 0))
-        foot_x = foot_projection_on_xy.cross(Vector((0, 0, -1))).normalized()
-
-        if self.auto_align_extremity:
-            if self.rot_axis == 'x' or self.rot_axis == 'automatic':
-                align_bone_x_axis(self.obj, org_foot.name, foot_x)
-                align_bone_x_axis(self.obj, org_toe.name, -foot_x)
-            elif self.rot_axis == 'z':
-                align_bone_z_axis(self.obj, org_foot.name, foot_x)
-                align_bone_z_axis(self.obj, org_toe.name, -foot_x)
-            else:
-                raise MetarigError(message='IK on %s has forbidden rotation axis (Y)' % self.org_bones[0])
+        align_bone_x_axis(self.obj, org_foot.name, foot_x)
+        align_bone_x_axis(self.obj, org_toe.name, -foot_x)
 
         # Orient heel
         align_bone_z_axis(self.obj, org_heel.name, Vector((0, 0, 1)))
@@ -1347,7 +1345,7 @@ def add_parameters(params):
     params.rotation_axis = bpy.props.EnumProperty(
         items   = items,
         name    = "Rotation Axis",
-        default = 'x'
+        default = 'automatic'
     )
 
     params.auto_align_extremity = bpy.props.BoolProperty(
@@ -1403,7 +1401,7 @@ def parameters_ui(layout, params):
     r = layout.row()
     r.prop(params, "rotation_axis")
 
-    if 'auto' in params.rotation_axis.lower():
+    if 'auto' not in params.rotation_axis.lower():
         r = layout.row()
         text = "Auto align Foot"
         r.prop(params, "auto_align_extremity", text=text)

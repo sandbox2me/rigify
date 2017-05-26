@@ -50,7 +50,7 @@ def add_parameters(params):
     params.rotation_axis = bpy.props.EnumProperty(
         items   = items, 
         name    = "Rotation Axis", 
-        default = 'x'
+        default = 'automatic'
     )
 
     params.auto_align_extremity = bpy.props.BoolProperty(
@@ -110,7 +110,7 @@ def parameters_ui(layout, params):
     r = layout.row()
     r.prop(params, "rotation_axis")
 
-    if 'auto' in params.rotation_axis.lower():
+    if 'auto' not in params.rotation_axis.lower():
         r = layout.row()
         etremities = {'arm': 'Hand', 'leg': 'Foot', 'paw': 'Claw'}
         text = "Auto align " + etremities[params.limb_type]
