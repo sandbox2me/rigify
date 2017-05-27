@@ -97,6 +97,7 @@ class Rig:
                     align_bone_z_axis(self.obj, org_toe.name, -foot_x)
                 else:
                     raise MetarigError(message='IK on %s has forbidden rotation axis (Y)' % self.org_bones[0])
+
             return
 
         # Orient thigh and shin bones
@@ -700,9 +701,15 @@ class Rig:
         eb[heel].length = eb[org_bones[2]].length / 2
 
         # Reset control position and orientation
-        l = eb[ctrl].length
-        orient_bone(self, eb[ctrl], 'y', reverse=True)
-        eb[ctrl].length = l
+        if self.rot_axis == 'automatic' or self.auto_align_extremity:
+            l = eb[ctrl].length
+            orient_bone(self, eb[ctrl], 'y', reverse=True)
+            eb[ctrl].length = l
+        else:
+            flip_bone(self.obj, ctrl)
+            eb[ctrl].tail[2] = eb[ctrl].head[2]
+            eb[ctrl].roll = 0
+
 
         # Parent
         eb[ heel ].use_connect = False

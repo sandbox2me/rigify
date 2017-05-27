@@ -695,9 +695,14 @@ class Rig:
         eb[ bones['ik']['mch_target'] ].use_connect = False
 
         # Reset control position and orientation
-        l = eb[ctrl].length
-        orient_bone(self, eb[ctrl], 'y', reverse=True)
+        if self.rot_axis == 'automatic' or self.auto_align_extremity:
+            orient_bone(self, eb[ctrl], 'y', reverse=True)
+        else:
+            flip_bone(self.obj, ctrl)
+            eb[ctrl].tail[2] = eb[ctrl].head[2]
+            eb[ctrl].roll = 0
         eb[ctrl].length = eb[org_bones[-1]].length
+
 
         # make mch toe bone
         toes_mch = get_bone_name(org_bones[3], 'mch')
