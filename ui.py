@@ -72,6 +72,7 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
             layout.operator("pose.rigify_generate", text="Generate Rig")
 
             if show_update_metarig:
+                layout.label(text="Some bones have old legacy rigify_type. Click to upgrade", icon='ERROR')
                 layout.operator("pose.rigify_upgrade_types", text="Upgrade Metarig")
 
 
@@ -637,7 +638,9 @@ class UpgradeMetarigTypes(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     def execute(self, context):
-        upgradeMetarigTypes(context.object)
+        for obj in bpy.data.objects:
+            if type(obj.data) == bpy.types.Armature:
+                upgradeMetarigTypes(obj)
         return {'FINISHED'}
 
 

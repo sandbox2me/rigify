@@ -1030,8 +1030,8 @@ def add_parameters(params):
     """
 
     items = [
-        ('x', 'Manual-X', ''),
-        ('z', 'Manual-Z', ''),
+        ('x', 'X manual', ''),
+        ('z', 'Z manual', ''),
         ('automatic', 'Automatic', '')
     ]
 
