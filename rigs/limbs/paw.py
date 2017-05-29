@@ -73,7 +73,7 @@ class Rig:
         org_toe = eb[org_bones[3]]
 
         foot_projection_on_xy = Vector((org_foot.y_axis[0], org_foot.y_axis[1], 0))
-        foot_x = foot_projection_on_xy.cross(Vector((0, 0, -1))).normalized()
+        foot_x = foot_projection_on_xy.cross(Vector((0, 0, 1))).normalized()
 
         if self.rot_axis != 'automatic':
 
@@ -81,9 +81,9 @@ class Rig:
             if self.auto_align_extremity:
                 if self.rot_axis == 'x':
                     align_bone_x_axis(self.obj, org_foot.name, foot_x)
-                    align_bone_x_axis(self.obj, org_toe.name, -foot_x)
+                    align_bone_x_axis(self.obj, org_toe.name, foot_x)
                 elif self.rot_axis == 'z':
-                    align_bone_z_axis(self.obj, org_foot.name, foot_x)
+                    align_bone_z_axis(self.obj, org_foot.name, -foot_x)
                     align_bone_z_axis(self.obj, org_toe.name, -foot_x)
                 else:
                     raise MetarigError(message='IK on %s has forbidden rotation axis (Y)' % self.org_bones[0])
@@ -97,9 +97,9 @@ class Rig:
         align_bone_x_axis(self.obj, org_thigh.name, chain_rot_axis)
         align_bone_x_axis(self.obj, org_shin.name, chain_rot_axis)
 
-        # Orient foot and toe
+        # # Orient foot and toe
         align_bone_x_axis(self.obj, org_foot.name, foot_x)
-        align_bone_x_axis(self.obj, org_toe.name, -foot_x)
+        align_bone_x_axis(self.obj, org_toe.name, foot_x)
 
     def create_parent(self):
 
