@@ -451,9 +451,16 @@ def generate_rig(context, metarig):
     create_bone_groups(obj, metarig)
 
     # Add rig_ui to logic
-    bpy.ops.logic.controller_add(type='PYTHON', object=obj.name)
-    ctrl = obj.game.controllers[-1]
-    ctrl.text = bpy.data.texts['rig_ui.py']
+    skip = False
+    ctrls = obj.game.controllers
+    for c in ctrls:
+        if 'Python' in c.name and c.text.name == 'rig_ui.py':
+            skip = True
+            break
+    if not skip:
+        bpy.ops.logic.controller_add(type='PYTHON', object=obj.name)
+        ctrl = obj.game.controllers[-1]
+        ctrl.text = bpy.data.texts['rig_ui.py']
 
 
     t.tick("The rest: ")
