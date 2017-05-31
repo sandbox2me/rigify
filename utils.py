@@ -863,7 +863,7 @@ def write_metarig(obj, layers=False, func_name="create"):
             code.append("    pbone.bone.layers = %s" % str(list(pbone.bone.layers)))
         # Rig type parameters
         for param_name in pbone.rigify_parameters.keys():
-            param = getattr(pbone.rigify_parameters, param_name)
+            param = getattr(pbone.rigify_parameters, param_name, '')
             if str(type(param)) == "<class 'bpy_prop_array'>":
                 param = list(param)
             if type(param) == str:
