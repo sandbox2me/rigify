@@ -98,8 +98,8 @@ class Rig:
         align_bone_x_axis(self.obj, org_shin.name, chain_rot_axis)
 
         # # Orient foot and toe
-        align_bone_x_axis(self.obj, org_foot.name, foot_x)
-        align_bone_x_axis(self.obj, org_toe.name, foot_x)
+        align_bone_x_axis(self.obj, org_foot.name, chain_rot_axis)
+        align_bone_x_axis(self.obj, org_toe.name, chain_rot_axis)
 
     def create_parent(self):
 
