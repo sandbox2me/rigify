@@ -253,7 +253,7 @@ def generate_rig(context, metarig):
     # Create the root bone.
     bpy.ops.object.mode_set(mode='EDIT')
     root_bone = new_bone(obj, ROOT_NAME)
-    spread = get_xy_spread(metarig.data.bones)
+    spread = get_xy_spread(metarig.data.bones) or metarig.data.bones[0].length
     spread = float('%.3g' % spread)
     scale = spread/0.589
     obj.data.edit_bones[root_bone].head = (0, 0, 0)
