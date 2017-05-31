@@ -450,6 +450,12 @@ def generate_rig(context, metarig):
     # Create Bone Groups
     create_bone_groups(obj, metarig)
 
+    # Add rig_ui to logic
+    bpy.ops.logic.controller_add(type='PYTHON', object=obj.name)
+    ctrl = obj.game.controllers[-1]
+    ctrl.text = bpy.data.texts['rig_ui.py']
+
+
     t.tick("The rest: ")
     #----------------------------------
     # Deconfigure
