@@ -359,7 +359,7 @@ class Rig:
             # Create custom property on tweak bone to control rubber hose
             name = 'rubber_tweak'
 
-            if i == trunc( len( tweaks[1:-1] ) / 2 ):
+            if not (i+1) % self.segments:           # i == trunc( len( tweaks[1:-1] ) / 2 ):
                 pb[t][name] = 0.0
             else:
                 pb[t][name] = 1.0
