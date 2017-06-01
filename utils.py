@@ -25,6 +25,7 @@ import math
 import random
 import time
 import re
+import os
 from mathutils import Vector, Matrix
 from rna_prop_ui import rna_idprop_ui_prop_get
 
@@ -881,10 +882,11 @@ def get_rig_type(rig_type):
     return submod
 
 
-def get_metarig_module(metarig_name):
+def get_metarig_module(metarig_name, path=METARIG_DIR):
     """ Fetches a rig module by name, and returns it.
     """
-    name = ".%s.%s" % (METARIG_DIR, metarig_name)
+
+    name = ".%s.%s" % (path, metarig_name)
     submod = importlib.import_module(name, package=MODULE_NAME)
     imp.reload(submod)
     return submod
