@@ -406,7 +406,7 @@ class Rig:
         mch_target = get_bone_name(org_bones[0], 'mch', 'ik_target')
 
         for o, ik in zip( org_bones, [ ctrl, mch_ik, mch_target ] ):
-            bone = copy_bone( self.obj, o, ik )
+            bone = copy_bone(self.obj, o, ik)
 
             if org_bones.index(o) == len( org_bones ) - 1:
                 eb[ bone ].length /= 4
@@ -637,7 +637,7 @@ class Rig:
 
         # Create IK paw control
         ctrl = get_bone_name(org_bones[2], 'ctrl', 'ik')
-        ctrl = copy_bone(self.obj, org_bones[2], ctrl)
+        ctrl = copy_bone(self.obj, org_bones[3], ctrl)
 
         # clear parent (so that rigify will parent to root)
         eb[ctrl].parent = None
@@ -701,7 +701,9 @@ class Rig:
             flip_bone(self.obj, ctrl)
             eb[ctrl].tail[2] = eb[ctrl].head[2]
             eb[ctrl].roll = 0
-        eb[ctrl].length = eb[org_bones[-1]].length
+        v = eb[org_bones[-1]].tail - eb[org_bones[-2]].head
+        eb[ctrl].length = Vector((v[0], v[1], 0)).length
+        # eb[ctrl].length = eb[org_bones[-1]].length
 
 
         # make mch toe bone
