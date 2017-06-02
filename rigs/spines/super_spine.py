@@ -935,7 +935,8 @@ class Rig:
         # Assigning widgets to tweak bones and layers
         for bone in tweaks:
 
-            if bone == bones['neck']['tweak'][0] and len(bones['neck']['original_names']) > 3:
+            if bones['neck']['tweak'] and bone == bones['neck']['tweak'][0] \
+                    and len(bones['neck']['original_names']) > 3:
                 create_neck_tweak_widget(self.obj, bone, size=1.0, bone_transform_name=None)
                 continue
             create_sphere_widget(self.obj, bone, bone_transform_name=None)
