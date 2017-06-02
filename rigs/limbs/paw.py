@@ -355,11 +355,11 @@ class Rig:
 
         # Rubber hose drivers
         pb = self.obj.pose.bones
-        for i,t in enumerate( tweaks[1:-1] ):
+        for i, t in enumerate(tweaks[1:-1]):
             # Create custom property on tweak bone to control rubber hose
             name = 'rubber_tweak'
 
-            if not (i+1) % self.segments:           # i == trunc( len( tweaks[1:-1] ) / 2 ):
+            if not (i+1) % self.segments:
                 pb[t][name] = 0.0
             else:
                 pb[t][name] = 1.0
@@ -398,18 +398,18 @@ class Rig:
     def create_ik(self, parent):
         org_bones = self.org_bones
 
-        bpy.ops.object.mode_set(mode ='EDIT')
+        bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
         ctrl = get_bone_name(org_bones[0], 'ctrl', 'ik')
         mch_ik = get_bone_name(org_bones[0], 'mch', 'ik')
         mch_target = get_bone_name(org_bones[0], 'mch', 'ik_target')
 
-        for o, ik in zip( org_bones, [ ctrl, mch_ik, mch_target ] ):
+        for o, ik in zip(org_bones, [ctrl, mch_ik, mch_target]):
             bone = copy_bone(self.obj, o, ik)
 
-            if org_bones.index(o) == len( org_bones ) - 1:
-                eb[ bone ].length /= 4
+            if org_bones.index(o) == len(org_bones) - 1:
+                eb[bone].length /= 4
 
         # Create MCH Stretch
         mch_str = copy_bone(
@@ -703,8 +703,6 @@ class Rig:
             eb[ctrl].roll = 0
         v = eb[org_bones[-1]].tail - eb[org_bones[-2]].head
         eb[ctrl].length = Vector((v[0], v[1], 0)).length
-        # eb[ctrl].length = eb[org_bones[-1]].length
-
 
         # make mch toe bone
         toes_mch = get_bone_name(org_bones[3], 'mch')
@@ -869,7 +867,6 @@ class Rig:
                 pb[b].rotation_mode = 'ZXY'
 
             # Add driver to limit scale constraint influence
-            # b = org_bones[3]
             b = toes_mch_parent
             drv = pb[b].constraints[-1].driver_add("influence").driver
             drv.type = 'AVERAGE'

@@ -859,7 +859,6 @@ class Rig:
             ik_rot_axis = pb[org_bones[0]].z_axis
         heel_x_orientation = pb[tmp_heel].y_axis.dot(ik_rot_axis)
         for i, b in enumerate([rock1_mch, rock2_mch]):
-            # heel_x_orientation = pb[tmp_heel].y_axis[0]
             if heel_x_orientation > 0:
                 if not i:
                     min_y = 0
@@ -892,11 +891,9 @@ class Rig:
                 'owner_space' : 'LOCAL'
             })
 
-
         # Cns toe_mch to MCH roll2
         make_constraint( self, toe_mch, {
             'constraint'  : 'COPY_TRANSFORMS',
-            # 'subtarget'   : roll2_mch
             'subtarget'   : roll2_mch
         })
 
@@ -1008,7 +1005,6 @@ class Rig:
             toes = copy_bone(self.obj, org_bones[3], toes)
 
             eb[toes].use_connect = False
-            # eb[toes].parent = eb[org_bones[3]]
             eb[toes].parent = eb[toe_mch]
 
             # Constrain 4th ORG to toes
@@ -1043,7 +1039,6 @@ class Rig:
                 pb[b].rotation_mode = 'ZXY'
 
             # Add driver to limit scale constraint influence
-            # b = org_bones[3]
             b = toe_mch
             drv = pb[b].constraints[-1].driver_add("influence").driver
             drv.type = 'AVERAGE'

@@ -163,9 +163,11 @@ def upgradeMetarigTypes(metarig, revert=False):
         if rg_type in rig_defs:
             bone.rigify_type = rig_defs[rg_type]
 
+
 #=======================
 # Bone manipulation
 #=======================
+
 def new_bone(obj, bone_name):
     """ Adds a new bone to the given armature object.
         Returns the resulting bone's name.

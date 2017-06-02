@@ -275,8 +275,6 @@ def generate_rig(context, metarig):
             bpy.data.objects[wgts_group_name].user_clear()
             bpy.data.objects.remove(bpy.data.objects[wgts_group_name])
         mesh = bpy.data.meshes.new(wgts_group_name)
-        # mesh.from_pydata([(-1, 0, 0), (1, 0, 0),(0, -1, 0), (0, 1, 0), (0, 0, -1),
-        #                   (0, 0, 1)], [(0, 1), (2, 3), (4, 5)], [])
         wgts_obj = bpy.data.objects.new(wgts_group_name, mesh)
         scene.objects.link(wgts_obj)
         wgts_obj.layers = WGT_LAYERS
