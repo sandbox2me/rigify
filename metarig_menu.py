@@ -27,8 +27,7 @@ from . import utils
 
 
 class ArmatureSubMenu(bpy.types.Menu):
-    bl_idname = 'ARMATURE_MT_armature_class'
-    operators = []
+    # bl_idname = 'ARMATURE_MT_armature_class'
 
     def draw(self, context):
         layout = self.layout
@@ -110,7 +109,7 @@ def make_metarig_menu_func(bl_idname, text):
     return metarig_menu
 
 
-def make_animals_submenu_func(bl_idname, text):
+def make_submenu_func(bl_idname, text):
     def metarig_menu(self, context):
         self.layout.menu(bl_idname, icon='OUTLINER_OB_ARMATURE', text=text)
     return metarig_menu
@@ -142,19 +141,20 @@ for metarig_class in metarigs_dict:
     # Create menu functions
     if metarig_class != utils.METARIG_DIR:
         armature_submenus.append(type('Class_' + metarig_class + '_submenu', (ArmatureSubMenu,), {}))
-        menu_funcs += [make_animals_submenu_func(armature_submenus[-1].bl_idname, metarig_class)]
+        armature_submenus[-1].bl_label = metarig_class + ' (submenu)'
+        armature_submenus[-1].bl_idname = 'ARMATURE_MT_%s_class' % metarig_class
+        armature_submenus[-1].operators = []
+        menu_funcs += [make_submenu_func(armature_submenus[-1].bl_idname, metarig_class)]
 
     for mop, name in metarig_ops[metarig_class]:
+        print(metarig_class)
+        print(metarig_ops[metarig_class])
         if metarig_class != utils.METARIG_DIR:
-            armature_submenus[-1].operators.append((mop.bl_idname, name,))
-            armature_submenus[-1].bl_label = metarig_class + ' (submenu)'
+            arm_sub = next((e for e in armature_submenus if e.bl_label == metarig_class + ' (submenu)'), '')
+            arm_sub.operators.append((mop.bl_idname, name,))
         else:
             text = capwords(name.replace("_", " ")) + " (Meta-Rig)"
             menu_funcs += [make_metarig_menu_func(mop.bl_idname, text)]
-
-print(menu_funcs)
-print(metarig_ops)
-
 
 def register():
     for cl in metarig_ops:
