@@ -57,6 +57,15 @@ class Rig:
         else:
             self.secondary_layers = None
 
+    def orient_org_bones(self):
+
+        bpy.ops.object.mode_set(mode='EDIT')
+        eb = self.obj.data.edit_bones
+
+        # Adjust eye bones roll
+        eb['ORG-eye.L'].roll = 0.0
+        eb['ORG-eye.R'].roll = 0.0
+
     def symmetrical_split(self, bones):
 
         # RE pattern match right or left parts
@@ -979,7 +988,8 @@ class Rig:
             }, tweak_unique
 
     def generate(self):
-        
+
+        self.orient_org_bones()
         all_bones, tweak_unique = self.create_bones()
         self.parent_bones(all_bones, tweak_unique)
         self.constraints(all_bones)
@@ -1184,7 +1194,7 @@ def create_sample(obj):
     bone = arm.edit_bones.new('eye.R')
     bone.head[:] = -0.0360, -0.0686, 0.1107
     bone.tail[:] = -0.0360, -0.0848, 0.1107
-    bone.roll = -0.0000
+    bone.roll = 0.0000
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['face']]
     bones['eye.R'] = bone.name

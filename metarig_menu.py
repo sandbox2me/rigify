@@ -117,7 +117,6 @@ def make_submenu_func(bl_idname, text):
 
 # Get the metarig modules
 metarigs_dict = get_metarig_list("")
-print(metarigs_dict)
 armature_submenus = []
 
 # Create metarig add Operators
@@ -147,8 +146,6 @@ for metarig_class in metarigs_dict:
         menu_funcs += [make_submenu_func(armature_submenus[-1].bl_idname, metarig_class)]
 
     for mop, name in metarig_ops[metarig_class]:
-        print(metarig_class)
-        print(metarig_ops[metarig_class])
         if metarig_class != utils.METARIG_DIR:
             arm_sub = next((e for e in armature_submenus if e.bl_label == metarig_class + ' (submenu)'), '')
             arm_sub.operators.append((mop.bl_idname, name,))

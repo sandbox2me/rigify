@@ -386,7 +386,7 @@ def create(obj):
     bone = arm.edit_bones.new('eye.R')
     bone.head[:] = -0.0516, -0.1209, 1.8941
     bone.tail[:] = -0.0516, -0.1451, 1.8941
-    bone.roll = -0.0000
+    bone.roll = 0.0000
     bone.use_connect = False
     bone.parent = arm.edit_bones[bones['face']]
     bones['eye.R'] = bone.name

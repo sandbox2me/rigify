@@ -51,6 +51,7 @@ outdated_types = {"pitchipoy.limbs.super_limb": "limbs.super_limb",
                   "pitchipoy.simple_tentacle": "limbs.simple_tentacle",
                   "pitchipoy.super_face": "faces.super_face",
                   "pitchipoy.super_palm": "limbs.super_palm",
+                  "pitchipoy.super_copy": "basic.super_copy",
                   "palm": "limbs.super_palm",
                   "basic.copy": "basic.super_copy"}
 
