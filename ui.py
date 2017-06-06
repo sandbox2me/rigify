@@ -134,16 +134,25 @@ class DATA_PT_rigify_layer_names(bpy.types.Panel):
                 return
 
         # UI
+        main_row = layout.row(align=True).split(0.05)
+        col1 = main_row.column()
+        col2 = main_row.column()
+        col1.label()
+        for i in range(32):
+            if i == 16 or i == 29:
+                col1.label()
+            col1.label(str(i+1) + '.')
+
         for i, rigify_layer in enumerate(arm.rigify_layers):
             # note: rigify_layer == arm.rigify_layers[i]
             if (i % 16) == 0:
-                col = layout.column()
+                col = col2.column()
                 if i == 0:
                     col.label(text="Top Row:")
                 else:
                     col.label(text="Bottom Row:")
             if (i % 8) == 0:
-                col = layout.column()
+                col = col2.column()
             if i != 28:
                 row = col.row(align=True)
                 icon = 'RESTRICT_VIEW_OFF' if arm.layers[i] else 'RESTRICT_VIEW_ON'
@@ -172,7 +181,7 @@ class DATA_PT_rigify_layer_names(bpy.types.Panel):
             else:
                 row.label(text=arm.rigify_colors[rigify_layer.group-1].name)
 
-        col = layout.column()
+        col = col2.column()
         col.label(text="Reserved:")
         # reserved_names = {28: 'Root', 29: 'DEF', 30: 'MCH', 31: 'ORG'}
         reserved_names = {29: 'DEF', 30: 'MCH', 31: 'ORG'}
@@ -696,7 +705,7 @@ class EncodeMetarig(bpy.types.Operator):
         else:
             text_block = bpy.data.texts.new(name)
 
-        text = write_metarig(context.active_object, layers=True, func_name="create")
+        text = write_metarig(context.active_object, layers=True, func_name="create", groups=True)
         text_block.write(text)
         bpy.ops.object.mode_set(mode='EDIT')
 
