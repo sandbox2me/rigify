@@ -129,7 +129,7 @@ class DATA_PT_rigify_layer_names(bpy.types.Panel):
                 arm.rigify_layers.add()
         else:
             # Can't add while drawing, just use button
-            if len(arm.rigify_layers) < 28:
+            if len(arm.rigify_layers) < 29:
                 layout.operator("pose.rigify_layer_init")
                 return
 
@@ -609,8 +609,10 @@ class LayerInit(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
         arm = obj.data
-        for i in range(1 + len(arm.rigify_layers), 29):
+        for i in range(1 + len(arm.rigify_layers), 30):
             arm.rigify_layers.add()
+        arm.rigify_layers[28].name = 'Root'
+        arm.rigify_layers[28].row = 14
         return {'FINISHED'}
 
 
