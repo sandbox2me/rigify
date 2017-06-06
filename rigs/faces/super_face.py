@@ -263,6 +263,16 @@ class Rig:
             eb[ tweak_name ].use_connect = False
             eb[ tweak_name ].parent      = None
 
+            if bone in uniques:
+                if bone.split('.')[-1] == 'L':
+                    simmetrical_bone = bone[:-1] + 'R'
+                elif bone.split('.')[-1] == 'R':
+                    simmetrical_bone = bone[:-1] + 'L'
+                middle_position = (eb[bone].head + eb[simmetrical_bone].head)/2
+                eb[tweak_name].head = middle_position
+                eb[tweak_name].tail[0] = middle_position[0]
+                eb[tweak_name].tail[1] = middle_position[1]
+
             tweaks.append( tweak_name )
 
             eb[ tweak_name ].tail[:] = \
