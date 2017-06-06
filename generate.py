@@ -31,6 +31,7 @@ from .utils import RIG_DIR
 from .utils import create_root_widget
 from .utils import random_id
 from .utils import copy_attributes
+from .utils import gamma_correct
 from .rig_ui_template import UI_SLIDERS, layers_ui, UI_REGISTER
 
 
@@ -521,9 +522,9 @@ def create_bone_groups(obj, metarig):
         if name not in obj.pose.bone_groups.keys():
             bg = obj.pose.bone_groups.new(name)
             bg.color_set = 'CUSTOM'
-            bg.colors.normal = groups[g_id].normal
-            bg.colors.select = groups[g_id].select
-            bg.colors.active = groups[g_id].active
+            bg.colors.normal = gamma_correct(groups[g_id].normal)
+            bg.colors.select = gamma_correct(groups[g_id].select)
+            bg.colors.active = gamma_correct(groups[g_id].active)
 
     for b in pb:
         try:

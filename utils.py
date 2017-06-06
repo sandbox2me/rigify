@@ -26,7 +26,7 @@ import random
 import time
 import re
 import os
-from mathutils import Vector, Matrix
+from mathutils import Vector, Matrix, Color
 from rna_prop_ui import rna_idprop_ui_prop_get
 
 RIG_DIR = "rigs"  # Name of the directory where rig types are kept
@@ -1141,3 +1141,31 @@ def random_id(length=8):
         text += random.choice(chars)
     text += str(hex(int(time.time())))[2:][-tlength:].rjust(tlength, '0')[::-1]
     return text
+
+
+#=============================================
+# Color correction functions
+#=============================================
+
+def linsrgb_to_srgb (linsrgb):
+    """Convert physically linear RGB values into sRGB ones. The transform is
+    uniform in the components, so *linsrgb* can be of any shape.
+
+    *linsrgb* values should range between 0 and 1, inclusively.
+
+    """
+    # From Wikipedia, but easy analogue to the above.
+    gamma = 1.055 * linsrgb**(1./2.4) - 0.055
+    scale = linsrgb * 12.92
+    # return np.where (linsrgb > 0.0031308, gamma, scale)
+    if linsrgb > 0.0031308:
+        return gamma
+    return scale
+
+
+def gamma_correct(color):
+
+    corrected_color = Color()
+    for i, component in enumerate(color):
+        corrected_color[i] = linsrgb_to_srgb(color[i])
+    return corrected_color
