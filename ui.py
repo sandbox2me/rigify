@@ -20,6 +20,7 @@
 
 import bpy
 from bpy.props import StringProperty
+from mathutils import Color
 
 from .utils import get_rig_type, MetarigError
 from .utils import write_metarig, write_widget
@@ -70,6 +71,38 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
                 layout.label(text=WARNING, icon='ERROR')
 
             layout.operator("pose.rigify_generate", text="Generate Rig")
+            layout.prop(id_store, "rigify_advanced_generation")
+
+            if id_store.rigify_advanced_generation:
+
+                main_row = layout.row(align=True).split(percentage=0.3)
+                col1 = main_row.column()
+                col2 = main_row.column()
+                col1.label(text="Target Rig")
+                col1.label(text="Target UI")
+
+                row = col2.row(align=True)
+
+                for i in range(0, len(id_store.rigify_target_rigs)):
+                    id_store.rigify_target_rigs.remove(0)
+
+                for ob in context.scene.objects:
+                    if type(ob.data) == bpy.types.Armature and "rig_id" in ob.data:
+                        id_store.rigify_target_rigs.add()
+                        id_store.rigify_target_rigs[-1].name = ob.name
+
+                row.prop_search(id_store, "rigify_target_rig", id_store, "rigify_target_rigs", text="",
+                                icon='OUTLINER_OB_ARMATURE')
+
+                for i in range(0, len(id_store.rigify_rig_uis)):
+                    id_store.rigify_rig_uis.remove(0)
+
+                for t in bpy.data.texts:
+                    id_store.rigify_rig_uis.add()
+                    id_store.rigify_rig_uis[-1].name = t.name
+
+                row = col2.row()
+                row.prop_search(id_store, "rigify_rig_ui", id_store, "rigify_rig_uis", text="", icon='TEXT')
 
             if show_update_metarig:
                 layout.label(text="Some bones have old legacy rigify_type. Click to upgrade", icon='ERROR')
@@ -84,7 +117,7 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
                 id_store.rigify_types.remove(0)
 
             for r in rig_lists.rig_list:
-                # collection = r.split('.')[0]  # UNUSED
+
                 if collection_name == "All":
                     a = id_store.rigify_types.add()
                     a.name = r
@@ -94,10 +127,6 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
                 elif (collection_name == "None") and ("." not in r):
                     a = id_store.rigify_types.add()
                     a.name = r
-
-            ## Rig collection field
-            #row = layout.row()
-            #row.prop(id_store, 'rigify_collection', text="Category")
 
             # Rig type list
             row = layout.row()
@@ -207,20 +236,31 @@ class DATA_OT_rigify_add_bone_groups(bpy.types.Operator):
         if not hasattr(armature, 'rigify_colors'):
             return {'FINISHED'}
 
-        groups = ['Face', 'Face Primary', 'Face Secondary', 'FK', 'IK', 'Tweaks', 'Torso', 'Upper Body', 'Upper Spine']
-        themes = {'Face': 'THEME11', 'Face Primary': 'THEME01', 'Face Secondary': 'THEME09',
-                  'FK': 'THEME04', 'IK': 'THEME01', 'Tweaks': 'THEME14',
-                  'Torso': 'THEME03', 'Upper Body': 'THEME09', 'Upper Spine': 'THEME02'}
+        groups = ['Root', 'IK', 'Special', 'Tweak', 'FK', 'Extra']
 
         for g in groups:
             if g in armature.rigify_colors.keys():
                 continue
+
             armature.rigify_colors.add()
             armature.rigify_colors[-1].name = g
-            id = int(themes[g][-2:]) - 1
-            armature.rigify_colors[-1].normal = bpy.context.user_preferences.themes[0].bone_color_sets[id].normal
-            armature.rigify_colors[-1].select = bpy.context.user_preferences.themes[0].bone_color_sets[id].select
-            armature.rigify_colors[-1].active = bpy.context.user_preferences.themes[0].bone_color_sets[id].active
+
+            armature.rigify_colors[g].select = Color((0.3140000104904175, 0.7839999794960022, 1.0))
+            armature.rigify_colors[g].active = Color((0.5490000247955322, 1.0, 1.0))
+            armature.rigify_colors[g].standard_colors_lock = True
+
+            if g == "Root":
+                armature.rigify_colors[g].normal = Color((0.43529415130615234, 0.18431372940540314, 0.41568630933761597))
+            if g == "IK":
+                armature.rigify_colors[g].normal = Color((0.6039215922355652, 0.0, 0.0))
+            if g== "Special":
+                armature.rigify_colors[g].normal = Color((0.9568628072738647, 0.7882353663444519, 0.0470588281750679))
+            if g== "Tweak":
+                armature.rigify_colors[g].normal = Color((0.03921568766236305, 0.21176472306251526, 0.5803921818733215))
+            if g== "FK":
+                armature.rigify_colors[g].normal = Color((0.11764706671237946, 0.5686274766921997, 0.03529411926865578))
+            if g== "Extra":
+                armature.rigify_colors[g].normal = Color((0.9686275124549866, 0.250980406999588, 0.0941176563501358))
 
         return {'FINISHED'}
 

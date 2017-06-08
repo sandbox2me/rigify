@@ -72,7 +72,7 @@ def generate_rig(context, metarig):
     bpy.ops.object.mode_set(mode='OBJECT')
 
     scene = context.scene
-
+    id_store = context.window_manager
     #------------------------------------------
     # Create/find the rig object and set it up
 
@@ -80,10 +80,8 @@ def generate_rig(context, metarig):
     # regenerate in the same object.  If not, create a new
     # object to generate the rig in.
     print("Fetch rig.")
-    try:
-        name = metarig["rig_object_name"]
-    except KeyError:
-        name = "rig"
+
+    name = id_store.rigify_target_rig or "rig"
 
     try:
         obj = scene.objects[name]
@@ -424,12 +422,14 @@ def generate_rig(context, metarig):
     # Create list of layer name/row pairs
     layer_layout = []
     for l in metarig.data.rigify_layers:
-        print( l.name )
+        print(l.name)
         layer_layout += [(l.name, l.row)]
 
     # Generate the UI script
-    if "rig_ui.py" in bpy.data.texts:
-        script = bpy.data.texts["rig_ui.py"]
+    rig_ui_name = id_store.rigify_rig_ui or 'rig_ui.py'
+
+    if rig_ui_name in bpy.data.texts.keys():
+        script = bpy.data.texts[rig_ui_name]
         script.clear()
     else:
         script = bpy.data.texts.new("rig_ui.py")
