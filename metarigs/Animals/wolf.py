@@ -66,11 +66,11 @@ def create(obj):
     arm.rigify_layers[4].row = 4
     arm.rigify_layers[4].set = False
     arm.rigify_layers[4].group = 4
-    arm.rigify_layers[5].name = "Fingers"
+    arm.rigify_layers[5].name = "Paws"
     arm.rigify_layers[5].row = 5
     arm.rigify_layers[5].set = False
     arm.rigify_layers[5].group = 6
-    arm.rigify_layers[6].name = "Fingers (Tweak)"
+    arm.rigify_layers[6].name = "Paws (Tweak)"
     arm.rigify_layers[6].row = 6
     arm.rigify_layers[6].set = False
     arm.rigify_layers[6].group = 4

@@ -290,6 +290,10 @@ def register():
                                                                 description="Rigify Advanced Generation Parameters",
                                                                 default=False)
 
+    IDStore.rigify_force_widget_update = bpy.props.BoolProperty(name="Force Widget Update",
+                                                                description="Rigify Force Widget Update",
+                                                                default=False)
+
     IDStore.rigify_target_rigs = bpy.props.CollectionProperty(type=RigifyName)
     IDStore.rigify_target_rig = bpy.props.StringProperty(name="Rigify Target Rig",
                                                          description="The Rig, Generate will run upon",
@@ -322,6 +326,7 @@ def unregister():
     del IDStore.rigify_types
     del IDStore.rigify_active_type
     del IDStore.rigify_advanced_generation
+    del IDStore.rigify_force_widget_update
     del IDStore.rigify_target_rig
     del IDStore.rigify_target_rigs
     del IDStore.rigify_rig_uis

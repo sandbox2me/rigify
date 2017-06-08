@@ -130,7 +130,7 @@ def create(obj):
     arm.rigify_layers[20].row = 1
     arm.rigify_layers[20].set = False
     arm.rigify_layers[20].group = 4
-    arm.rigify_layers[21].name = "Hairs"
+    arm.rigify_layers[21].name = "Hair"
     arm.rigify_layers[21].row = 14
     arm.rigify_layers[21].set = False
     arm.rigify_layers[21].group = 6

@@ -35,7 +35,6 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "data"
-    #bl_options = {'DEFAULT_OPEN'}
 
     @classmethod
     def poll(cls, context):
@@ -103,6 +102,8 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
 
                 row = col2.row()
                 row.prop_search(id_store, "rigify_rig_ui", id_store, "rigify_rig_uis", text="", icon='TEXT')
+
+                layout.prop(id_store, "rigify_force_widget_update")
 
             if show_update_metarig:
                 layout.label(text="Some bones have old legacy rigify_type. Click to upgrade", icon='ERROR')
@@ -601,20 +602,6 @@ class VIEW3D_PT_tools_rigify_dev(bpy.types.Panel):
             if context.mode == 'EDIT_MESH':
                 r = self.layout.row()
                 r.operator("mesh.rigify_encode_mesh_widget", text="Encode Mesh Widget to Python")
-
-#~ class INFO_MT_armature_metarig_add(bpy.types.Menu):
-    #~ bl_idname = "INFO_MT_armature_metarig_add"
-    #~ bl_label = "Meta-Rig"
-
-    #~ def draw(self, context):
-        #~ import rigify
-
-        #~ layout = self.layout
-        #~ layout.operator_context = 'INVOKE_REGION_WIN'
-
-        #~ for submodule_type in rigify.get_submodule_types():
-            #~ text = bpy.path.display_name(submodule_type)
-            #~ layout.operator("pose.metarig_sample_add", text=text, icon='OUTLINER_OB_ARMATURE').metarig_type = submodule_type
 
 
 def rigify_report_exception(operator, exception):

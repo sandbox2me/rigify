@@ -101,6 +101,19 @@ def generate_rig(context, metarig):
     obj.select = True
     scene.objects.active = obj
 
+    # Remove wgts if force update is set
+    if "WGTS" in scene.objects and id_store.rigify_force_widget_update:
+        bpy.ops.object.select_all(action='DESELECT')
+        for i, lyr in enumerate(WGT_LAYERS):
+            if lyr:
+                context.scene.layers[i] = True
+        for wgt in bpy.data.objects["WGTS"].children:
+            wgt.select = True
+        bpy.ops.object.delete(use_global=False)
+        for i, lyr in enumerate(WGT_LAYERS):
+            if lyr:
+                context.scene.layers[i] = False
+
     # Remove all bones from the generated rig armature.
     bpy.ops.object.mode_set(mode='EDIT')
     for bone in obj.data.edit_bones:
