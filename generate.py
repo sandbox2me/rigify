@@ -291,6 +291,9 @@ def generate_rig(context, metarig):
         scene.objects.link(wgts_obj)
         wgts_obj.layers = WGT_LAYERS
         t.tick("Create main WGTS: ")
+    else:
+        wgts_obj = bpy.data.objects[wgts_group_name]
+    wgts_obj.location = obj.location
 
     #----------------------------------
     try:
