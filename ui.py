@@ -69,8 +69,12 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
             if show_warning:
                 layout.label(text=WARNING, icon='ERROR')
 
-            layout.operator("pose.rigify_generate", text="Generate Rig")
-            layout.prop(id_store, "rigify_advanced_generation", toggle=True)
+            layout.operator("pose.rigify_generate", text="Generate Rig", icon='POSE_HLT')
+            if id_store.rigify_advanced_generation:
+                icon = 'UNLOCKED'
+            else:
+                icon = 'LOCKED'
+            layout.prop(id_store, "rigify_advanced_generation", toggle=True, icon=icon)
 
             if id_store.rigify_advanced_generation:
 
