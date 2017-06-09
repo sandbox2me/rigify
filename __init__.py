@@ -286,8 +286,8 @@ def register():
     IDStore.rigify_types = bpy.props.CollectionProperty(type=RigifyName)
     IDStore.rigify_active_type = bpy.props.IntProperty(name="Rigify Active Type", description="The selected rig type")
 
-    IDStore.rigify_advanced_generation = bpy.props.BoolProperty(name="Rigify Advanced Generation",
-                                                                description="Rigify Advanced Generation Parameters",
+    IDStore.rigify_advanced_generation = bpy.props.BoolProperty(name="Advanced Options",
+                                                                description="Rigify Advanced Options",
                                                                 default=False)
 
     def update_mode(self, context):
