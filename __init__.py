@@ -290,8 +290,18 @@ def register():
                                                                 description="Rigify Advanced Generation Parameters",
                                                                 default=False)
 
+    def update_mode(self, context):
+        if self.rigify_generate_mode == 'new':
+            self.rigify_force_widget_update = False
+
+    IDStore.rigify_generate_mode = bpy.props.EnumProperty(name="Rigify Generate Rig Mode",
+                                                                description="Rig Generation mode",
+                                                                update=update_mode,
+                                                                items=(('overwrite','overwrite',''),
+                                                                                     ('new','new','')))
+
     IDStore.rigify_force_widget_update = bpy.props.BoolProperty(name="Force Widget Update",
-                                                                description="Rigify Force Widget Update",
+                                                                description="Force Widget Update",
                                                                 default=False)
 
     IDStore.rigify_target_rigs = bpy.props.CollectionProperty(type=RigifyName)
@@ -303,6 +313,10 @@ def register():
     IDStore.rigify_rig_ui = bpy.props.StringProperty(name="Rigify Target Rig UI",
                                                          description="The Rig UI to overwrite",
                                                          default="")
+
+    IDStore.rigify_rig_basename = bpy.props.StringProperty(name="Rigify Rig Name",
+                                                     description="The Rig Name",
+                                                     default="")
 
     if (ui and 'legacy' in str(ui)) or bpy.context.user_preferences.addons['rigify'].preferences.legacy_mode:
         # update legacy on restart or reload
@@ -326,11 +340,13 @@ def unregister():
     del IDStore.rigify_types
     del IDStore.rigify_active_type
     del IDStore.rigify_advanced_generation
+    del IDStore.rigify_generate_mode
     del IDStore.rigify_force_widget_update
     del IDStore.rigify_target_rig
     del IDStore.rigify_target_rigs
     del IDStore.rigify_rig_uis
     del IDStore.rigify_rig_ui
+    del IDStore.rigify_rig_basename
 
     bpy.utils.unregister_class(RigifyName)
     bpy.utils.unregister_class(RigifyParameters)
