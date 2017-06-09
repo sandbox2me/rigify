@@ -315,7 +315,7 @@ def register():
                                                          default="")
 
     IDStore.rigify_rig_basename = bpy.props.StringProperty(name="Rigify Rig Name",
-                                                     description="Defines the name of the Rig. If unset, 'rig' will be used ",
+                                                     description="Defines the name of the Rig. If unset, in 'new' mode 'rig' will be used, in 'overwrite' mode the target rig name will be used",
                                                      default="")
 
     if (ui and 'legacy' in str(ui)) or bpy.context.user_preferences.addons['rigify'].preferences.legacy_mode:

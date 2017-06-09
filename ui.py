@@ -93,7 +93,7 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
                 row.enabled = (id_store.rigify_generate_mode == "overwrite")
 
                 row = col2.row(align=True)
-                row.prop(id_store, "rigify_rig_basename", text="")
+                row.prop(id_store, "rigify_rig_basename", text="", icon="SORTALPHA")
 
                 row = col2.row(align=True)
                 for i in range(0, len(id_store.rigify_target_rigs)):
