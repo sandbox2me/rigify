@@ -225,7 +225,11 @@ especially with more complex samples.  When in edit-mode on an armature,
 there is a "Rigify Dev Tools" panel in the View3d tools panel containing a
 button labeled "Encode Sample to Python".  This button will generate the python
 code for create_sample() from the armature you are editing.  The generated code
-appears in a text block called "metarig_sample.py"
+appears in a text block called "metarig_sample.py".
+Metarig sample scripts can be made available in the Add Armature menu just putting them
+in the "metarigs" folder inside the addon. Starting from ver. 0.5 you can organize your
+metarigs in sub-folders (to a maximum of one level), just create a sub-folder inside the
+"metarigs" folder and add your samples there.
 
 IMPLEMENTATION RIGS
 -------------------
