@@ -508,10 +508,7 @@ def generate_rig(context, metarig):
     # Add rig_ui to logic
     skip = False
     ctrls = obj.game.controllers
-    if rig_ui_old_name:
-        for c in ctrls:
-            if 'Python' in c.name and c.text.name == rig_ui_old_name:
-                bpy.ops.logic.controller_remove(c.name)
+
     for c in ctrls:
         if 'Python' in c.name and c.text.name == script.name:
             skip = True
