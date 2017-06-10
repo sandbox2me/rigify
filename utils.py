@@ -417,7 +417,7 @@ def create_widget(rig, bone_name, bone_transform_name=None):
     id_store = bpy.context.window_manager
 
     # Check if it already exists in the scene
-    if obj_name in scene.objects and not id_store.rigify_generate_mode == "new":
+    if obj_name in scene.objects:
         # Move object to bone position, in case it changed
         obj = scene.objects[obj_name]
         obj_to_bone(obj, rig, bone_transform_name)
