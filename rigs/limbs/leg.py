@@ -1414,7 +1414,9 @@ def parameters_ui(layout, params):
     r = layout.row()
     r.prop(params, "bbones")
 
-    for layer in [ 'fk', 'tweak' ]:
+    bone_layers = bpy.context.active_pose_bone.bone.layers[:]
+
+    for layer in ['fk', 'tweak']:
         r = layout.row()
         r.prop(params, layer + "_extra_layers")
         r.active = params.tweak_extra_layers
@@ -1423,23 +1425,35 @@ def parameters_ui(layout, params):
         row = col.row(align=True)
 
         for i in range(8):
-            row.prop(params, layer + "_layers", index=i, toggle=True, text="")
+            icon = "NONE"
+            if bone_layers[i]:
+                icon = "LAYER_ACTIVE"
+            row.prop(params, layer + "_layers", index=i, toggle=True, text="", icon=icon)
 
         row = col.row(align=True)
 
         for i in range(16,24):
-            row.prop(params, layer + "_layers", index=i, toggle=True, text="")
+            icon = "NONE"
+            if bone_layers[i]:
+                icon = "LAYER_ACTIVE"
+            row.prop(params, layer + "_layers", index=i, toggle=True, text="", icon=icon)
 
         col = r.column(align=True)
         row = col.row(align=True)
 
         for i in range(8,16):
-            row.prop(params, layer + "_layers", index=i, toggle=True, text="")
+            icon = "NONE"
+            if bone_layers[i]:
+                icon = "LAYER_ACTIVE"
+            row.prop(params, layer + "_layers", index=i, toggle=True, text="", icon=icon)
 
         row = col.row(align=True)
 
         for i in range(24,32):
-            row.prop(params, layer + "_layers", index=i, toggle=True, text="")
+            icon = "NONE"
+            if bone_layers[i]:
+                icon = "LAYER_ACTIVE"
+            row.prop(params, layer + "_layers", index=i, toggle=True, text="", icon=icon)
 
 
 def create_sample(obj):
