@@ -1031,33 +1031,35 @@ def add_parameters(params):
         RigifyParameters PropertyGroup
     """
 
-    #Setting up extra layers for the tweak bones
-    params.primary_layers_extra = bpy.props.BoolProperty( 
-        name        = "primary_layers_extra", 
-        default     = True, 
-        description = ""
+    # Setting up extra layers for the tweak bones
+    params.primary_layers_extra = bpy.props.BoolProperty(
+        name="primary_layers_extra",
+        default=True,
+        description=""
         )
     params.primary_layers = bpy.props.BoolVectorProperty(
-        size        = 32,
-        description = "Layers for the 1st tweak controls to be on",
-        default     = tuple( [ i == 1 for i in range(0, 32) ] )
+        size=32,
+        description="Layers for the 1st tweak controls to be on",
+        default=tuple([i == 1 for i in range(0, 32)])
         )
-    params.secondary_layers_extra = bpy.props.BoolProperty( 
-        name        = "secondary_layers_extra", 
-        default     = True, 
-        description = ""
+    params.secondary_layers_extra = bpy.props.BoolProperty(
+        name="secondary_layers_extra",
+        default=True,
+        description=""
         )
     params.secondary_layers = bpy.props.BoolVectorProperty(
-        size        = 32,
-        description = "Layers for the 2nd tweak controls to be on",
-        default     = tuple( [ i == 1 for i in range(0, 32) ] )
+        size=32,
+        description="Layers for the 2nd tweak controls to be on",
+        default=tuple([i == 1 for i in range(0, 32)])
         )
 
 
 def parameters_ui(layout, params):
     """ Create the ui for the rig parameters."""
     layers = ["primary_layers", "secondary_layers"]
-    
+
+    bone_layers = bpy.context.active_pose_bone.bone.layers[:]
+
     for layer in layers:
         r = layout.row()
         r.prop( params, layer + "_extra" )
@@ -1066,21 +1068,33 @@ def parameters_ui(layout, params):
         col = r.column(align=True)
         row = col.row(align=True)
         for i in range(8):
-            row.prop(params, layer, index=i, toggle=True, text="")
+            icon = "NONE"
+            if bone_layers[i]:
+                icon = "LAYER_ACTIVE"
+            row.prop(params, layer, index=i, toggle=True, text="", icon=icon)
 
         row = col.row(align=True)
-        for i in range(16,24):
-            row.prop(params, layer, index=i, toggle=True, text="")
+        for i in range(16, 24):
+            icon = "NONE"
+            if bone_layers[i]:
+                icon = "LAYER_ACTIVE"
+            row.prop(params, layer, index=i, toggle=True, text="", icon=icon)
         
         col = r.column(align=True)
         row = col.row(align=True)
         
-        for i in range(8,16):
-            row.prop(params, layer, index=i, toggle=True, text="")
+        for i in range(8, 16):
+            icon = "NONE"
+            if bone_layers[i]:
+                icon = "LAYER_ACTIVE"
+            row.prop(params, layer, index=i, toggle=True, text="", icon=icon)
 
         row = col.row(align=True)
-        for i in range(24,32):
-            row.prop(params, layer, index=i, toggle=True, text="")
+        for i in range(24, 32):
+            icon = "NONE"
+            if bone_layers[i]:
+                icon = "LAYER_ACTIVE"
+            row.prop(params, layer, index=i, toggle=True, text="", icon=icon)
 
 
 def create_sample(obj):
