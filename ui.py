@@ -26,6 +26,8 @@ from .utils import get_rig_type, MetarigError
 from .utils import write_metarig, write_widget
 from .utils import unique_name
 from .utils import upgradeMetarigTypes, outdated_types
+from .utils import get_keyed_frames
+from .rigs.utils import get_limb_generated_names
 from . import rig_lists
 from . import generate
 
@@ -623,6 +625,33 @@ class VIEW3D_PT_tools_rigify_dev(bpy.types.Panel):
                 r.operator("mesh.rigify_encode_mesh_widget", text="Encode Mesh Widget to Python")
 
 
+class VIEW3D_PT_rigify_animation_tools(bpy.types.Panel):
+    bl_label = "Rigify Animation Tools"
+    bl_category = 'Animation'
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+
+    def draw(self, context):
+        obj = context.active_object
+        id_store = context.window_manager
+        if obj is not None:
+            row = self.layout.row()
+            row.prop(id_store, 'rigify_transfer_only_selected')
+
+            row = self.layout.row(align=True)
+            row.operator("rigify.ik2fk", text='IK2FK Pose', icon='SNAP_ON')
+            row.operator("rigify.fk2ik", text='FK2IK Pose', icon='SNAP_ON')
+
+            row = self.layout.row(align=True)
+            row.operator("rigify.transfer_fk_to_ik", text='IK2FK Action', icon='ACTION_TWEAK')
+            row.operator("rigify.transfer_ik_to_fk", text='FK2IK Action', icon='ACTION_TWEAK')
+
+            row = self.layout.row(align=True)
+            row.prop(id_store, 'rigify_transfer_start_frame')
+            row.prop(id_store, 'rigify_transfer_end_frame')
+            row.operator("rigify.get_frame_range", icon='TIME', text='')
+
+
 def rigify_report_exception(operator, exception):
     import traceback
     import sys
@@ -815,9 +844,198 @@ class EncodeWidget(bpy.types.Operator):
         return {'FINISHED'}
 
 
-#menu_func = (lambda self, context: self.layout.menu("INFO_MT_armature_metarig_add", icon='OUTLINER_OB_ARMATURE'))
+class OBJECT_OT_GetFrameRange(bpy.types.Operator):
+    """Get start and end frame range"""
+    bl_idname = "rigify.get_frame_range"
+    bl_label = "Get Frame Range"
 
-#from bl_ui import space_info  # ensure the menu is loaded first
+    def execute(self, context):
+        scn = context.scene
+        id_store = context.window_manager
+
+        id_store.rigify_transfer_start_frame = scn.frame_start
+        id_store.rigify_transfer_end_frame = scn.frame_end
+
+        return {'FINISHED'}
+
+
+def FktoIk(rig, id_store, window='ALL'):
+
+    rig_id = rig.data['rig_id']
+    leg_ik2fk = eval('bpy.ops.pose.rigify_leg_ik2fk_' + rig_id)
+    arm_ik2fk = eval('bpy.ops.pose.rigify_arm_ik2fk_' + rig_id)
+    limb_generated_names = get_limb_generated_names(rig)
+
+    scn = bpy.context.scene
+
+    if window == 'ALL':
+        frames = get_keyed_frames(rig)
+        frames = [f for f in frames if f in range(id_store.rigify_transfer_start_frame, id_store.rigify_transfer_end_frame+1)]
+    elif window == 'CURRENT':
+        frames = [scn.frame_current]
+    else:
+        frames = [scn.frame_current]
+
+    id_store = bpy.context.window_manager
+    if not id_store.rigify_transfer_only_selected:
+        pbones = rig.pose.bones
+    else:
+        pbones = bpy.context.selected_pose_bones
+
+    for b in pbones:
+        for group in limb_generated_names:
+            if b.name in limb_generated_names[group].values() or b.name in limb_generated_names[group]['controls']\
+                    or b.name in limb_generated_names[group]['ik_ctrl']:
+                names = limb_generated_names[group]
+                if names['limb_type'] == 'arm':
+                    func = arm_ik2fk
+                    controls = names['controls']
+                    ik_ctrl = names['ik_ctrl']
+                    fk_ctrl = names['fk_ctrl']
+                    parent = names['parent']
+                    pole = names['pole']
+                    kwargs = {'uarm_fk': controls[1], 'farm_fk': controls[2], 'hand_fk': controls[3],
+                              'uarm_ik': controls[0], 'farm_ik': ik_ctrl[1], 'hand_ik': controls[4],
+                              'pole': pole, 'main_parent': parent}
+                else:
+                    func = leg_ik2fk
+                    controls = names['controls']
+                    ik_ctrl = names['ik_ctrl']
+                    fk_ctrl = names['fk_ctrl']
+                    parent = names['parent']
+                    pole = names['pole']
+
+                    kwargs = {'thigh_fk': controls[1], 'shin_fk': controls[2], 'foot_fk': controls[3],
+                              'mfoot_fk': controls[7], 'thigh_ik': controls[0], 'shin_ik': ik_ctrl[1],
+                              'foot_ik': controls[6], 'pole': pole, 'footroll': controls[5], 'mfoot_ik': ik_ctrl[2],
+                              'main_parent': parent}
+
+                for f in frames:
+                    scn.frame_set(f)
+                    func(**kwargs)
+                    bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_VisualLocRot')
+                    bpy.ops.anim.keyframe_insert_menu(type='Scaling')
+
+                limb_generated_names.pop(group)
+                break
+
+    # arm = rig.data
+
+
+def IktoFk(rig, id_store, window='ALL'):
+
+    scn = bpy.context.scene
+
+    rig_id = rig.data['rig_id']
+    leg_fk2ik = eval('bpy.ops.pose.rigify_leg_fk2ik_' + rig_id)
+    arm_fk2ik = eval('bpy.ops.pose.rigify_arm_fk2ik_' + rig_id)
+    limb_generated_names = get_limb_generated_names(rig)
+
+    if window == 'ALL':
+        frames = get_keyed_frames(rig)
+        frames = [f for f in frames if f in range(id_store.rigify_transfer_start_frame, id_store.rigify_transfer_end_frame+1)]
+    elif window == 'CURRENT':
+        frames = [scn.frame_current]
+
+    id_store = bpy.context.window_manager
+    if not id_store.rigify_transfer_only_selected:
+        pbones = rig.pose.bones
+    else:
+        pbones = bpy.context.selected_pose_bones
+
+    for b in pbones:
+        for group in limb_generated_names:
+            if b.name in limb_generated_names[group].values() or b.name in limb_generated_names[group]['controls']\
+                    or b.name in limb_generated_names[group]['ik_ctrl']:
+                names = limb_generated_names[group]
+                if names['limb_type'] == 'arm':
+                    func = arm_fk2ik
+                    controls = names['controls']
+                    ik_ctrl = names['ik_ctrl']
+                    fk_ctrl = names['fk_ctrl']
+                    parent = names['parent']
+                    pole = names['pole']
+                    kwargs = {'uarm_fk': controls[1], 'farm_fk': controls[2], 'hand_fk': controls[3],
+                              'uarm_ik': controls[0], 'farm_ik': ik_ctrl[1],
+                              'hand_ik': controls[4]}
+                else:
+                    func = leg_fk2ik
+                    controls = names['controls']
+                    ik_ctrl = names['ik_ctrl']
+                    fk_ctrl = names['fk_ctrl']
+                    parent = names['parent']
+                    pole = names['pole']
+                    kwargs = {'thigh_fk': controls[1], 'shin_fk': controls[2], 'foot_fk': controls[3],
+                              'mfoot_fk': controls[7], 'thigh_ik': controls[0], 'shin_ik': ik_ctrl[1],
+                              'foot_ik': ik_ctrl[2], 'mfoot_ik': ik_ctrl[2]}
+                for f in frames:
+                    scn.frame_set(f)
+                    func(**kwargs)
+                    bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_VisualLocRot')
+                    bpy.ops.anim.keyframe_insert_menu(type='Scaling')
+                limb_generated_names.pop(group)
+                break
+
+
+class OBJECT_OT_IK2FK(bpy.types.Operator):
+    """ Snaps IK limb on FK limb at current frame"""
+    bl_idname = "rigify.ik2fk"
+    bl_label = "IK2FK"
+    bl_description = "Snaps IK limb on FK"
+
+    def execute(self,context):
+        rig = context.object
+        id_store = context.window_manager
+
+        FktoIk(rig, id_store, window='CURRENT')
+
+        return {'FINISHED'}
+
+
+class OBJECT_OT_FK2IK(bpy.types.Operator):
+    """ Snaps FK limb on IK limb at current frame"""
+    bl_idname = "rigify.fk2ik"
+    bl_label = "FK2IK"
+    bl_description = "Snaps FK limb on IK"
+
+    def execute(self,context):
+        rig = context.object
+        id_store = context.window_manager
+
+        IktoFk(rig, id_store, window='CURRENT')
+
+        return {'FINISHED'}
+
+
+class OBJECT_OT_TransferFKtoIK(bpy.types.Operator):
+    """Transfers FK animation to IK"""
+    bl_idname = "rigify.transfer_fk_to_ik"
+    bl_label = "Transfer FK anim to IK"
+    bl_description = "Transfer FK animation to IK bones"
+
+    def execute(self, context):
+        rig = context.object
+        id_store = context.window_manager
+
+        FktoIk(rig, id_store)
+
+        return {'FINISHED'}
+
+
+class OBJECT_OT_TransferIKtoFK(bpy.types.Operator):
+    """Transfers FK animation to IK"""
+    bl_idname = "rigify.transfer_ik_to_fk"
+    bl_label = "Transfer IK anim to FK"
+    bl_description = "Transfer IK animation to FK bones"
+
+    def execute(self, context):
+        rig = context.object
+        id_store = context.window_manager
+
+        IktoFk(rig, id_store)
+
+        return {'FINISHED'}
+
 
 def register():
 
@@ -835,6 +1053,7 @@ def register():
     bpy.utils.register_class(DATA_PT_rigify_buttons)
     bpy.utils.register_class(BONE_PT_rigify_buttons)
     bpy.utils.register_class(VIEW3D_PT_tools_rigify_dev)
+    bpy.utils.register_class(VIEW3D_PT_rigify_animation_tools)
     bpy.utils.register_class(LayerInit)
     bpy.utils.register_class(Generate)
     bpy.utils.register_class(UpgradeMetarigTypes)
@@ -842,7 +1061,11 @@ def register():
     bpy.utils.register_class(EncodeMetarig)
     bpy.utils.register_class(EncodeMetarigSample)
     bpy.utils.register_class(EncodeWidget)
-    #space_info.INFO_MT_armature_add.append(ui.menu_func)
+    bpy.utils.register_class(OBJECT_OT_GetFrameRange)
+    bpy.utils.register_class(OBJECT_OT_FK2IK)
+    bpy.utils.register_class(OBJECT_OT_IK2FK)
+    bpy.utils.register_class(OBJECT_OT_TransferFKtoIK)
+    bpy.utils.register_class(OBJECT_OT_TransferIKtoFK)
 
 
 def unregister():
@@ -861,6 +1084,7 @@ def unregister():
     bpy.utils.unregister_class(DATA_PT_rigify_buttons)
     bpy.utils.unregister_class(BONE_PT_rigify_buttons)
     bpy.utils.unregister_class(VIEW3D_PT_tools_rigify_dev)
+    bpy.utils.unregister_class(VIEW3D_PT_rigify_animation_tools)
     bpy.utils.unregister_class(LayerInit)
     bpy.utils.unregister_class(Generate)
     bpy.utils.unregister_class(UpgradeMetarigTypes)
@@ -868,3 +1092,8 @@ def unregister():
     bpy.utils.unregister_class(EncodeMetarig)
     bpy.utils.unregister_class(EncodeMetarigSample)
     bpy.utils.unregister_class(EncodeWidget)
+    bpy.utils.unregister_class(OBJECT_OT_GetFrameRange)
+    bpy.utils.unregister_class(OBJECT_OT_FK2IK)
+    bpy.utils.unregister_class(OBJECT_OT_IK2FK)
+    bpy.utils.unregister_class(OBJECT_OT_TransferFKtoIK)
+    bpy.utils.unregister_class(OBJECT_OT_TransferIKtoFK)

@@ -982,6 +982,52 @@ class Rig:
                     var.targets[0].data_path = \
                         owner.path_from_id() + '[' + '"' + prop + '"' + ']'
 
+    @staticmethod
+    def get_future_names(bones):
+
+        if len(bones) != 3:
+            return
+
+        names = dict()
+
+        uarm = strip_org(bones[0].name)
+        farm = strip_org(bones[1].name)
+        hand = strip_org(bones[2].name)
+
+        suffix=''
+        if uarm[-2:] == '.L' or uarm[-2:] == '.R':
+            suffix = uarm[-2:]
+            uarm = uarm.rstrip(suffix)
+            farm = farm.rstrip(suffix)
+            hand = hand.rstrip(suffix)
+
+        # the following is declared in rig_ui
+        # controls = ['upper_arm_ik.L', 'upper_arm_fk.L', 'forearm_fk.L', 'hand_fk.L', 'hand_ik.L', 'MCH-hand_fk.L',
+        #             'upper_arm_parent.L']
+        # tweaks = ['upper_arm_tweak.L.001', 'forearm_tweak.L', 'forearm_tweak.L.001']
+        # ik_ctrl = ['hand_ik.L', 'MCH-upper_arm_ik.L', 'MCH-upper_arm_ik_target.L']
+        # fk_ctrl = 'upper_arm_fk.L'
+        # parent = 'upper_arm_parent.L'
+        # hand_fk = 'hand_fk.L'
+        # pole = 'upper_arm_ik_target.L'
+
+        names['controls'] = [uarm + '_ik', uarm + '_fk', farm + '_fk', hand + '_fk', hand + '_ik',
+                             make_mechanism_name(hand + '_fk'), uarm + '_parent']
+        names['ik_ctrl'] = [hand + '_ik', make_mechanism_name(uarm) + '_ik', make_mechanism_name(uarm) + '_ik_target']
+        names['fk_ctrl'] = uarm + '_fk' + suffix
+        names['parent'] = uarm + '_parent' + suffix
+        names['hand_fk'] = hand + '_fk' + suffix
+        names['pole'] = uarm + '_ik_target' + suffix
+        names['limb_type'] = 'arm'
+
+        if suffix:
+            for i, name in enumerate(names['controls']):
+                names['controls'][i] = name + suffix
+            for i, name in enumerate(names['ik_ctrl']):
+                names['ik_ctrl'][i] = name + suffix
+
+        return names
+
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones

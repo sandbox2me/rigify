@@ -23,6 +23,15 @@ class Rig:
 
         return self.limb.generate()
 
+    @staticmethod
+    def get_future_names(bones):
+        if bones[0].rigify_parameters.limb_type == 'arm':
+            return armRig.get_future_names(bones)
+        elif bones[0].rigify_parameters.limb_type == 'leg':
+            return legRig.get_future_names(bones)
+        elif bones[0].rigify_parameters.limb_type == 'paw':
+            return pawRig.get_future_names(bones)
+
 
 def add_parameters(params):
     """ Add the parameters of this rig type to the

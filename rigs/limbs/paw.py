@@ -1119,6 +1119,57 @@ class Rig:
                     var.targets[0].data_path = \
                         owner.path_from_id() + '[' + '"' + prop + '"' + ']'
 
+    @staticmethod
+    def get_future_names(bones):
+
+        if len(bones) != 4:
+            return
+
+        names = dict()
+
+        thigh = strip_org(bones[0].name)
+        shin = strip_org(bones[1].name)
+
+        foot = strip_org(bones[2].name)
+
+        toe = strip_org(bones[3].name)
+
+        suffix = ''
+        if thigh[-2:] == '.L' or thigh[-2:] == '.R':
+            suffix = thigh[-2:]
+            thigh = thigh.rstrip(suffix)
+            shin = shin.rstrip(suffix)
+            foot = foot.rstrip(suffix)
+            toe = toe.rstrip(suffix)
+
+        # the following is declared in rig_ui
+        # controls = ['thigh_ik.R', 'thigh_fk.R', 'shin_fk.R', 'foot_fk.R', 'toe.R', 'foot_heel_ik.R', 'foot_ik.R',
+        #             'MCH-foot_fk.R', 'thigh_parent.R']
+        # tweaks = ['thigh_tweak.R.001', 'shin_tweak.R', 'shin_tweak.R.001']
+        # ik_ctrl = ['foot_ik.R', 'MCH-thigh_ik.R', 'MCH-thigh_ik_target.R']
+        # fk_ctrl = 'thigh_fk.R'
+        # parent = 'thigh_parent.R'
+        # foot_fk = 'foot_fk.R'
+        # pole = 'thigh_ik_target.R'
+
+        names['controls'] = [thigh + '_ik', thigh + '_fk', shin + '_fk', foot + '_fk', toe, foot + '_heel_ik',
+                             foot + '_ik', make_mechanism_name(foot + '_fk'), thigh + '_parent']
+        names['ik_ctrl'] = [foot + '_ik', make_mechanism_name(thigh) + '_ik', make_mechanism_name(thigh) + '_ik_target']
+        names['fk_ctrl'] = thigh + '_fk' + suffix
+        names['parent'] = thigh + '_parent' + suffix
+        names['foot_fk'] = foot + '_fk' + suffix
+        names['pole'] = thigh + '_ik_target' + suffix
+
+        names['limb_type'] = 'paw'
+
+        if suffix:
+            for i, name in enumerate(names['controls']):
+                names['controls'][i] = name + suffix
+            for i, name in enumerate(names['ik_ctrl']):
+                names['ik_ctrl'][i] = name + suffix
+
+        return names
+
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones

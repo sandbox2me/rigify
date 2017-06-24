@@ -1171,3 +1171,23 @@ def gamma_correct(color):
     for i, component in enumerate(color):
         corrected_color[i] = linsrgb_to_srgb(color[i])
     return corrected_color
+
+
+#=============================================
+# Keyframing functions
+#=============================================
+
+
+def get_keyed_frames(rig):
+    frames = []
+    if rig.animation_data:
+        if rig.animation_data.action:
+            fcus = rig.animation_data.action.fcurves
+            for fc in fcus:
+                for kp in fc.keyframe_points:
+                    if kp.co[0] not in frames:
+                        frames.append(kp.co[0])
+
+    frames.sort()
+
+    return frames
