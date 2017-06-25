@@ -651,6 +651,9 @@ class VIEW3D_PT_rigify_animation_tools(bpy.types.Panel):
             row.operator("rigify.clear_animation", text="Clear FK Action", icon='CANCEL').type = "FK"
 
             row = self.layout.row(align=True)
+            row.operator("rigify.rotation_pole", icon='NONE', text='Toggle IK rotation-pole')
+
+            row = self.layout.row(align=True)
             row.prop(id_store, 'rigify_transfer_start_frame')
             row.prop(id_store, 'rigify_transfer_end_frame')
             row.operator("rigify.get_frame_range", icon='TIME', text='')
@@ -863,14 +866,15 @@ class OBJECT_OT_GetFrameRange(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def FktoIk(rig, id_store, window='ALL'):
+def FktoIk(rig, window='ALL'):
+
+    scn = bpy.context.scene
+    id_store = bpy.context.window_manager
 
     rig_id = rig.data['rig_id']
     leg_ik2fk = eval('bpy.ops.pose.rigify_leg_ik2fk_' + rig_id)
     arm_ik2fk = eval('bpy.ops.pose.rigify_arm_ik2fk_' + rig_id)
     limb_generated_names = get_limb_generated_names(rig)
-
-    scn = bpy.context.scene
 
     if window == 'ALL':
         frames = get_keyed_frames(rig)
@@ -880,7 +884,6 @@ def FktoIk(rig, id_store, window='ALL'):
     else:
         frames = [scn.frame_current]
 
-    id_store = bpy.context.window_manager
     if not id_store.rigify_transfer_only_selected:
         pbones = rig.pose.bones
         bpy.ops.pose.select_all(action='SELECT')
@@ -927,9 +930,10 @@ def FktoIk(rig, id_store, window='ALL'):
     # arm = rig.data
 
 
-def IktoFk(rig, id_store, window='ALL'):
+def IktoFk(rig, window='ALL'):
 
     scn = bpy.context.scene
+    id_store = bpy.context.window_manager
 
     rig_id = rig.data['rig_id']
     leg_fk2ik = eval('bpy.ops.pose.rigify_leg_fk2ik_' + rig_id)
@@ -942,7 +946,6 @@ def IktoFk(rig, id_store, window='ALL'):
     elif window == 'CURRENT':
         frames = [scn.frame_current]
 
-    id_store = bpy.context.window_manager
     if not id_store.rigify_transfer_only_selected:
         bpy.ops.pose.select_all(action='SELECT')
         pbones = rig.pose.bones
@@ -1020,6 +1023,88 @@ def clearAnimation(act, type, names):
     # updateView3D()
 
 
+def rotPoleToggle(rig, window='ALL', value=False, toggle=False, bake=False):
+
+    scn = bpy.context.scene
+    id_store = bpy.context.window_manager
+
+    rig_id = rig.data['rig_id']
+    leg_fk2ik = eval('bpy.ops.pose.rigify_leg_fk2ik_' + rig_id)
+    arm_fk2ik = eval('bpy.ops.pose.rigify_arm_fk2ik_' + rig_id)
+    leg_ik2fk = eval('bpy.ops.pose.rigify_leg_ik2fk_' + rig_id)
+    arm_ik2fk = eval('bpy.ops.pose.rigify_arm_ik2fk_' + rig_id)
+    limb_generated_names = get_limb_generated_names(rig)
+
+    if window == 'ALL':
+        frames = get_keyed_frames(rig)
+        frames = [f for f in frames if f in range(id_store.rigify_transfer_start_frame, id_store.rigify_transfer_end_frame+1)]
+    elif window == 'CURRENT':
+        frames = [scn.frame_current]
+
+    if not id_store.rigify_transfer_only_selected:
+        bpy.ops.pose.select_all(action='SELECT')
+        pbones = rig.pose.bones
+    else:
+        pbones = bpy.context.selected_pose_bones
+
+    for b in pbones:
+        for group in limb_generated_names:
+            names = limb_generated_names[group]
+            if b.name in names.values() or b.name in names['controls'] or b.name in names['ik_ctrl']:
+                if names['limb_type'] == 'arm':
+                    func1 = arm_fk2ik
+                    func2 = arm_ik2fk
+                    controls = names['controls']
+                    ik_ctrl = names['ik_ctrl']
+                    fk_ctrl = names['fk_ctrl']
+                    parent = names['parent']
+                    pole = names['pole']
+                    kwargs1 = {'uarm_fk': controls[1], 'farm_fk': controls[2], 'hand_fk': controls[3],
+                              'uarm_ik': controls[0], 'farm_ik': ik_ctrl[1],
+                              'hand_ik': controls[4]}
+                    kwargs2 = {'uarm_fk': controls[1], 'farm_fk': controls[2], 'hand_fk': controls[3],
+                              'uarm_ik': controls[0], 'farm_ik': ik_ctrl[1], 'hand_ik': controls[4],
+                              'pole': pole, 'main_parent': parent}
+                    rig.pose.bones[controls[1]].bone.select = False
+                    rig.pose.bones[controls[2]].bone.select = False
+                    rig.pose.bones[controls[3]].bone.select = False
+                else:
+                    func1 = leg_fk2ik
+                    func2 = leg_ik2fk
+                    controls = names['controls']
+                    ik_ctrl = names['ik_ctrl']
+                    fk_ctrl = names['fk_ctrl']
+                    parent = names['parent']
+                    pole = names['pole']
+                    kwargs1 = {'thigh_fk': controls[1], 'shin_fk': controls[2], 'foot_fk': controls[3],
+                              'mfoot_fk': controls[7], 'thigh_ik': controls[0], 'shin_ik': ik_ctrl[1],
+                              'foot_ik': ik_ctrl[2], 'mfoot_ik': ik_ctrl[2]}
+                    kwargs2 = {'thigh_fk': controls[1], 'shin_fk': controls[2], 'foot_fk': controls[3],
+                              'mfoot_fk': controls[7], 'thigh_ik': controls[0], 'shin_ik': ik_ctrl[1],
+                              'foot_ik': controls[6], 'pole': pole, 'footroll': controls[5], 'mfoot_ik': ik_ctrl[2],
+                              'main_parent': parent}
+                    rig.pose.bones[controls[1]].bone.select = False
+                    rig.pose.bones[controls[2]].bone.select = False
+                    rig.pose.bones[controls[3]].bone.select = False
+                    rig.pose.bones[controls[7]].bone.select = False
+
+                if toggle:
+                    new_pole_vector_value = not rig.pose.bones[names['parent']]['pole_vector']
+                else:
+                    new_pole_vector_value = value
+
+                for f in frames:
+                    scn.frame_set(f)
+                    func1(**kwargs1)
+                    rig.pose.bones[names['parent']]['pole_vector'] = new_pole_vector_value
+                    func2(**kwargs2)
+                    if bake:
+                        bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_VisualLocRot')
+                        bpy.ops.anim.keyframe_insert_menu(type='Scaling')
+                limb_generated_names.pop(group)
+                break
+
+
 class OBJECT_OT_IK2FK(bpy.types.Operator):
     """ Snaps IK limb on FK limb at current frame"""
     bl_idname = "rigify.ik2fk"
@@ -1030,7 +1115,7 @@ class OBJECT_OT_IK2FK(bpy.types.Operator):
         rig = context.object
         id_store = context.window_manager
 
-        FktoIk(rig, id_store, window='CURRENT')
+        FktoIk(rig, window='CURRENT')
 
         return {'FINISHED'}
 
@@ -1043,9 +1128,8 @@ class OBJECT_OT_FK2IK(bpy.types.Operator):
 
     def execute(self,context):
         rig = context.object
-        id_store = context.window_manager
 
-        IktoFk(rig, id_store, window='CURRENT')
+        IktoFk(rig, window='CURRENT')
 
         return {'FINISHED'}
 
@@ -1060,7 +1144,7 @@ class OBJECT_OT_TransferFKtoIK(bpy.types.Operator):
         rig = context.object
         id_store = context.window_manager
 
-        FktoIk(rig, id_store)
+        FktoIk(rig)
 
         return {'FINISHED'}
 
@@ -1073,9 +1157,8 @@ class OBJECT_OT_TransferIKtoFK(bpy.types.Operator):
 
     def execute(self, context):
         rig = context.object
-        id_store = context.window_manager
 
-        IktoFk(rig, id_store)
+        IktoFk(rig)
 
         return {'FINISHED'}
 
@@ -1102,6 +1185,17 @@ class OBJECT_OT_ClearAnimation(bpy.types.Operator):
             clearAnimation(act, self.type, names=get_limb_generated_names(rig))
         finally:
             context.user_preferences.edit.use_global_undo = use_global_undo
+        return {'FINISHED'}
+
+
+class OBJECT_OT_Rot2Pole(bpy.types.Operator):
+    bl_idname = "rigify.rotation_pole"
+    bl_label = "Rotation - Pole toggle"
+    bl_description = "Toggles IK chain between rotation and pole target"
+
+    def execute(self, context):
+        rig = context.object
+        rotPoleToggle(rig, window='ALL', toggle=True, bake=True)
         return {'FINISHED'}
 
 
@@ -1135,6 +1229,7 @@ def register():
     bpy.utils.register_class(OBJECT_OT_TransferFKtoIK)
     bpy.utils.register_class(OBJECT_OT_TransferIKtoFK)
     bpy.utils.register_class(OBJECT_OT_ClearAnimation)
+    bpy.utils.register_class(OBJECT_OT_Rot2Pole)
 
 
 def unregister():
@@ -1167,3 +1262,4 @@ def unregister():
     bpy.utils.unregister_class(OBJECT_OT_TransferFKtoIK)
     bpy.utils.unregister_class(OBJECT_OT_TransferIKtoFK)
     bpy.utils.unregister_class(OBJECT_OT_ClearAnimation)
+    bpy.utils.unregister_class(OBJECT_OT_Rot2Pole)
