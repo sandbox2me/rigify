@@ -1068,6 +1068,7 @@ def rotPoleToggle(rig, window='ALL', value=False, toggle=False, bake=False):
                     rig.pose.bones[controls[1]].bone.select = False
                     rig.pose.bones[controls[2]].bone.select = False
                     rig.pose.bones[controls[3]].bone.select = False
+                    rig.pose.bones[pole].bone.select = True
                 else:
                     func1 = leg_fk2ik
                     func2 = leg_ik2fk
@@ -1087,6 +1088,7 @@ def rotPoleToggle(rig, window='ALL', value=False, toggle=False, bake=False):
                     rig.pose.bones[controls[2]].bone.select = False
                     rig.pose.bones[controls[3]].bone.select = False
                     rig.pose.bones[controls[7]].bone.select = False
+                    rig.pose.bones[pole].bone.select = True
 
                 if toggle:
                     new_pole_vector_value = not rig.pose.bones[names['parent']]['pole_vector']
