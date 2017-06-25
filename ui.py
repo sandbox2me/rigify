@@ -647,6 +647,10 @@ class VIEW3D_PT_rigify_animation_tools(bpy.types.Panel):
             row.operator("rigify.transfer_ik_to_fk", text='FK2IK Action', icon='ACTION_TWEAK')
 
             row = self.layout.row(align=True)
+            row.operator("rigify.clear_animation", text="Clear IK Action", icon='CANCEL').type = "IK"
+            row.operator("rigify.clear_animation", text="Clear FK Action", icon='CANCEL').type = "FK"
+
+            row = self.layout.row(align=True)
             row.prop(id_store, 'rigify_transfer_start_frame')
             row.prop(id_store, 'rigify_transfer_end_frame')
             row.operator("rigify.get_frame_range", icon='TIME', text='')
@@ -879,6 +883,7 @@ def FktoIk(rig, id_store, window='ALL'):
     id_store = bpy.context.window_manager
     if not id_store.rigify_transfer_only_selected:
         pbones = rig.pose.bones
+        bpy.ops.pose.select_all(action='SELECT')
     else:
         pbones = bpy.context.selected_pose_bones
 
@@ -939,6 +944,7 @@ def IktoFk(rig, id_store, window='ALL'):
 
     id_store = bpy.context.window_manager
     if not id_store.rigify_transfer_only_selected:
+        bpy.ops.pose.select_all(action='SELECT')
         pbones = rig.pose.bones
     else:
         pbones = bpy.context.selected_pose_bones
@@ -975,6 +981,43 @@ def IktoFk(rig, id_store, window='ALL'):
                     bpy.ops.anim.keyframe_insert_menu(type='Scaling')
                 limb_generated_names.pop(group)
                 break
+
+
+def clearAnimation(act, type, names):
+
+    bones = []
+    for group in names:
+        if names[group]['limb_type'] == 'arm':
+            if type == 'IK':
+                bones.extend([names[group]['controls'][0], names[group]['controls'][4]])
+            elif type == 'FK':
+                bones.extend([names[group]['controls'][1], names[group]['controls'][2], names[group]['controls'][3]])
+        else:
+            if type == 'IK':
+                bones.extend([names[group]['controls'][0], names[group]['controls'][6], names[group]['controls'][5],
+                              names[group]['controls'][4]])
+            elif type == 'FK':
+                bones.extend([names[group]['controls'][1], names[group]['controls'][2], names[group]['controls'][3],
+                              names[group]['controls'][4]])
+    FCurves = []
+    for fcu in act.fcurves:
+        words = fcu.data_path.split('"')
+        if (words[0] == "pose.bones[" and
+                    words[1] in bones):
+            FCurves.append(fcu)
+
+    if FCurves == []:
+        return
+
+    for fcu in FCurves:
+        act.fcurves.remove(fcu)
+
+    # Put cleared bones back to rest pose
+    bpy.ops.pose.loc_clear()
+    bpy.ops.pose.rot_clear()
+    bpy.ops.pose.scale_clear()
+
+    # updateView3D()
 
 
 class OBJECT_OT_IK2FK(bpy.types.Operator):
@@ -1037,6 +1080,31 @@ class OBJECT_OT_TransferIKtoFK(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class OBJECT_OT_ClearAnimation(bpy.types.Operator):
+    bl_idname = "rigify.clear_animation"
+    bl_label = "Clear Animation"
+    bl_description = "Clear Animation For FK or IK Bones"
+    type = StringProperty()
+
+    def execute(self, context):
+
+        use_global_undo = context.user_preferences.edit.use_global_undo
+        context.user_preferences.edit.use_global_undo = False
+        try:
+            rig = context.object
+            scn = context.scene
+            if not rig.animation_data:
+                return {'FINISHED'}
+            act = rig.animation_data.action
+            if not act:
+                return {'FINISHED'}
+
+            clearAnimation(act, self.type, names=get_limb_generated_names(rig))
+        finally:
+            context.user_preferences.edit.use_global_undo = use_global_undo
+        return {'FINISHED'}
+
+
 def register():
 
     bpy.utils.register_class(DATA_OT_rigify_add_bone_groups)
@@ -1066,6 +1134,7 @@ def register():
     bpy.utils.register_class(OBJECT_OT_IK2FK)
     bpy.utils.register_class(OBJECT_OT_TransferFKtoIK)
     bpy.utils.register_class(OBJECT_OT_TransferIKtoFK)
+    bpy.utils.register_class(OBJECT_OT_ClearAnimation)
 
 
 def unregister():
@@ -1097,3 +1166,4 @@ def unregister():
     bpy.utils.unregister_class(OBJECT_OT_IK2FK)
     bpy.utils.unregister_class(OBJECT_OT_TransferFKtoIK)
     bpy.utils.unregister_class(OBJECT_OT_TransferIKtoFK)
+    bpy.utils.unregister_class(OBJECT_OT_ClearAnimation)
