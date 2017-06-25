@@ -1105,6 +1105,7 @@ def rotPoleToggle(rig, window='ALL', value=False, toggle=False, bake=False):
                         bpy.ops.anim.keyframe_insert_menu(type='Scaling')
                 limb_generated_names.pop(group)
                 break
+    scn.frame_set(0)
 
 
 class OBJECT_OT_IK2FK(bpy.types.Operator):

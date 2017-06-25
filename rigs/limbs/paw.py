@@ -3,7 +3,7 @@ from .ui import create_script
 from .limb_utils import *
 from mathutils import Vector
 from ...utils import copy_bone, flip_bone, put_bone, create_cube_widget
-from ...utils import strip_org, make_deformer_name, create_widget
+from ...utils import strip_org, strip_mch, make_deformer_name, create_widget
 from ...utils import create_circle_widget, create_sphere_widget, create_line_widget
 from ...utils import MetarigError, make_mechanism_name, org
 from ...utils import create_limb_widget, connected_children_names
@@ -1127,12 +1127,10 @@ class Rig:
 
         names = dict()
 
-        thigh = strip_org(bones[0].name)
-        shin = strip_org(bones[1].name)
-
-        foot = strip_org(bones[2].name)
-
-        toe = strip_org(bones[3].name)
+        thigh = strip_mch(strip_org(bones[0].name))
+        shin = strip_mch(strip_org(bones[1].name))
+        foot = strip_mch(strip_org(bones[2].name))
+        toe = strip_mch(strip_org(bones[3].name))
 
         suffix = ''
         if thigh[-2:] == '.L' or thigh[-2:] == '.R':

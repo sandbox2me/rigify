@@ -107,6 +107,14 @@ def strip_org(name):
 org_name = strip_org
 
 
+def strip_mch(name):
+    """ Returns the name with ORG_PREFIX stripped from it.
+        """
+    if name.startswith(MCH_PREFIX):
+        return name[len(MCH_PREFIX):]
+    else:
+        return name
+
 def org(name):
     """ Prepends the ORG_PREFIX to a name if it doesn't already have
         it, and returns it.
