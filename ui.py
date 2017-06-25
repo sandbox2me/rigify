@@ -1194,10 +1194,20 @@ class OBJECT_OT_Rot2Pole(bpy.types.Operator):
     bl_idname = "rigify.rotation_pole"
     bl_label = "Rotation - Pole toggle"
     bl_description = "Toggles IK chain between rotation and pole target"
+    bone_name = bpy.props.StringProperty(default='')
+    window = bpy.props.StringProperty(default='ALL')
+    toggle = bpy.props.BoolProperty(default=True)
+    value = bpy.props.BoolProperty(default=True)
+    bake = bpy.props.BoolProperty(default=True)
 
     def execute(self, context):
         rig = context.object
-        rotPoleToggle(rig, window='ALL', toggle=True, bake=True)
+
+        if self.bone_name:
+            bpy.ops.pose.select_all(action='DESELECT')
+            rig.pose.bones[self.bone_name].bone.select = True
+
+        rotPoleToggle(rig, window=self.window, toggle=self.toggle, value=self.value, bake=self.bake)
         return {'FINISHED'}
 
 
