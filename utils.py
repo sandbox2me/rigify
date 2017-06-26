@@ -1199,3 +1199,25 @@ def get_keyed_frames(rig):
     frames.sort()
 
     return frames
+
+
+def overwrite_prop_animation(rig, bone, prop_name, value, frames):
+    act = rig.animation_data.action
+    if not act:
+        return
+
+    bone_name = bone.name
+    curve = None
+
+    for fcu in act.fcurves:
+        words = fcu.data_path.split('"')
+        if words[0] == "pose.bones[" and words[1] == bone_name and words[-2] == prop_name:
+            curve = fcu
+            break
+
+    if not curve:
+        return
+
+    for kp in curve.keyframe_points:
+        if kp.co[0] in frames:
+            kp.co[1] = value

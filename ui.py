@@ -27,6 +27,7 @@ from .utils import write_metarig, write_widget
 from .utils import unique_name
 from .utils import upgradeMetarigTypes, outdated_types
 from .utils import get_keyed_frames
+from .utils import overwrite_prop_animation
 from .rigs.utils import get_limb_generated_names
 from . import rig_lists
 from . import generate
@@ -651,8 +652,14 @@ class VIEW3D_PT_rigify_animation_tools(bpy.types.Panel):
             row.operator("rigify.clear_animation", text="Clear FK Action", icon='CANCEL').type = "FK"
 
             row = self.layout.row(align=True)
-            row.operator("rigify.rotation_pole", icon='NONE', text='Toggle IK rotation-pole')
-
+            op = row.operator("rigify.rotation_pole", icon='SCRIPTWIN', text='Switch to pole')
+            op.value = True
+            op.toggle = False
+            op.bake = True
+            op = row.operator("rigify.rotation_pole", icon='SCRIPTWIN', text='Switch to rotation')
+            op.value = False
+            op.toggle = False
+            op.bake = True
             row = self.layout.row(align=True)
             row.prop(id_store, 'rigify_transfer_start_frame')
             row.prop(id_store, 'rigify_transfer_end_frame')
@@ -902,6 +909,10 @@ def FktoIk(rig, window='ALL'):
                     fk_ctrl = names['fk_ctrl']
                     parent = names['parent']
                     pole = names['pole']
+                    rig.pose.bones[controls[0]].bone.select = True
+                    rig.pose.bones[ik_ctrl[1]].bone.select = True
+                    rig.pose.bones[controls[4]].bone.select = True
+                    rig.pose.bones[pole].bone.select = True
                     kwargs = {'uarm_fk': controls[1], 'farm_fk': controls[2], 'hand_fk': controls[3],
                               'uarm_ik': controls[0], 'farm_ik': ik_ctrl[1], 'hand_ik': controls[4],
                               'pole': pole, 'main_parent': parent}
@@ -912,7 +923,11 @@ def FktoIk(rig, window='ALL'):
                     fk_ctrl = names['fk_ctrl']
                     parent = names['parent']
                     pole = names['pole']
-
+                    rig.pose.bones[controls[0]].bone.select = True
+                    rig.pose.bones[ik_ctrl[1]].bone.select = True
+                    rig.pose.bones[controls[6]].bone.select = True
+                    rig.pose.bones[controls[5]].bone.select = True
+                    rig.pose.bones[pole].bone.select = True
                     kwargs = {'thigh_fk': controls[1], 'shin_fk': controls[2], 'foot_fk': controls[3],
                               'mfoot_fk': controls[7], 'thigh_ik': controls[0], 'shin_ik': ik_ctrl[1],
                               'foot_ik': controls[6], 'pole': pole, 'footroll': controls[5], 'mfoot_ik': ik_ctrl[2],
@@ -964,6 +979,9 @@ def IktoFk(rig, window='ALL'):
                     fk_ctrl = names['fk_ctrl']
                     parent = names['parent']
                     pole = names['pole']
+                    rig.pose.bones[controls[1]].bone.select = True
+                    rig.pose.bones[controls[2]].bone.select = True
+                    rig.pose.bones[controls[3]].bone.select = True
                     kwargs = {'uarm_fk': controls[1], 'farm_fk': controls[2], 'hand_fk': controls[3],
                               'uarm_ik': controls[0], 'farm_ik': ik_ctrl[1],
                               'hand_ik': controls[4]}
@@ -974,6 +992,9 @@ def IktoFk(rig, window='ALL'):
                     fk_ctrl = names['fk_ctrl']
                     parent = names['parent']
                     pole = names['pole']
+                    rig.pose.bones[controls[1]].bone.select = True
+                    rig.pose.bones[controls[2]].bone.select = True
+                    rig.pose.bones[controls[3]].bone.select = True
                     kwargs = {'thigh_fk': controls[1], 'shin_fk': controls[2], 'foot_fk': controls[3],
                               'mfoot_fk': controls[7], 'thigh_ik': controls[0], 'shin_ik': ik_ctrl[1],
                               'foot_ik': ik_ctrl[2], 'mfoot_ik': ik_ctrl[2]}
@@ -1103,6 +1124,8 @@ def rotPoleToggle(rig, window='ALL', value=False, toggle=False, bake=False):
                     if bake:
                         bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_VisualLocRot')
                         bpy.ops.anim.keyframe_insert_menu(type='Scaling')
+                        overwrite_prop_animation(rig, rig.pose.bones[parent], 'pole_vector', new_pole_vector_value,
+                                                 [f])
                 limb_generated_names.pop(group)
                 break
     scn.frame_set(0)

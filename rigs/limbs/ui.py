@@ -26,7 +26,7 @@ if is_selected( controls ):
     props.hand_ik = controls[4]
     props.pole = pole
     props.main_parent = parent
-    props = layout.operator("rigify.rotation_pole", text="Toggle Rotation and Pole")
+    props = layout.operator("rigify.rotation_pole", text="Switch Rotation-Pole")
     props.bone_name = controls[1]
     props.window = "CURRENT"
     props.toggle = True
