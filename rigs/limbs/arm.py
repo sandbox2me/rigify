@@ -1401,7 +1401,7 @@ def create_sample(obj):
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'QUATERNION'
     pbone = obj.pose.bones[bones['palm.01.L']]
-    pbone.rigify_type = 'palm'
+    pbone.rigify_type = 'limbs.super_palm'
     pbone.lock_location = (False, False, False)
     pbone.lock_rotation = (False, False, False)
     pbone.lock_rotation_w = False
