@@ -319,8 +319,8 @@ def register():
                                                      default="")
 
     IDStore.rigify_transfer_only_selected = bpy.props.BoolProperty(name="Transfer Only Selected", description="Transfer selected bones only", default=True)
-    IDStore.rigify_transfer_start_frame = bpy.props.IntProperty(name="Transfer Start Frame", description="First Frame to Transfer", default=0, min= 0)
-    IDStore.rigify_transfer_end_frame = bpy.props.IntProperty(name="Transfer End Frame", description="Last Frame to Transfer", default=0, min= 0)
+    IDStore.rigify_transfer_start_frame = bpy.props.IntProperty(name="Start Frame", description="First Frame to Transfer", default=0, min= 0)
+    IDStore.rigify_transfer_end_frame = bpy.props.IntProperty(name="End Frame", description="Last Frame to Transfer", default=0, min= 0)
 
     if (ui and 'legacy' in str(ui)) or bpy.context.user_preferences.addons['rigify'].preferences.legacy_mode:
         # update legacy on restart or reload

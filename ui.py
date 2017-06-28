@@ -640,7 +640,13 @@ class VIEW3D_PT_rigify_animation_tools(bpy.types.Panel):
         id_store = context.window_manager
         if obj is not None:
             row = self.layout.row()
-            row.prop(id_store, 'rigify_transfer_only_selected')
+
+            if id_store.rigify_transfer_only_selected:
+                icon = 'OUTLINER_DATA_ARMATURE'
+            else:
+                icon = 'ARMATURE_DATA'
+
+            row.prop(id_store, 'rigify_transfer_only_selected', toggle=True, icon=icon)
 
             row = self.layout.row(align=True)
             row.operator("rigify.ik2fk", text='IK2FK Pose', icon='SNAP_ON')
@@ -655,11 +661,11 @@ class VIEW3D_PT_rigify_animation_tools(bpy.types.Panel):
             row.operator("rigify.clear_animation", text="Clear FK Action", icon='CANCEL').type = "FK"
 
             row = self.layout.row(align=True)
-            op = row.operator("rigify.rotation_pole", icon='SCRIPTWIN', text='Switch to pole')
+            op = row.operator("rigify.rotation_pole", icon='FORCE_HARMONIC', text='Switch to pole')
             op.value = True
             op.toggle = False
             op.bake = True
-            op = row.operator("rigify.rotation_pole", icon='SCRIPTWIN', text='Switch to rotation')
+            op = row.operator("rigify.rotation_pole", icon='FORCE_MAGNETIC', text='Switch to rotation')
             op.value = False
             op.toggle = False
             op.bake = True

@@ -256,28 +256,29 @@ class ToolsPanel(bpy.types.Panel):
 
         col = layout.column(align=True)
         row = col.row(align=True)
+        id_store = context.window_manager
 
         layout.prop(scn, 'order_list')
 
+        if id_store.rigify_convert_only_selected:
+            icon = 'OUTLINER_DATA_ARMATURE'
+        else:
+            icon = 'ARMATURE_DATA'
+
+        layout.prop(id_store, 'rigify_convert_only_selected', toggle=True, icon=icon)
+
         col = layout.column(align=True)
         row = col.row(align=True)
 
-        col.label(text="Current Action:")
-        col.operator('current.selected')
-        col.operator('current.every')
-
+        row.operator('rigify_quat2eu.current', icon='ACTION')
         row = col.row(align=True)
-        col = layout.column(align=True)
-
-        col.label(text="All Actions:")
-        col.operator('all.selected')
-        col.operator('all.every')
+        row.operator('rigify_quat2eu.all', icon='NLA')
 
 
-class CONVERT_OT_current_action_selected_bones(bpy.types.Operator):
-    bl_label = 'Selected Bones'
-    bl_idname = 'current.selected'
-    bl_description = 'Converts selected bones in current Action'
+class CONVERT_OT_quat2eu_current_action(bpy.types.Operator):
+    bl_label = 'Convert Current Action'
+    bl_idname = 'rigify_quat2eu.current'
+    bl_description = 'Converts bones in current Action'
     bl_options = {'REGISTER', 'UNDO'}
 
     # on mouse up:
@@ -290,38 +291,20 @@ class CONVERT_OT_current_action_selected_bones(bpy.types.Operator):
         pose_bones = bpy.context.selected_pose_bones
         action = obj.animation_data.action
         order = order_list[bpy.context.scene['order_list']]
+        id_store = context.window_manager
 
-        convert.one_act_sel_bon(obj, action, pose_bones, order)
-
-        return {'FINISHED'}
-
-
-class CONVERT_OT_current_action_every_bones(bpy.types.Operator):
-    bl_label = 'All Bones'
-    bl_idname = 'current.every'
-    bl_description = 'Converts every bone in current Action'
-    bl_options = {'REGISTER', 'UNDO'}
-
-    # on mouse up:
-    def invoke(self, context, event):
-        self.execute(context)
-        return {'FINISHED'}
-
-    def execute(op, context):
-        obj = bpy.context.active_object
-        pose_bones = bpy.context.selected_pose_bones
-        action = obj.animation_data.action
-        order = order_list[bpy.context.scene['order_list']]
-
-        convert.one_act_every_bon(obj, action, order)
+        if id_store.rigify_convert_only_selected:
+            convert.one_act_sel_bon(obj, action, pose_bones, order)
+        else:
+            convert.one_act_every_bon(obj, action, order)
 
         return {'FINISHED'}
 
 
-class CONVERT_OT_all_actions_selected_bones(bpy.types.Operator):
-    bl_label = 'Selected Bone'
-    bl_idname = 'all.selected'
-    bl_description = 'Converts selected bones in every Action'
+class CONVERT_OT_quat2eu_all_actions(bpy.types.Operator):
+    bl_label = 'Convert All Actions'
+    bl_idname = 'rigify_quat2eu.all'
+    bl_description = 'Converts bones in every Action'
     bl_options = {'REGISTER', 'UNDO'}
 
     # on mouse up:
@@ -333,32 +316,19 @@ class CONVERT_OT_all_actions_selected_bones(bpy.types.Operator):
         obj = bpy.context.active_object
         pose_bones = bpy.context.selected_pose_bones
         order = order_list[bpy.context.scene['order_list']]
+        id_store = context.window_manager
 
-        convert.all_act_sel_bon(obj, pose_bones, order)
+        if id_store.rigify_convert_only_selected:
+            convert.all_act_sel_bon(obj, pose_bones, order)
+        else:
+            convert.all_act_every_bon(obj, order)
 
-        return {'FINISHED'}
-
-
-class CONVERT_OT_all_action_every_bones(bpy.types.Operator):
-    bl_label = 'All Bone'
-    bl_idname = 'all.every'
-    bl_description = 'Converts every bone in every Action'
-    bl_options = {'REGISTER', 'UNDO'}
-
-    # on mouse up:
-    def invoke(self, context, event):
-        self.execute(context)
-        return {'FINISHED'}
-
-    def execute(op, context):
-        obj = bpy.context.active_object
-        order = order_list[bpy.context.scene['order_list']]
-
-        convert.all_act_every_bon(obj, order)
         return {'FINISHED'}
 
 
 def register():
+    IDStore = bpy.types.WindowManager
+
     items = [('QUATERNION', 'QUATERNION', 'QUATERNION'),
              ('XYZ', 'XYZ', 'XYZ'),
              ('XZY', 'XZY', 'XZY'),
@@ -367,21 +337,23 @@ def register():
              ('ZXY', 'ZXY', 'ZXY'),
              ('ZYX', 'ZYX', 'ZYX')]
 
-    bpy.types.Scene.order_list = bpy.props.EnumProperty(items=items, name='Order',
+    bpy.types.Scene.order_list = bpy.props.EnumProperty(items=items, name='Convert to',
                                                         description="The target rotation mode", default='QUATERNION')
 
-    bpy.utils.register_class(ToolsPanel)
-    bpy.utils.register_class(CONVERT_OT_all_action_every_bones)
-    bpy.utils.register_class(CONVERT_OT_all_actions_selected_bones)
-    bpy.utils.register_class(CONVERT_OT_current_action_every_bones)
-    bpy.utils.register_class(CONVERT_OT_current_action_selected_bones)
+    IDStore.rigify_convert_only_selected = bpy.props.BoolProperty(
+        name="Convert Only Selected", description="Convert selected bones only", default=True)
 
+    bpy.utils.register_class(ToolsPanel)
+    bpy.utils.register_class(CONVERT_OT_quat2eu_current_action)
+    bpy.utils.register_class(CONVERT_OT_quat2eu_all_actions)
 
 def unregister():
+    IDStore = bpy.types.WindowManager
+
     bpy.utils.unregister_class(ToolsPanel)
-    bpy.utils.unregister_class(CONVERT_OT_all_action_every_bones)
-    bpy.utils.unregister_class(CONVERT_OT_all_actions_selected_bones)
-    bpy.utils.unregister_class(CONVERT_OT_current_action_every_bones)
-    bpy.utils.unregister_class(CONVERT_OT_current_action_selected_bones)
+    bpy.utils.unregister_class(CONVERT_OT_quat2eu_current_action)
+    bpy.utils.unregister_class(CONVERT_OT_quat2eu_all_actions)
+
+    del IDStore.rigify_convert_only_selected
 
 # bpy.utils.register_module(__name__)
