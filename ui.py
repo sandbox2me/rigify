@@ -31,6 +31,7 @@ from .utils import overwrite_prop_animation
 from .rigs.utils import get_limb_generated_names
 from . import rig_lists
 from . import generate
+from . import rot_mode
 
 
 class DATA_PT_rigify_buttons(bpy.types.Panel):
@@ -609,6 +610,7 @@ class BONE_PT_rigify_buttons(bpy.types.Panel):
 class VIEW3D_PT_tools_rigify_dev(bpy.types.Panel):
     bl_label = "Rigify Dev Tools"
     bl_category = 'Tools'
+    bl_context = "armature_edit"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
 
@@ -628,7 +630,8 @@ class VIEW3D_PT_tools_rigify_dev(bpy.types.Panel):
 
 class VIEW3D_PT_rigify_animation_tools(bpy.types.Panel):
     bl_label = "Rigify Animation Tools"
-    bl_category = 'Animation'
+    bl_category = 'Tools'
+    bl_context = "posemode"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
 
@@ -1237,6 +1240,8 @@ class OBJECT_OT_Rot2Pole(bpy.types.Operator):
 
 def register():
 
+    rot_mode.register()
+
     bpy.utils.register_class(DATA_OT_rigify_add_bone_groups)
     bpy.utils.register_class(DATA_OT_rigify_use_standard_colors)
     bpy.utils.register_class(DATA_OT_rigify_apply_selection_colors)
@@ -1250,8 +1255,8 @@ def register():
     bpy.utils.register_class(DATA_PT_rigify_layer_names)
     bpy.utils.register_class(DATA_PT_rigify_buttons)
     bpy.utils.register_class(BONE_PT_rigify_buttons)
-    bpy.utils.register_class(VIEW3D_PT_tools_rigify_dev)
     bpy.utils.register_class(VIEW3D_PT_rigify_animation_tools)
+    bpy.utils.register_class(VIEW3D_PT_tools_rigify_dev)
     bpy.utils.register_class(LayerInit)
     bpy.utils.register_class(Generate)
     bpy.utils.register_class(UpgradeMetarigTypes)
@@ -1270,6 +1275,8 @@ def register():
 
 def unregister():
 
+    rot_mode.unregister()
+
     bpy.utils.unregister_class(DATA_OT_rigify_add_bone_groups)
     bpy.utils.unregister_class(DATA_OT_rigify_use_standard_colors)
     bpy.utils.unregister_class(DATA_OT_rigify_apply_selection_colors)
@@ -1283,8 +1290,8 @@ def unregister():
     bpy.utils.unregister_class(DATA_PT_rigify_layer_names)
     bpy.utils.unregister_class(DATA_PT_rigify_buttons)
     bpy.utils.unregister_class(BONE_PT_rigify_buttons)
-    bpy.utils.unregister_class(VIEW3D_PT_tools_rigify_dev)
     bpy.utils.unregister_class(VIEW3D_PT_rigify_animation_tools)
+    bpy.utils.unregister_class(VIEW3D_PT_tools_rigify_dev)
     bpy.utils.unregister_class(LayerInit)
     bpy.utils.unregister_class(Generate)
     bpy.utils.unregister_class(UpgradeMetarigTypes)
