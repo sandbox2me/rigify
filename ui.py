@@ -1240,8 +1240,6 @@ class OBJECT_OT_Rot2Pole(bpy.types.Operator):
 
 def register():
 
-    rot_mode.register()
-
     bpy.utils.register_class(DATA_OT_rigify_add_bone_groups)
     bpy.utils.register_class(DATA_OT_rigify_use_standard_colors)
     bpy.utils.register_class(DATA_OT_rigify_apply_selection_colors)
@@ -1272,10 +1270,9 @@ def register():
     bpy.utils.register_class(OBJECT_OT_ClearAnimation)
     bpy.utils.register_class(OBJECT_OT_Rot2Pole)
 
+    rot_mode.register()
 
 def unregister():
-
-    rot_mode.unregister()
 
     bpy.utils.unregister_class(DATA_OT_rigify_add_bone_groups)
     bpy.utils.unregister_class(DATA_OT_rigify_use_standard_colors)
@@ -1306,3 +1303,6 @@ def unregister():
     bpy.utils.unregister_class(OBJECT_OT_TransferIKtoFK)
     bpy.utils.unregister_class(OBJECT_OT_ClearAnimation)
     bpy.utils.unregister_class(OBJECT_OT_Rot2Pole)
+
+    rot_mode.unregister()
+
