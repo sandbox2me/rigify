@@ -331,19 +331,38 @@ def fk2ik_arm(obj, fk, ik):
         match_pose_scale(hand, handi)
     else:
         # Upper arm position
-        match_pose_translation(uarm, uarmi)
-        match_pose_rotation(uarm, uarmi)
-        match_pose_scale(uarm, uarmi)
+        mat = get_pose_matrix_in_other_space(uarmi.matrix, uarm)
+        set_pose_translation(uarm, mat.copy())
+        set_pose_rotation(uarm, mat.copy())
+        set_pose_scale(uarm, mat.copy())
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode='POSE')
+        # match_pose_translation(uarm, uarmi)
+        # match_pose_rotation(uarm, uarmi)
+        # match_pose_scale(uarm, uarmi)
 
         # Forearm position
-        #match_pose_translation(hand, handi)
-        match_pose_rotation(farm, farmi)
-        match_pose_scale(farm, farmi)
+        mat = get_pose_matrix_in_other_space(farmi.matrix, farm)
+        set_pose_translation(farm, mat.copy())
+        set_pose_rotation(farm, mat.copy())
+        set_pose_scale(farm, mat.copy())
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode='POSE')
+        #match_pose_translation(farm, farmi)
+        # match_pose_rotation(farm, farmi)
+        # match_pose_scale(farm, farmi)
 
         # Hand position
-        match_pose_translation(hand, handi)
-        match_pose_rotation(hand, handi)
-        match_pose_scale(hand, handi)
+        mat = get_pose_matrix_in_other_space(handi.matrix, hand)
+        set_pose_translation(hand, mat.copy())
+        set_pose_rotation(hand, mat.copy())
+        set_pose_scale(hand, mat.copy())
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode='POSE')
+        
+        # match_pose_translation(hand, handi)
+        # match_pose_rotation(hand, handi)
+        # match_pose_scale(hand, handi)
 
 
 def ik2fk_arm(obj, fk, ik):
@@ -380,16 +399,24 @@ def ik2fk_arm(obj, fk, ik):
 
     else:
         # Hand position
-        match_pose_translation(handi, hand)
-        match_pose_rotation(handi, hand)
-        match_pose_scale(handi, hand)
+        mat = get_pose_matrix_in_other_space(hand.matrix, handi)
+        set_pose_translation(handi, mat.copy())
+        set_pose_rotation(handi, mat.copy())
+        set_pose_scale(handi, mat.copy())
+        # match_pose_translation(handi, hand)
+        # match_pose_rotation(handi, hand)
+        # match_pose_scale(handi, hand)
 
         # Upper Arm position
-        match_pose_translation(uarmi, uarm)
-        match_pose_rotation(uarmi, uarm)
-        match_pose_scale(uarmi, uarm)
+        mat = get_pose_matrix_in_other_space(farm.matrix, farmi)
+        set_pose_translation(farmi, mat.copy())
+        set_pose_rotation(farmi, mat.copy())
+        set_pose_scale(farmi, mat.copy())
+        # match_pose_translation(uarmi, uarm)
+        # match_pose_rotation(uarmi, uarm)
+        # match_pose_scale(uarmi, uarm)
         # Rotation Correction
-        correct_rotation(uarmi, uarm)
+        # correct_rotation(uarmi, uarm)
 
 def fk2ik_leg(obj, fk, ik):
     """ Matches the fk bones in a leg rig to the ik bones.
