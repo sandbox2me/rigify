@@ -168,9 +168,18 @@ def upgradeMetarigTypes(metarig, revert=False):
         rig_defs = outdated_types
 
     for bone in metarig.pose.bones:
-        rg_type = bone.rigify_type
-        if rg_type in rig_defs:
-            bone.rigify_type = rig_defs[rg_type]
+        rig_type = bone.rigify_type
+        if rig_type in rig_defs:
+            bone.rigify_type = rig_defs[rig_type]
+            if 'leg' in rig_type:
+                bone.rigfy_parameters.limb_type = 'leg'
+            if 'arm' in rig_type:
+                bone.rigfy_parameters.limb_type = 'arm'
+            if 'paw' in rig_type:
+                bone.rigfy_parameters.limb_type = 'paw'
+            if rig_type == "basic.copy":
+                bone.rigify_parameters.make_widget = False
+
 
 
 #=======================
