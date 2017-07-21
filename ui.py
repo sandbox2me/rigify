@@ -42,7 +42,7 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.object.type == 'ARMATURE'
+        return context.object.type == 'ARMATURE' and context.active_object.data.get("rig_id") is None
 
     def draw(self, context):
         C = context
@@ -132,7 +132,6 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
                 layout.label(text="Some bones have old legacy rigify_type. Click to upgrade", icon='ERROR')
                 layout.operator("pose.rigify_upgrade_types", text="Upgrade Metarig")
 
-
         elif obj.mode == 'EDIT':
             # Build types list
             collection_name = str(id_store.rigify_collection).replace(" ", "")
@@ -169,7 +168,7 @@ class DATA_PT_rigify_layer_names(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.object.type == 'ARMATURE'
+        return context.object.type == 'ARMATURE' and context.active_object.data.get("rig_id") is None
 
     def draw(self, context):
         layout = self.layout
@@ -504,7 +503,7 @@ class DATA_PT_rigify_bone_groups(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.object.type == 'ARMATURE'
+        return context.object.type == 'ARMATURE' and context.active_object.data.get("rig_id") is None
 
     def draw(self, context):
         obj = context.object
@@ -550,7 +549,7 @@ class BONE_PT_rigify_buttons(bpy.types.Panel):
             return False
         obj = context.object
         if obj:
-            return obj.mode == 'POSE'
+            return obj.mode == 'POSE' and context.active_object.data.get("rig_id") is None
         return False
 
     def draw(self, context):
@@ -634,6 +633,10 @@ class VIEW3D_PT_rigify_animation_tools(bpy.types.Panel):
     bl_context = "posemode"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
+
+    @classmethod
+    def poll(cls, context):
+        return context.object.type == 'ARMATURE' and context.active_object.data.get("rig_id") is not None
 
     def draw(self, context):
         obj = context.active_object
@@ -1277,6 +1280,7 @@ def register():
     bpy.utils.register_class(OBJECT_OT_Rot2Pole)
 
     rot_mode.register()
+
 
 def unregister():
 
