@@ -908,6 +908,7 @@ def FktoIk(rig, window='ALL'):
         bpy.ops.pose.select_all(action='SELECT')
     else:
         pbones = bpy.context.selected_pose_bones
+        bpy.ops.pose.select_all(action='DESELECT')
 
     for b in pbones:
         for group in limb_generated_names:
@@ -978,6 +979,7 @@ def IktoFk(rig, window='ALL'):
         pbones = rig.pose.bones
     else:
         pbones = bpy.context.selected_pose_bones
+        bpy.ops.pose.select_all(action='DESELECT')
 
     for b in pbones:
         for group in limb_generated_names:
@@ -1079,6 +1081,7 @@ def rotPoleToggle(rig, window='ALL', value=False, toggle=False, bake=False):
         pbones = rig.pose.bones
     else:
         pbones = bpy.context.selected_pose_bones
+        bpy.ops.pose.select_all(action='DESELECT')
 
     for b in pbones:
         for group in limb_generated_names:
