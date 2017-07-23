@@ -1210,6 +1210,29 @@ def get_keyed_frames(rig):
     return frames
 
 
+def bones_in_frame(f, rig, *args):
+    """
+    True if one of the bones listed in args is animated at frame f
+    :param f: the frame
+    :param rig: the rig
+    :param args: bone names
+    :return:
+    """
+
+    if rig.animation_data and rig.animation_data.action:
+        fcus = rig.animation_data.action.fcurves
+    else:
+        return False
+
+    for fc in fcus:
+        animated_frames = [kp.co[0] for kp in fc.keyframe_points]
+        for bone in args:
+            if bone in fc.data_path.split('"') and f in animated_frames:
+                return True
+
+    return False
+
+
 def overwrite_prop_animation(rig, bone, prop_name, value, frames):
     act = rig.animation_data.action
     if not act:

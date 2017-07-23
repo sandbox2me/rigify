@@ -26,7 +26,7 @@ from .utils import get_rig_type, MetarigError
 from .utils import write_metarig, write_widget
 from .utils import unique_name
 from .utils import upgradeMetarigTypes, outdated_types
-from .utils import get_keyed_frames
+from .utils import get_keyed_frames, bones_in_frame
 from .utils import overwrite_prop_animation
 from .rigs.utils import get_limb_generated_names
 from . import rig_lists
@@ -905,7 +905,7 @@ def FktoIk(rig, window='ALL'):
 
     if not id_store.rigify_transfer_only_selected:
         pbones = rig.pose.bones
-        bpy.ops.pose.select_all(action='SELECT')
+        bpy.ops.pose.select_all(action='DESELECT')
     else:
         pbones = bpy.context.selected_pose_bones
         bpy.ops.pose.select_all(action='DESELECT')
@@ -929,6 +929,8 @@ def FktoIk(rig, window='ALL'):
                     kwargs = {'uarm_fk': controls[1], 'farm_fk': controls[2], 'hand_fk': controls[3],
                               'uarm_ik': controls[0], 'farm_ik': ik_ctrl[1], 'hand_ik': controls[4],
                               'pole': pole, 'main_parent': parent}
+                    args = (controls[0], controls[1], controls[2], controls[3],
+                            ik_ctrl[1], controls[4], pole)
                 else:
                     func = leg_ik2fk
                     controls = names['controls']
@@ -945,13 +947,18 @@ def FktoIk(rig, window='ALL'):
                               'mfoot_fk': controls[7], 'thigh_ik': controls[0], 'shin_ik': ik_ctrl[1],
                               'foot_ik': controls[6], 'pole': pole, 'footroll': controls[5], 'mfoot_ik': ik_ctrl[2],
                               'main_parent': parent}
+                    args = (controls[0], controls[1], controls[2], controls[3],
+                            ik_ctrl[1], controls[6], controls[5], pole)
 
                 for f in frames:
+                    if not bones_in_frame(f, rig, *args):
+                        continue
                     scn.frame_set(f)
                     func(**kwargs)
                     bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_VisualLocRot')
                     bpy.ops.anim.keyframe_insert_menu(type='Scaling')
 
+                bpy.ops.pose.select_all(action='DESELECT')
                 limb_generated_names.pop(group)
                 break
 
@@ -973,9 +980,11 @@ def IktoFk(rig, window='ALL'):
         frames = [f for f in frames if f in range(id_store.rigify_transfer_start_frame, id_store.rigify_transfer_end_frame+1)]
     elif window == 'CURRENT':
         frames = [scn.frame_current]
+    else:
+        frames = [scn.frame_current]
 
     if not id_store.rigify_transfer_only_selected:
-        bpy.ops.pose.select_all(action='SELECT')
+        bpy.ops.pose.select_all(action='DESELECT')
         pbones = rig.pose.bones
     else:
         pbones = bpy.context.selected_pose_bones
@@ -999,6 +1008,8 @@ def IktoFk(rig, window='ALL'):
                     kwargs = {'uarm_fk': controls[1], 'farm_fk': controls[2], 'hand_fk': controls[3],
                               'uarm_ik': controls[0], 'farm_ik': ik_ctrl[1],
                               'hand_ik': controls[4]}
+                    args = (controls[0], controls[1], controls[2], controls[3],
+                            ik_ctrl[1], controls[4], pole)
                 else:
                     func = leg_fk2ik
                     controls = names['controls']
@@ -1012,11 +1023,18 @@ def IktoFk(rig, window='ALL'):
                     kwargs = {'thigh_fk': controls[1], 'shin_fk': controls[2], 'foot_fk': controls[3],
                               'mfoot_fk': controls[7], 'thigh_ik': controls[0], 'shin_ik': ik_ctrl[1],
                               'foot_ik': ik_ctrl[2], 'mfoot_ik': ik_ctrl[2]}
+                    args = (controls[0], controls[1], controls[2], controls[3],
+                            ik_ctrl[1], controls[6], controls[5], pole)
+
                 for f in frames:
+                    if not bones_in_frame(f, rig, *args):
+                        continue
                     scn.frame_set(f)
                     func(**kwargs)
                     bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_VisualLocRot')
                     bpy.ops.anim.keyframe_insert_menu(type='Scaling')
+
+                bpy.ops.pose.select_all(action='DESELECT')
                 limb_generated_names.pop(group)
                 break
 
