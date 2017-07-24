@@ -962,8 +962,6 @@ def FktoIk(rig, window='ALL'):
                 limb_generated_names.pop(group)
                 break
 
-    # arm = rig.data
-
 
 def IktoFk(rig, window='ALL'):
 

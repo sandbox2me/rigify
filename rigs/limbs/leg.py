@@ -363,7 +363,7 @@ class Rig:
 
         # Rubber hose drivers
         pb = self.obj.pose.bones
-        for i,t in enumerate( tweaks[1:-1] ):
+        for i, t in enumerate(tweaks[1:-1]):
             # Create custom property on tweak bone to control rubber hose
             name = 'rubber_tweak'
 
@@ -406,18 +406,18 @@ class Rig:
     def create_ik(self, parent):
         org_bones = self.org_bones
 
-        bpy.ops.object.mode_set(mode ='EDIT')
+        bpy.ops.object.mode_set(mode='EDIT')
         eb = self.obj.data.edit_bones
 
         ctrl = get_bone_name(org_bones[0], 'ctrl', 'ik')
         mch_ik = get_bone_name(org_bones[0], 'mch', 'ik')
         mch_target = get_bone_name(org_bones[0], 'mch', 'ik_target')
 
-        for o, ik in zip( org_bones, [ ctrl, mch_ik, mch_target ] ):
-            bone = copy_bone( self.obj, o, ik )
+        for o, ik in zip(org_bones, [ctrl, mch_ik, mch_target]):
+            bone = copy_bone(self.obj, o, ik)
 
-            if org_bones.index(o) == len( org_bones ) - 1:
-                eb[ bone ].length /= 4
+            if org_bones.index(o) == len(org_bones) - 1:
+                eb[bone].length /= 4
 
         # Create MCH Stretch
         mch_str = copy_bone(
@@ -687,6 +687,13 @@ class Rig:
         else:
             leg_parent = None
 
+        mch_name = get_bone_name(strip_org(org_bones[0]), 'mch', 'parent_socket')
+        mch_main_parent = copy_bone(self.obj, org_bones[0], mch_name)
+        eb[mch_main_parent].length = eb[org_bones[0]].length / 12
+        eb[mch_main_parent].parent = eb[bones['parent']]
+        eb[mch_main_parent].roll = 0.0
+        eb[bones['main_parent']].parent = eb[mch_main_parent]
+
         # Create heel ctrl bone
         heel = get_bone_name(org_bones[2], 'ctrl', 'heel_ik')
         heel = copy_bone(self.obj, org_bones[2], heel)
@@ -947,6 +954,10 @@ class Rig:
             'use_max_y'   : True,
             'max_y'       : 1.05,
             'owner_space' : 'LOCAL'
+        })
+        make_constraint(self, mch_main_parent, {
+            'constraint': 'COPY_ROTATION',
+            'subtarget': org_bones[0]
         })
 
         # Create ik/fk switch property
@@ -1481,7 +1492,7 @@ def parameters_ui(layout, params):
 
         row = col.row(align=True)
 
-        for i in range(16,24):
+        for i in range(16, 24):
             icon = "NONE"
             if bone_layers[i]:
                 icon = "LAYER_ACTIVE"
@@ -1490,7 +1501,7 @@ def parameters_ui(layout, params):
         col = r.column(align=True)
         row = col.row(align=True)
 
-        for i in range(8,16):
+        for i in range(8, 16):
             icon = "NONE"
             if bone_layers[i]:
                 icon = "LAYER_ACTIVE"
@@ -1498,7 +1509,7 @@ def parameters_ui(layout, params):
 
         row = col.row(align=True)
 
-        for i in range(24,32):
+        for i in range(24, 32):
             icon = "NONE"
             if bone_layers[i]:
                 icon = "LAYER_ACTIVE"
