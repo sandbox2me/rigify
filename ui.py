@@ -55,6 +55,7 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
             WARNING = "Warning: Some features may change after generation"
             show_warning = False
             show_update_metarig = False
+            show_not_updatable = False
 
             check_props = ['IK_follow', 'root/parent', 'FK_limb_follow', 'IK_Stretch']
 
@@ -67,25 +68,50 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
                         break
                 for b in obj.pose.bones:
                     if b.rigify_type in outdated_types.keys():
-                        show_update_metarig = True
-                        break
+                        if outdated_types[b.rigify_type]:
+                            show_update_metarig = True
+                        else:
+                            show_update_metarig = False
+                            show_not_updatable = True
+                            break
 
             if show_warning:
                 layout.label(text=WARNING, icon='ERROR')
 
-            layout.operator("pose.rigify_generate", text="Generate Rig", icon='POSE_HLT')
+            if show_not_updatable:
+                layout.label(text="WARNING: This metarig contains deprecated rigify rig-types and cannot be upgraded automatically.", icon='ERROR')
+                layout.label(text="If you want to use it anyway try enabling the legacy mode before generating again.")
+
+                layout.operator("pose.rigify_switch_to_legacy", text="Switch to Legacy")
+
+            enable_generate_and_advanced = not (show_not_updatable or show_update_metarig)
+
+            if show_update_metarig:
+
+                layout.label(text="This metarig contains old rig-types that can be automatically upgraded to benefit of rigify's new features.", icon='ERROR')
+                layout.label(text= "To use it as-is you need to enable legacy mode.",)
+                layout.operator("pose.rigify_upgrade_types", text="Upgrade Metarig")
+
+            row = layout.row()
+            row.operator("pose.rigify_generate", text="Generate Rig", icon='POSE_HLT')
+            row.enabled = enable_generate_and_advanced
+
             if id_store.rigify_advanced_generation:
                 icon = 'UNLOCKED'
             else:
                 icon = 'LOCKED'
-            layout.prop(id_store, "rigify_advanced_generation", toggle=True, icon=icon)
+
+            col = layout.column()
+            col.enabled = enable_generate_and_advanced
+            row = col.row()
+            row.prop(id_store, "rigify_advanced_generation", toggle=True, icon=icon)
 
             if id_store.rigify_advanced_generation:
 
-                row = layout.row(align=True)
+                row = col.row(align=True)
                 row.prop(id_store, "rigify_generate_mode", expand=True)
 
-                main_row = layout.row(align=True).split(percentage=0.3)
+                main_row = col.row(align=True).split(percentage=0.3)
                 col1 = main_row.column()
                 col2 = main_row.column()
                 col1.label(text="Rig Name")
@@ -123,14 +149,10 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
                 row.prop_search(id_store, "rigify_rig_ui", id_store, "rigify_rig_uis", text="", icon='TEXT')
                 row.enabled = (id_store.rigify_generate_mode == "overwrite")
 
-                row = layout.row()
+                row = col.row()
                 row.prop(id_store, "rigify_force_widget_update")
                 if id_store.rigify_generate_mode == 'new':
                     row.enabled = False
-
-            if show_update_metarig:
-                layout.label(text="Some bones have old legacy rigify_type. Click to upgrade", icon='ERROR')
-                layout.operator("pose.rigify_upgrade_types", text="Upgrade Metarig")
 
         elif obj.mode == 'EDIT':
             # Build types list
@@ -756,6 +778,22 @@ class UpgradeMetarigTypes(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class SwitchToLegacy(bpy.types.Operator):
+    """Switch to Legacy mode"""
+
+    bl_idname = "pose.rigify_switch_to_legacy"
+    bl_label = "Legacy Mode will disable Rigify new features"
+    bl_description = 'Switches Rigify to Legacy Mode'
+    bl_options = {'UNDO'}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
+
+    def execute(self, context):
+        bpy.context.user_preferences.addons['rigify'].preferences.legacy_mode = True
+        return {'FINISHED'}
+
+
 class Sample(bpy.types.Operator):
     """Create a sample metarig to be modified before generating """ \
     """the final rig"""
@@ -923,14 +961,14 @@ def FktoIk(rig, window='ALL'):
                     parent = names['parent']
                     pole = names['pole']
                     rig.pose.bones[controls[0]].bone.select = True
-                    rig.pose.bones[ik_ctrl[1]].bone.select = True
                     rig.pose.bones[controls[4]].bone.select = True
                     rig.pose.bones[pole].bone.select = True
+                    rig.pose.bones[parent].bone.select = True
                     kwargs = {'uarm_fk': controls[1], 'farm_fk': controls[2], 'hand_fk': controls[3],
                               'uarm_ik': controls[0], 'farm_ik': ik_ctrl[1], 'hand_ik': controls[4],
                               'pole': pole, 'main_parent': parent}
                     args = (controls[0], controls[1], controls[2], controls[3],
-                            ik_ctrl[1], controls[4], pole)
+                            controls[4], pole, parent)
                 else:
                     func = leg_ik2fk
                     controls = names['controls']
@@ -939,16 +977,16 @@ def FktoIk(rig, window='ALL'):
                     parent = names['parent']
                     pole = names['pole']
                     rig.pose.bones[controls[0]].bone.select = True
-                    rig.pose.bones[ik_ctrl[1]].bone.select = True
                     rig.pose.bones[controls[6]].bone.select = True
                     rig.pose.bones[controls[5]].bone.select = True
                     rig.pose.bones[pole].bone.select = True
+                    rig.pose.bones[parent].bone.select = True
                     kwargs = {'thigh_fk': controls[1], 'shin_fk': controls[2], 'foot_fk': controls[3],
                               'mfoot_fk': controls[7], 'thigh_ik': controls[0], 'shin_ik': ik_ctrl[1],
                               'foot_ik': controls[6], 'pole': pole, 'footroll': controls[5], 'mfoot_ik': ik_ctrl[2],
                               'main_parent': parent}
                     args = (controls[0], controls[1], controls[2], controls[3],
-                            ik_ctrl[1], controls[6], controls[5], pole)
+                            controls[6], controls[5], pole, parent)
 
                 for f in frames:
                     if not bones_in_frame(f, rig, *args):
@@ -1007,7 +1045,7 @@ def IktoFk(rig, window='ALL'):
                               'uarm_ik': controls[0], 'farm_ik': ik_ctrl[1],
                               'hand_ik': controls[4]}
                     args = (controls[0], controls[1], controls[2], controls[3],
-                            ik_ctrl[1], controls[4], pole)
+                            controls[4], pole, parent)
                 else:
                     func = leg_fk2ik
                     controls = names['controls']
@@ -1022,7 +1060,7 @@ def IktoFk(rig, window='ALL'):
                               'mfoot_fk': controls[7], 'thigh_ik': controls[0], 'shin_ik': ik_ctrl[1],
                               'foot_ik': ik_ctrl[2], 'mfoot_ik': ik_ctrl[2]}
                     args = (controls[0], controls[1], controls[2], controls[3],
-                            ik_ctrl[1], controls[6], controls[5], pole)
+                            controls[6], controls[5], pole, parent)
 
                 for f in frames:
                     if not bones_in_frame(f, rig, *args):
@@ -1091,9 +1129,11 @@ def rotPoleToggle(rig, window='ALL', value=False, toggle=False, bake=False):
         frames = [f for f in frames if f in range(id_store.rigify_transfer_start_frame, id_store.rigify_transfer_end_frame+1)]
     elif window == 'CURRENT':
         frames = [scn.frame_current]
+    else:
+        frames = [scn.frame_current]
 
     if not id_store.rigify_transfer_only_selected:
-        bpy.ops.pose.select_all(action='SELECT')
+        bpy.ops.pose.select_all(action='DESELECT')
         pbones = rig.pose.bones
     else:
         pbones = bpy.context.selected_pose_bones
@@ -1102,6 +1142,12 @@ def rotPoleToggle(rig, window='ALL', value=False, toggle=False, bake=False):
     for b in pbones:
         for group in limb_generated_names:
             names = limb_generated_names[group]
+
+            if toggle:
+                new_pole_vector_value = not rig.pose.bones[names['parent']]['pole_vector']
+            else:
+                new_pole_vector_value = value
+
             if b.name in names.values() or b.name in names['controls'] or b.name in names['ik_ctrl']:
                 if names['limb_type'] == 'arm':
                     func1 = arm_fk2ik
@@ -1111,16 +1157,18 @@ def rotPoleToggle(rig, window='ALL', value=False, toggle=False, bake=False):
                     fk_ctrl = names['fk_ctrl']
                     parent = names['parent']
                     pole = names['pole']
+                    rig.pose.bones[controls[0]].bone.select = not new_pole_vector_value
+                    rig.pose.bones[controls[4]].bone.select = not new_pole_vector_value
+                    rig.pose.bones[parent].bone.select = not new_pole_vector_value
+                    rig.pose.bones[pole].bone.select = new_pole_vector_value
+
                     kwargs1 = {'uarm_fk': controls[1], 'farm_fk': controls[2], 'hand_fk': controls[3],
                               'uarm_ik': controls[0], 'farm_ik': ik_ctrl[1],
                               'hand_ik': controls[4]}
                     kwargs2 = {'uarm_fk': controls[1], 'farm_fk': controls[2], 'hand_fk': controls[3],
                               'uarm_ik': controls[0], 'farm_ik': ik_ctrl[1], 'hand_ik': controls[4],
                               'pole': pole, 'main_parent': parent}
-                    rig.pose.bones[controls[1]].bone.select = False
-                    rig.pose.bones[controls[2]].bone.select = False
-                    rig.pose.bones[controls[3]].bone.select = False
-                    rig.pose.bones[pole].bone.select = True
+                    args = (controls[0], controls[4], pole, parent)
                 else:
                     func1 = leg_fk2ik
                     func2 = leg_ik2fk
@@ -1129,6 +1177,12 @@ def rotPoleToggle(rig, window='ALL', value=False, toggle=False, bake=False):
                     fk_ctrl = names['fk_ctrl']
                     parent = names['parent']
                     pole = names['pole']
+                    rig.pose.bones[controls[0]].bone.select = not new_pole_vector_value
+                    rig.pose.bones[controls[6]].bone.select = not new_pole_vector_value
+                    rig.pose.bones[controls[5]].bone.select = not new_pole_vector_value
+                    rig.pose.bones[parent].bone.select = not new_pole_vector_value
+                    rig.pose.bones[pole].bone.select = new_pole_vector_value
+
                     kwargs1 = {'thigh_fk': controls[1], 'shin_fk': controls[2], 'foot_fk': controls[3],
                               'mfoot_fk': controls[7], 'thigh_ik': controls[0], 'shin_ik': ik_ctrl[1],
                               'foot_ik': ik_ctrl[2], 'mfoot_ik': ik_ctrl[2]}
@@ -1136,18 +1190,11 @@ def rotPoleToggle(rig, window='ALL', value=False, toggle=False, bake=False):
                               'mfoot_fk': controls[7], 'thigh_ik': controls[0], 'shin_ik': ik_ctrl[1],
                               'foot_ik': controls[6], 'pole': pole, 'footroll': controls[5], 'mfoot_ik': ik_ctrl[2],
                               'main_parent': parent}
-                    rig.pose.bones[controls[1]].bone.select = False
-                    rig.pose.bones[controls[2]].bone.select = False
-                    rig.pose.bones[controls[3]].bone.select = False
-                    rig.pose.bones[controls[7]].bone.select = False
-                    rig.pose.bones[pole].bone.select = True
-
-                if toggle:
-                    new_pole_vector_value = not rig.pose.bones[names['parent']]['pole_vector']
-                else:
-                    new_pole_vector_value = value
+                    args = (controls[0], controls[6], controls[5], pole, parent)
 
                 for f in frames:
+                    if not bones_in_frame(f, rig, *args):
+                        continue
                     scn.frame_set(f)
                     func1(**kwargs1)
                     rig.pose.bones[names['parent']]['pole_vector'] = new_pole_vector_value
@@ -1155,8 +1202,9 @@ def rotPoleToggle(rig, window='ALL', value=False, toggle=False, bake=False):
                     if bake:
                         bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_VisualLocRot')
                         bpy.ops.anim.keyframe_insert_menu(type='Scaling')
-                        overwrite_prop_animation(rig, rig.pose.bones[parent], 'pole_vector', new_pole_vector_value,
-                                                 [f])
+                        overwrite_prop_animation(rig, rig.pose.bones[parent], 'pole_vector', new_pole_vector_value, [f])
+
+                bpy.ops.pose.select_all(action='DESELECT')
                 limb_generated_names.pop(group)
                 break
     scn.frame_set(0)
@@ -1286,6 +1334,7 @@ def register():
     bpy.utils.register_class(LayerInit)
     bpy.utils.register_class(Generate)
     bpy.utils.register_class(UpgradeMetarigTypes)
+    bpy.utils.register_class(SwitchToLegacy)
     bpy.utils.register_class(Sample)
     bpy.utils.register_class(EncodeMetarig)
     bpy.utils.register_class(EncodeMetarigSample)
@@ -1321,6 +1370,7 @@ def unregister():
     bpy.utils.unregister_class(LayerInit)
     bpy.utils.unregister_class(Generate)
     bpy.utils.unregister_class(UpgradeMetarigTypes)
+    bpy.utils.unregister_class(SwitchToLegacy)
     bpy.utils.unregister_class(Sample)
     bpy.utils.unregister_class(EncodeMetarig)
     bpy.utils.unregister_class(EncodeMetarigSample)

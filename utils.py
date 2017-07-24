@@ -47,13 +47,22 @@ outdated_types = {"pitchipoy.limbs.super_limb": "limbs.super_limb",
                   "pitchipoy.limbs.super_leg": "limbs.super_limb",
                   "pitchipoy.limbs.super_front_paw": "limbs.super_limb",
                   "pitchipoy.limbs.super_rear_paw": "limbs.super_limb",
+                  "pitchipoy.limbs.super_finger": "limbs.super_finger",
                   "pitchipoy.super_torso_turbo": "spines.super_spine",
                   "pitchipoy.simple_tentacle": "limbs.simple_tentacle",
                   "pitchipoy.super_face": "faces.super_face",
                   "pitchipoy.super_palm": "limbs.super_palm",
                   "pitchipoy.super_copy": "basic.super_copy",
+                  "pitchipoy.tentacle": "",
                   "palm": "limbs.super_palm",
-                  "basic.copy": "basic.super_copy"}
+                  "basic.copy": "basic.super_copy",
+                  "biped.arm": "",
+                  "biped.leg": "",
+                  "finger": "",
+                  "neck_short": "",
+                  "misc.delta": "",
+                  "spine": ""
+                  }
 
 #=======================================================================
 # Error handling
