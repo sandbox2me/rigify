@@ -35,6 +35,17 @@ from . import generate
 from . import rot_mode
 
 
+class DATA_UL_rigify_template_list(bpy.types.UIList):
+    """UIList subclass, to disable renaming in UI"""
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        ob = data
+        template = item
+        if template:
+            layout.label(text=template.name, translate=False, icon_value=icon)
+        else:
+            layout.label(text="", translate=False, icon_value=icon)
+
+
 class DATA_PT_rigify_buttons(bpy.types.Panel):
     bl_label = "Rigify Buttons"
     bl_space_type = 'PROPERTIES'
@@ -111,7 +122,7 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
                 col.operator("pose.rigify_template_init")
             else:
                 col.label("UI template for rig:")
-                col.template_list("UI_UL_list", "rigify_templates", armature_id_store, "rigify_templates", armature_id_store, "rigify_active_template")
+                col.template_list("DATA_UL_rigify_template_list", "rigify_templates", armature_id_store, "rigify_templates", armature_id_store, "rigify_active_template")
 
             col.separator()
             row = col.row()
@@ -1349,6 +1360,7 @@ class OBJECT_OT_Rot2Pole(bpy.types.Operator):
 
 def register():
 
+    bpy.utils.register_class(DATA_UL_rigify_template_list)
     bpy.utils.register_class(DATA_OT_rigify_add_bone_groups)
     bpy.utils.register_class(DATA_OT_rigify_use_standard_colors)
     bpy.utils.register_class(DATA_OT_rigify_apply_selection_colors)
@@ -1386,6 +1398,7 @@ def register():
 
 def unregister():
 
+    bpy.utils.unregister_class(DATA_UL_rigify_template_list)
     bpy.utils.unregister_class(DATA_OT_rigify_add_bone_groups)
     bpy.utils.unregister_class(DATA_OT_rigify_use_standard_colors)
     bpy.utils.unregister_class(DATA_OT_rigify_apply_selection_colors)

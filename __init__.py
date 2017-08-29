@@ -332,7 +332,7 @@ def register():
         bpy.context.user_preferences.addons['rigify'].preferences.legacy_mode = True
     IDStore = bpy.types.Armature
     IDStore.rigify_templates = bpy.props.CollectionProperty(type=RigifyTemplate)
-    IDStore.rigify_active_template = bpy.props.IntProperty(name="Rigify Active Template", description="The selected ui template")
+    IDStore.rigify_active_template = bpy.props.IntProperty(name="Rigify Active Template", description="The selected ui template", default=1)
 
     # Add rig parameters
     for rig in rig_lists.rig_list:
