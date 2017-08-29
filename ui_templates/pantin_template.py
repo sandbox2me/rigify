@@ -21,7 +21,7 @@ import bpy
 from mathutils import Matrix, Vector
 from math import acos, pi
 
-# rig_id = "%s"
+rig_id = "%s"
 
 
 #######################
@@ -56,7 +56,7 @@ def z_index_same(member_index, flip, bone_index, extra_offset=0.0):
 class Rigify_Swap_Bones(bpy.types.Operator):
     """ Swap left and right bones
     """
-    bl_idname = "pose.rigify_swap_bones"# + rig_id
+    bl_idname = "pose.rigify_swap_bones" + rig_id
     bl_label = "Rigify Swap left and right selected bones"
     bl_options = {'UNDO'}
 
@@ -78,7 +78,7 @@ class Rigify_Swap_Bones(bpy.types.Operator):
             swapped_name = swap_LR(pb.name)
             if swapped_name is not None:
                 other = context.object.pose.bones[swapped_name]
-                
+
                 tmp_matrix = pb.matrix_basis.copy()
                 pb.matrix_basis = other.matrix_basis
                 other.matrix_basis = tmp_matrix
@@ -91,7 +91,7 @@ class Rigify_Swap_Bones(bpy.types.Operator):
 
 class Rigify_Fill_Members(bpy.types.Operator):
     """Construct member and bone structure"""
-    bl_idname = "pose.rigify_fill_members"# + rig_id
+    bl_idname = "pose.rigify_fill_members" + rig_id
     bl_label = "Construct member and bone structure"
 
 
@@ -101,7 +101,7 @@ class Rigify_Fill_Members(bpy.types.Operator):
 
     def execute(self, context):
         obj = context.object
-        
+
         obj.pantin_members.clear()
         members = {}
         for pbone in obj.pose.bones:
@@ -112,7 +112,7 @@ class Rigify_Fill_Members(bpy.types.Operator):
                 members[pbone['member_index']] = []
             members[pbone['member_index']].append((pbone['bone_index'], pbone.name))
         # print(members)
-        
+
         for member, bones in sorted(members.items(), key=lambda i:i[0], reverse=True):
             m = obj.pantin_members.add()
             m.index = member
@@ -120,12 +120,12 @@ class Rigify_Fill_Members(bpy.types.Operator):
                 b = m.bones.add()
                 b.index = bone[0]
                 b.name = bone[1]
-            
+
         return {'FINISHED'}
 
 class Rigify_Reapply_Members(bpy.types.Operator):
     """ Change members' order"""
-    bl_idname = "pose.rigify_reapply_order_members"# + rig_id
+    bl_idname = "pose.rigify_reapply_order_members" + rig_id
     bl_label = "Reapply previous members' order"
     bl_options = {'UNDO'}
 
@@ -136,7 +136,7 @@ class Rigify_Reapply_Members(bpy.types.Operator):
 
     def execute(self, context):
         obj = context.object
-        
+
         for member in obj.pantin_members:
             for bone in member.bones:
                 try:
@@ -146,12 +146,12 @@ class Rigify_Reapply_Members(bpy.types.Operator):
                     continue
                 pb['member_index'] = member.index
                 pb['bone_index'] = bone.index
-            
+
         return {'FINISHED'}
 
 class Rigify_Sort_Doubles(bpy.types.Operator):
     """Sort bones which have the same index"""
-    bl_idname = "pose.rigify_sort_doubles"# + rig_id
+    bl_idname = "pose.rigify_sort_doubles" + rig_id
     bl_label = "Sort double bones"
     bl_options = {'UNDO'}
 
@@ -162,11 +162,11 @@ class Rigify_Sort_Doubles(bpy.types.Operator):
 
     def execute(self, context):
         obj = context.object
-        
+
         for member in obj.pantin_members:
             bone_indices = [[bone.index, bone.name] for bone in member.bones]
             bone_indices.sort(key=lambda e: e[0])
-            
+
             for i, bone in enumerate(bone_indices):
                 try:
                     pb = obj.pose.bones[bone[1]]
@@ -180,7 +180,7 @@ class Rigify_Sort_Doubles(bpy.types.Operator):
 
 class Rigify_Reorder_Members(bpy.types.Operator):
     """ Change members' order"""
-    bl_idname = "pose.rigify_reorder_members"# + rig_id
+    bl_idname = "pose.rigify_reorder_members" + rig_id
     bl_label = "Change members' order"
     bl_options = {'UNDO'}
 
@@ -241,16 +241,16 @@ class Rigify_Reorder_Members(bpy.types.Operator):
                 # # active_member.active_bone += 1
                 # # bone0.index += 1
                 # # bone1.index -= 1
-            
+
         mode = bpy.context.mode
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.object.mode_set(mode=mode)
-        
+
         return {'FINISHED'}
 
 class Rigify_Reorder_Bones(bpy.types.Operator):
     """ Change bones' order"""
-    bl_idname = "pose.rigify_reorder_bones"# + rig_id
+    bl_idname = "pose.rigify_reorder_bones" + rig_id
     bl_label = "Change bones' order"
     bl_options = {'UNDO'}
 
@@ -312,11 +312,11 @@ class Rigify_Reorder_Bones(bpy.types.Operator):
                 active_member.active_bone += 1
                 bone0.index += 1
                 bone1.index -= 1
-            
+
         mode = bpy.context.mode
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.object.mode_set(mode=mode)
-        
+
         return {'FINISHED'}
 
 class PantinBones(bpy.types.PropertyGroup):
@@ -406,7 +406,7 @@ class DATA_PT_members_panel(bpy.types.Panel):
             if id_store.pantin_members and len(id_store.pantin_members):
                 box = layout.box()
                 col = box.column()
-                
+
                 for i, m in enumerate(id_store.pantin_members):
                     row = col.row(align=True)
                     row.alignment = 'EXPAND'
