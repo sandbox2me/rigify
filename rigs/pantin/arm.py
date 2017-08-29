@@ -116,16 +116,6 @@ class Rig:
             pantin_utils.create_aligned_circle_widget(
                 self.obj, elimb_ik, radius=widget_size)
 
-            # Bone groups
-            if s == '.R':
-                pantin_utils.assign_bone_group(self.obj, ulimb_ik, 'R')
-                pantin_utils.assign_bone_group(self.obj, joint_str, 'R')
-                pantin_utils.assign_bone_group(self.obj, elimb_ik, 'R')
-            if s == '.L':
-                pantin_utils.assign_bone_group(self.obj, ulimb_ik, 'L')
-                pantin_utils.assign_bone_group(self.obj, joint_str, 'L')
-                pantin_utils.assign_bone_group(self.obj, elimb_ik, 'L')
-
             # Constraints
             for org, ctrl in zip(side_org_bones, [ulimb_str,
                                                   flimb_str,

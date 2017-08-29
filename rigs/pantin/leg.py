@@ -268,20 +268,6 @@ class Rig:
             pantin_utils.create_aligned_crescent_widget(
                 self.obj, roll_fr, radius=side_factor * pb[roll_fr].length / 2)
 
-            # Bone groups
-            if s == '.R':
-                pantin_utils.assign_bone_group(self.obj, ulimb_ik, 'R')
-                pantin_utils.assign_bone_group(self.obj, joint_str, 'R')
-                pantin_utils.assign_bone_group(self.obj, elimb_ik, 'R')
-                pantin_utils.assign_bone_group(self.obj, toe_ctl, 'R')
-                pantin_utils.assign_bone_group(self.obj, roll_fr, 'R')
-            if s == '.L':
-                pantin_utils.assign_bone_group(self.obj, ulimb_ik, 'L')
-                pantin_utils.assign_bone_group(self.obj, joint_str, 'L')
-                pantin_utils.assign_bone_group(self.obj, elimb_ik, 'L')
-                pantin_utils.assign_bone_group(self.obj, toe_ctl, 'L')
-                pantin_utils.assign_bone_group(self.obj, roll_fr, 'L')
-
             # Constraints
             foot_fr_p = pb[foot_fr]
             heel_fr_p = pb[heel_fr]
