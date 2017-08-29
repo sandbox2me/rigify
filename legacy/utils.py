@@ -24,14 +24,11 @@ import importlib
 import math
 import random
 import time
-import re
-import os
-from mathutils import Vector, Matrix, Color
+from mathutils import Vector, Matrix
 from rna_prop_ui import rna_idprop_ui_prop_get
 
 RIG_DIR = "rigs"  # Name of the directory where rig types are kept
 METARIG_DIR = "metarigs"  # Name of the directory where metarigs are kept
-TEMPLATE_DIR = "ui_templates"  # Name of the directory where ui templates are kept
 
 ORG_PREFIX = "ORG-"  # Prefix of original bones.
 MCH_PREFIX = "MCH-"  # Prefix of mechanism bones.
@@ -43,27 +40,6 @@ WGT_LAYERS = [x == 19 for x in range(0, 20)]  # Widgets go on the last scene lay
 
 MODULE_NAME = "rigify"  # Windows/Mac blender is weird, so __package__ doesn't work
 
-outdated_types = {"pitchipoy.limbs.super_limb": "limbs.super_limb",
-                  "pitchipoy.limbs.super_arm": "limbs.super_limb",
-                  "pitchipoy.limbs.super_leg": "limbs.super_limb",
-                  "pitchipoy.limbs.super_front_paw": "limbs.super_limb",
-                  "pitchipoy.limbs.super_rear_paw": "limbs.super_limb",
-                  "pitchipoy.limbs.super_finger": "limbs.super_finger",
-                  "pitchipoy.super_torso_turbo": "spines.super_spine",
-                  "pitchipoy.simple_tentacle": "limbs.simple_tentacle",
-                  "pitchipoy.super_face": "faces.super_face",
-                  "pitchipoy.super_palm": "limbs.super_palm",
-                  "pitchipoy.super_copy": "basic.super_copy",
-                  "pitchipoy.tentacle": "",
-                  "palm": "limbs.super_palm",
-                  "basic.copy": "basic.super_copy",
-                  "biped.arm": "",
-                  "biped.leg": "",
-                  "finger": "",
-                  "neck_short": "",
-                  "misc.delta": "",
-                  "spine": ""
-                  }
 
 #=======================================================================
 # Error handling
@@ -81,23 +57,6 @@ class MetarigError(Exception):
 #=======================================================================
 # Name manipulation
 #=======================================================================
-
-def strip_trailing_number(s):
-    m = re.search(r'\.(\d{3})$', s)
-    return s[0:-4] if m else s
-
-
-def unique_name(collection, base_name):
-    base_name = strip_trailing_number(base_name)
-    count = 1
-    name = base_name
-
-    while collection.get(name):
-        name = "%s.%03d" % (base_name, count)
-        count += 1
-    return name
-
-
 def org_name(name):
     """ Returns the name with ORG_PREFIX stripped from it.
     """
@@ -116,14 +75,6 @@ def strip_org(name):
         return name
 org_name = strip_org
 
-
-def strip_mch(name):
-    """ Returns the name with ORG_PREFIX stripped from it.
-        """
-    if name.startswith(MCH_PREFIX):
-        return name[len(MCH_PREFIX):]
-    else:
-        return name
 
 def org(name):
     """ Prepends the ORG_PREFIX to a name if it doesn't already have
@@ -165,37 +116,9 @@ def insert_before_lr(name, text):
         return name + text
 
 
-def upgradeMetarigTypes(metarig, revert=False):
-    """Replaces rigify_type properties from old versions with their current names
-
-    :param revert: revert types to previous version (if old type available)
-    """
-
-    if revert:
-        vals = list(outdated_types.values())
-        rig_defs = {v: k for k, v in outdated_types.items() if vals.count(v) == 1}
-    else:
-        rig_defs = outdated_types
-
-    for bone in metarig.pose.bones:
-        rig_type = bone.rigify_type
-        if rig_type in rig_defs:
-            bone.rigify_type = rig_defs[rig_type]
-            if 'leg' in rig_type:
-                bone.rigfy_parameters.limb_type = 'leg'
-            if 'arm' in rig_type:
-                bone.rigfy_parameters.limb_type = 'arm'
-            if 'paw' in rig_type:
-                bone.rigfy_parameters.limb_type = 'paw'
-            if rig_type == "basic.copy":
-                bone.rigify_parameters.make_widget = False
-
-
-
 #=======================
 # Bone manipulation
 #=======================
-
 def new_bone(obj, bone_name):
     """ Adds a new bone to the given armature object.
         Returns the resulting bone's name.
@@ -211,7 +134,6 @@ def new_bone(obj, bone_name):
         return name
     else:
         raise MetarigError("Can't add new bone '%s' outside of edit mode" % bone_name)
-
 
 def copy_bone_simple(obj, bone_name, assign_name=''):
     """ Makes a copy of the given bone in the given armature object.
@@ -241,7 +163,6 @@ def copy_bone_simple(obj, bone_name, assign_name=''):
         return bone_name_2
     else:
         raise MetarigError("Cannot copy bones outside of edit mode")
-
 
 def copy_bone(obj, bone_name, assign_name=''):
     """ Makes a copy of the given bone in the given armature object.
@@ -474,9 +395,8 @@ def create_widget(rig, bone_name, bone_transform_name=None):
     if bone_transform_name is None:
         bone_transform_name = bone_name
 
-    obj_name = WGT_PREFIX + rig.name + '_' + bone_name
+    obj_name = WGT_PREFIX + bone_name
     scene = bpy.context.scene
-    id_store = bpy.context.window_manager
 
     # Check if it already exists in the scene
     if obj_name in scene.objects:
@@ -500,9 +420,6 @@ def create_widget(rig, bone_name, bone_transform_name=None):
 
         # Move object to bone position and set layers
         obj_to_bone(obj, rig, bone_transform_name)
-        wgts_group_name = 'WGTS_' + rig.name
-        if wgts_group_name in bpy.data.objects.keys():
-            obj.parent = bpy.data.objects[wgts_group_name]
         obj.layers = WGT_LAYERS
 
         return obj
@@ -547,23 +464,6 @@ def create_cube_widget(rig, bone_name, radius=0.5, bone_transform_name=None):
     if obj is not None:
         r = radius
         verts = [(r, r, r), (r, -r, r), (-r, -r, r), (-r, r, r), (r, r, -r), (r, -r, -r), (-r, -r, -r), (-r, r, -r)]
-        edges = [(0, 1), (1, 2), (2, 3), (3, 0), (4, 5), (5, 6), (6, 7), (7, 4), (0, 4), (1, 5), (2, 6), (3, 7)]
-        mesh = obj.data
-        mesh.from_pydata(verts, edges, [])
-        mesh.update()
-
-
-def create_chain_widget(rig, bone_name, radius=0.5, invert=False, bone_transform_name=None):
-    """Creates a basic chain widget
-    """
-    obj = create_widget(rig, bone_name, bone_transform_name)
-    if obj != None:
-        r = radius
-        rh = radius/2
-        if invert:
-            verts = [(rh, rh, rh), (r, -r, r), (-r, -r, r), (-rh, rh, rh), (rh, rh, -rh), (r, -r, -r), (-r, -r, -r), (-rh, rh, -rh)]
-        else:
-            verts = [(r, r, r), (rh, -rh, rh), (-rh, -rh, rh), (-r, r, r), (r, r, -r), (rh, -rh, -rh), (-rh, -rh, -rh), (-r, r, -r)]
         edges = [(0, 1), (1, 2), (2, 3), (3, 0), (4, 5), (5, 6), (6, 7), (7, 4), (0, 4), (1, 5), (2, 6), (3, 7)]
         mesh = obj.data
         mesh.from_pydata(verts, edges, [])
@@ -645,156 +545,6 @@ def create_root_widget(rig, bone_name, bone_transform_name=None):
     if obj is not None:
         verts = [(0.7071067690849304, 0.7071067690849304, 0.0), (0.7071067690849304, -0.7071067690849304, 0.0), (-0.7071067690849304, 0.7071067690849304, 0.0), (-0.7071067690849304, -0.7071067690849304, 0.0), (0.8314696550369263, 0.5555701851844788, 0.0), (0.8314696550369263, -0.5555701851844788, 0.0), (-0.8314696550369263, 0.5555701851844788, 0.0), (-0.8314696550369263, -0.5555701851844788, 0.0), (0.9238795042037964, 0.3826834261417389, 0.0), (0.9238795042037964, -0.3826834261417389, 0.0), (-0.9238795042037964, 0.3826834261417389, 0.0), (-0.9238795042037964, -0.3826834261417389, 0.0), (0.9807852506637573, 0.19509035348892212, 0.0), (0.9807852506637573, -0.19509035348892212, 0.0), (-0.9807852506637573, 0.19509035348892212, 0.0), (-0.9807852506637573, -0.19509035348892212, 0.0), (0.19509197771549225, 0.9807849526405334, 0.0), (0.19509197771549225, -0.9807849526405334, 0.0), (-0.19509197771549225, 0.9807849526405334, 0.0), (-0.19509197771549225, -0.9807849526405334, 0.0), (0.3826850652694702, 0.9238788485527039, 0.0), (0.3826850652694702, -0.9238788485527039, 0.0), (-0.3826850652694702, 0.9238788485527039, 0.0), (-0.3826850652694702, -0.9238788485527039, 0.0), (0.5555717945098877, 0.8314685821533203, 0.0), (0.5555717945098877, -0.8314685821533203, 0.0), (-0.5555717945098877, 0.8314685821533203, 0.0), (-0.5555717945098877, -0.8314685821533203, 0.0), (0.19509197771549225, 1.2807848453521729, 0.0), (0.19509197771549225, -1.2807848453521729, 0.0), (-0.19509197771549225, 1.2807848453521729, 0.0), (-0.19509197771549225, -1.2807848453521729, 0.0), (1.280785322189331, 0.19509035348892212, 0.0), (1.280785322189331, -0.19509035348892212, 0.0), (-1.280785322189331, 0.19509035348892212, 0.0), (-1.280785322189331, -0.19509035348892212, 0.0), (0.3950919806957245, 1.2807848453521729, 0.0), (0.3950919806957245, -1.2807848453521729, 0.0), (-0.3950919806957245, 1.2807848453521729, 0.0), (-0.3950919806957245, -1.2807848453521729, 0.0), (1.280785322189331, 0.39509034156799316, 0.0), (1.280785322189331, -0.39509034156799316, 0.0), (-1.280785322189331, 0.39509034156799316, 0.0), (-1.280785322189331, -0.39509034156799316, 0.0), (0.0, 1.5807849168777466, 0.0), (0.0, -1.5807849168777466, 0.0), (1.5807852745056152, 0.0, 0.0), (-1.5807852745056152, 0.0, 0.0)]
         edges = [(0, 4), (1, 5), (2, 6), (3, 7), (4, 8), (5, 9), (6, 10), (7, 11), (8, 12), (9, 13), (10, 14), (11, 15), (16, 20), (17, 21), (18, 22), (19, 23), (20, 24), (21, 25), (22, 26), (23, 27), (0, 24), (1, 25), (2, 26), (3, 27), (16, 28), (17, 29), (18, 30), (19, 31), (12, 32), (13, 33), (14, 34), (15, 35), (28, 36), (29, 37), (30, 38), (31, 39), (32, 40), (33, 41), (34, 42), (35, 43), (36, 44), (37, 45), (38, 44), (39, 45), (40, 46), (41, 46), (42, 47), (43, 47)]
-        mesh = obj.data
-        mesh.from_pydata(verts, edges, [])
-        mesh.update()
-
-
-def create_neck_bend_widget(rig, bone_name, radius=1.0, head_tail=0.0, bone_transform_name=None):
-    obj = create_widget(rig, bone_name, bone_transform_name)
-    size = 2.0
-    if obj != None:
-        v = [(-0.08855080604553223 * size, 0.7388765811920166 * size, -0.3940150737762451 * size),
-                 (0.08855044841766357 * size, 0.7388765811920166 * size, -0.3940150737762451 * size),
-                 (0.17710095643997192 * size, 0.5611097812652588 * size, -0.6478927135467529 * size),
-                 (-4.0892032870942785e-07 * size, 0.4087378978729248 * size, -0.865501880645752 * size),
-                 (-0.17710143327713013 * size, 0.5611097812652588 * size, -0.6478922367095947 * size),
-                 (0.08855026960372925 * size, 0.5611097812652588 * size, -0.6478924751281738 * size),
-                 (-0.08855092525482178 * size, 0.5611097812652588 * size, -0.6478927135467529 * size),
-                 (-0.6478927135467529 * size, 0.5611097812652588 * size, 0.08855098485946655 * size),
-                 (-0.6478927135467529 * size, 0.5611097812652588 * size, -0.08855020999908447 * size),
-                 (-0.6478924751281738 * size, 0.5611097812652588 * size, 0.17710155248641968 * size),
-                 (-0.865501880645752 * size, 0.4087378978729248 * size, 4.6876743908796925e-07 * size),
-                 (-0.647892951965332 * size, 0.5611097812652588 * size, -0.17710083723068237 * size),
-                 (-0.39401543140411377 * size, 0.7388765811920166 * size, -0.08855029940605164 * size),
-                 (-0.39401543140411377 * size, 0.7388765811920166 * size, 0.08855095505714417 * size),
-                 (0.6478927135467529 * size, 0.5611097812652588 * size, -0.08855059742927551 * size),
-                 (0.6478927135467529 * size, 0.5611097812652588 * size, 0.08855065703392029 * size),
-                 (0.6478924751281738 * size, 0.5611097812652588 * size, -0.17710113525390625 * size),
-                 (0.865501880645752 * size, 0.4087378978729248 * size, -3.264514703005261e-08 * size),
-                 (0.647892951965332 * size, 0.5611097812652588 * size, 0.1771012544631958 * size),
-                 (0.08855065703392029 * size, 0.7388765811920166 * size, 0.3940155506134033 * size),
-                 (-0.08855056762695312 * size, 0.7388765811920166 * size, 0.3940155506134033 * size),
-                 (-0.17710107564926147 * size, 0.5611097812652588 * size, 0.647892951965332 * size),
-                 (2.244429140318971e-07 * size, 0.4087378978729248 * size, 0.865502119064331 * size),
-                 (0.17710131406784058 * size, 0.5611097812652588 * size, 0.6478927135467529 * size),
-                 (-0.08855044841766357 * size, 0.5611097812652588 * size, 0.647892951965332 * size),
-                 (0.08855074644088745 * size, 0.5611097812652588 * size, 0.647892951965332 * size),
-                 (0.3940153121948242 * size, 0.7388765811920166 * size, 0.08855071663856506 * size),
-                 (0.39401519298553467 * size, 0.7388765811920166 * size, -0.08855047821998596 * size),
-                 (-8.416645869147032e-08 * size, 0.8255770206451416 * size, -0.2656517028808594 * size),
-                 (-0.06875583529472351 * size, 0.8255770206451416 * size, -0.2565997838973999 * size),
-                 (-0.13282597064971924 * size, 0.8255770206451416 * size, -0.2300611138343811 * size),
-                 (-0.18784427642822266 * size, 0.8255770206451416 * size, -0.18784409761428833 * size),
-                 (-0.2300613522529602 * size, 0.8255770206451416 * size, -0.1328257918357849 * size),
-                 (-0.256600022315979 * size, 0.8255770206451416 * size, -0.06875564157962799 * size),
-                 (-0.2656519412994385 * size, 0.8255770206451416 * size, 9.328307726264029e-08 * size),
-                 (-0.25660014152526855 * size, 0.8255770206451416 * size, 0.06875583529472351 * size),
-                 (-0.2300613522529602 * size, 0.8255770206451416 * size, 0.13282597064971924 * size),
-                 (-0.18784433603286743 * size, 0.8255770206451416 * size, 0.18784421682357788 * size),
-                 (-0.1328260898590088 * size, 0.8255770206451416 * size, 0.23006129264831543 * size),
-                 (-0.06875592470169067 * size, 0.8255770206451416 * size, 0.256600022315979 * size),
-                 (-1.8761508613351907e-07 * size, 0.8255770206451416 * size, 0.2656519412994385 * size),
-                 (0.06875556707382202 * size, 0.8255770206451416 * size, 0.2566000819206238 * size),
-                 (0.13282573223114014 * size, 0.8255770206451416 * size, 0.23006141185760498 * size),
-                 (0.18784403800964355 * size, 0.8255770206451416 * size, 0.1878443956375122 * size),
-                 (0.23006105422973633 * size, 0.8255770206451416 * size, 0.1328260898590088 * size),
-                 (0.25659990310668945 * size, 0.8255770206451416 * size, 0.06875596940517426 * size),
-                 (0.2656517028808594 * size, 0.8255770206451416 * size, 2.3684407324253698e-07 * size),
-                 (0.25659990310668945 * size, 0.8255770206451416 * size, -0.06875550746917725 * size),
-                 (0.23006117343902588 * size, 0.8255770206451416 * size, -0.13282567262649536 * size),
-                 (0.18784427642822266 * size, 0.8255770206451416 * size, -0.18784397840499878 * size),
-                 (0.13282597064971924 * size, 0.8255770206451416 * size, -0.23006099462509155 * size),
-                 (0.0687558501958847 * size, 0.8255770206451416 * size, -0.2565997838973999 * size), ]
-        edges = [(1, 0), (3, 2), (5, 2), (4, 3), (6, 4), (1, 5), (0, 6), (13, 7), (12, 8), (7, 9), (9, 10), (8, 11),
-                 (27, 14), (26, 15), (14, 16), (16, 17), (15, 18), (17, 18), (10, 11), (12, 13), (20, 19), (22, 21),
-                 (24, 21), (23, 22), (29, 28), (30, 29), (31, 30), (32, 31), (33, 32), (34, 33), (35, 34), (36, 35),
-                 (37, 36), (38, 37), (39, 38), (40, 39), (41, 40), (42, 41), (43, 42), (44, 43), (45, 44), (46, 45),
-                 (47, 46), (48, 47), (49, 48), (50, 49), (51, 50), (28, 51), (26, 27), (25, 23), (20, 24),
-                 (19, 25), ]
-
-        verts = [(a[0] * radius, head_tail, a[2] * radius) for a in v]
-        mesh = obj.data
-        mesh.from_pydata(verts, edges, [])
-        mesh.update()
-
-
-def create_neck_tweak_widget(rig, bone_name, size=1.0, bone_transform_name=None):
-    obj = create_widget(rig, bone_name, bone_transform_name)
-
-    if obj != None:
-        verts = [(0.3535533845424652 * size, 0.3535533845424652 * size, 0.0 * size),
-                 (0.4619397521018982 * size, 0.19134171307086945 * size, 0.0 * size),
-                 (0.5 * size, -2.1855694143368964e-08 * size, 0.0 * size),
-                 (0.4619397521018982 * size, -0.19134175777435303 * size, 0.0 * size),
-                 (0.3535533845424652 * size, -0.3535533845424652 * size, 0.0 * size),
-                 (0.19134174287319183 * size, -0.4619397521018982 * size, 0.0 * size),
-                 (7.549790126404332e-08 * size, -0.5 * size, 0.0 * size),
-                 (-0.1913416087627411 * size, -0.46193981170654297 * size, 0.0 * size),
-                 (-0.35355329513549805 * size, -0.35355350375175476 * size, 0.0 * size),
-                 (-0.4619397521018982 * size, -0.19134178757667542 * size, 0.0 * size),
-                 (-0.5 * size, 5.962440319251527e-09 * size, 0.0 * size),
-                 (-0.4619397222995758 * size, 0.1913418024778366 * size, 0.0 * size),
-                 (-0.35355326533317566 * size, 0.35355350375175476 * size, 0.0 * size),
-                 (-0.19134148955345154 * size, 0.46193987131118774 * size, 0.0 * size),
-                 (3.2584136988589307e-07 * size, 0.5 * size, 0.0 * size),
-                 (0.1913420855998993 * size, 0.46193960309028625 * size, 0.0 * size),
-                 (7.450580596923828e-08 * size, 0.46193960309028625 * size, 0.19134199619293213 * size),
-                 (5.9254205098113744e-08 * size, 0.5 * size, 2.323586443253589e-07 * size),
-                 (4.470348358154297e-08 * size, 0.46193987131118774 * size, -0.1913415789604187 * size),
-                 (2.9802322387695312e-08 * size, 0.35355350375175476 * size, -0.3535533547401428 * size),
-                 (2.9802322387695312e-08 * size, 0.19134178757667542 * size, -0.46193981170654297 * size),
-                 (5.960464477539063e-08 * size, -1.1151834122813398e-08 * size, -0.5000000596046448 * size),
-                 (5.960464477539063e-08 * size, -0.1913418024778366 * size, -0.46193984150886536 * size),
-                 (5.960464477539063e-08 * size, -0.35355350375175476 * size, -0.3535533845424652 * size),
-                 (7.450580596923828e-08 * size, -0.46193981170654297 * size, -0.19134166836738586 * size),
-                 (9.348272556053416e-08 * size, -0.5 * size, 1.624372103492533e-08 * size),
-                 (1.043081283569336e-07 * size, -0.4619397521018982 * size, 0.19134168326854706 * size),
-                 (1.1920928955078125e-07 * size, -0.3535533845424652 * size, 0.35355329513549805 * size),
-                 (1.1920928955078125e-07 * size, -0.19134174287319183 * size, 0.46193966269493103 * size),
-                 (1.1920928955078125e-07 * size, -4.7414250303745575e-09 * size, 0.49999991059303284 * size),
-                 (1.1920928955078125e-07 * size, 0.19134172797203064 * size, 0.46193966269493103 * size),
-                 (8.940696716308594e-08 * size, 0.3535533845424652 * size, 0.35355329513549805 * size),
-                 (0.3535534739494324 * size, 0.0 * size, 0.35355329513549805 * size),
-                 (0.1913418173789978 * size, -2.9802322387695312e-08 * size, 0.46193966269493103 * size),
-                 (8.303572940349113e-08 * size, -5.005858838558197e-08 * size, 0.49999991059303284 * size),
-                 (-0.19134165346622467 * size, -5.960464477539063e-08 * size, 0.46193966269493103 * size),
-                 (-0.35355329513549805 * size, -8.940696716308594e-08 * size, 0.35355329513549805 * size),
-                 (-0.46193963289260864 * size, -5.960464477539063e-08 * size, 0.19134168326854706 * size),
-                 (-0.49999991059303284 * size, -5.960464477539063e-08 * size, 1.624372103492533e-08 * size),
-                 (-0.4619397521018982 * size, -2.9802322387695312e-08 * size, -0.19134166836738586 * size),
-                 (-0.3535534143447876 * size, -2.9802322387695312e-08 * size, -0.3535533845424652 * size),
-                 (-0.19134171307086945 * size, 0.0 * size, -0.46193984150886536 * size),
-                 (7.662531942287387e-08 * size, 9.546055501630235e-09 * size, -0.5000000596046448 * size),
-                 (0.19134187698364258 * size, 5.960464477539063e-08 * size, -0.46193981170654297 * size),
-                 (0.3535535931587219 * size, 5.960464477539063e-08 * size, -0.3535533547401428 * size),
-                 (0.4619399905204773 * size, 5.960464477539063e-08 * size, -0.1913415789604187 * size),
-                 (0.5000000596046448 * size, 5.960464477539063e-08 * size, 2.323586443253589e-07 * size),
-                 (0.4619396924972534 * size, 2.9802322387695312e-08 * size, 0.19134199619293213 * size),
-                 (1.563460111618042 * size, 2.778762819843905e-08 * size, 1.5634593963623047 * size),
-                 (0.8461387157440186 * size, -1.0400220418205208e-07 * size, 2.0427582263946533 * size),
-                 (7.321979467178608e-08 * size, -1.9357810288056498e-07 * size, 2.2110657691955566 * size),
-                 (-0.8461385369300842 * size, -2.3579201524626114e-07 * size, 2.0427582263946533 * size),
-                 (-1.5634597539901733 * size, -3.67581861837607e-07 * size, 1.5634593963623047 * size),
-                 (-2.0427584648132324 * size, -2.3579204366797057e-07 * size, 0.8461383581161499 * size),
-                 (-2.211066246032715 * size, -2.3579204366797057e-07 * size, 9.972505665700737e-08 * size),
-                 (-2.0427589416503906 * size, -1.0400223260376151e-07 * size, -0.8461381196975708 * size),
-                 (-1.5634604692459106 * size, -1.040022183929068e-07 * size, -1.563459873199463 * size),
-                 (-0.8461387753486633 * size, 2.77876033294433e-08 * size, -2.042759418487549 * size),
-                 (4.4872678017782164e-08 * size, 7.00015263532805e-08 * size, -2.211066484451294 * size),
-                 (0.8461388349533081 * size, 2.913672290105751e-07 * size, -2.0427591800689697 * size),
-                 (1.5634608268737793 * size, 2.9136725743228453e-07 * size, -1.563459873199463 * size),
-                 (2.042759895324707 * size, 2.9136725743228453e-07 * size, -0.8461377024650574 * size),
-                 (2.211066722869873 * size, 2.9136725743228453e-07 * size, 1.0554133496043505e-06 * size),
-                 (2.0427587032318115 * size, 1.5957746768435754e-07 * size, 0.8461397886276245 * size), ]
-        edges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 9), (9, 10), (10, 11),
-                 (11, 12), (12, 13), (13, 14), (14, 15), (0, 15), (16, 31), (16, 17), (17, 18), (18, 19), (19, 20),
-                 (20, 21), (21, 22), (22, 23), (23, 24), (24, 25), (25, 26), (26, 27), (27, 28), (28, 29), (29, 30),
-                 (30, 31), (32, 33), (33, 34), (34, 35), (35, 36), (36, 37), (37, 38), (38, 39), (39, 40), (40, 41),
-                 (41, 42), (42, 43), (43, 44), (44, 45), (45, 46), (46, 47), (32, 47), (48, 49), (49, 50), (50, 51),
-                 (51, 52), (52, 53), (53, 54), (54, 55), (55, 56), (56, 57), (57, 58), (58, 59), (59, 60), (60, 61),
-                 (61, 62), (62, 63), (48, 63), (21, 58), (10, 54), (29, 50), (2, 62), ]
-
         mesh = obj.data
         mesh.from_pydata(verts, edges, [])
         mesh.update()
@@ -926,19 +676,6 @@ def align_bone_z_axis(obj, bone, vec):
         bone_e.roll += angle * 2
 
 
-def align_bone_y_axis(obj, bone, vec):
-    """ Matches the bone y-axis to
-        the given vector.
-        Must be in edit mode.
-    """
-
-    bone_e = obj.data.edit_bones[bone]
-    vec.normalize()
-    vec = vec * bone_e.length
-
-    bone_e.tail = bone_e.head + vec
-
-
 #=============================================
 # Misc
 #=============================================
@@ -961,26 +698,16 @@ def copy_attributes(a, b):
 def get_rig_type(rig_type):
     """ Fetches a rig module by name, and returns it.
     """
-    name = ".%s.%s" % (RIG_DIR, rig_type)
+    name = "rigify.legacy.%s.%s" % (RIG_DIR, rig_type)
     submod = importlib.import_module(name, package=MODULE_NAME)
     importlib.reload(submod)
     return submod
 
 
-def get_metarig_module(metarig_name, path=METARIG_DIR):
+def get_metarig_module(metarig_name):
     """ Fetches a rig module by name, and returns it.
     """
-
-    name = ".%s.%s" % (path, metarig_name)
-    submod = importlib.import_module(name, package=MODULE_NAME)
-    importlib.reload(submod)
-    return submod
-
-
-def get_ui_template_module(template_name):
-    """ Fetches a ui template module by name, and returns it.
-    """
-    name = ".%s.%s" % (TEMPLATE_DIR, template_name)
+    name = "rigify.legacy.%s.%s" % (METARIG_DIR, metarig_name)
     submod = importlib.import_module(name, package=MODULE_NAME)
     importlib.reload(submod)
     return submod
@@ -1046,7 +773,7 @@ def get_layers(layers):
             return [x in layers for x in range(0, 32)]
 
 
-def write_metarig(obj, layers=False, func_name="create", groups=False):
+def write_metarig(obj, layers=False, func_name="create"):
     """
     Write a metarig as a python script, this rig is to have all info needed for
     generating the real rig with rigify.
@@ -1054,7 +781,6 @@ def write_metarig(obj, layers=False, func_name="create", groups=False):
     code = []
 
     code.append("import bpy\n\n")
-    code.append("from mathutils import Color\n\n")
 
     code.append("def %s(obj):" % func_name)
     code.append("    # generated by rigify.utils.write_metarig")
@@ -1064,23 +790,6 @@ def write_metarig(obj, layers=False, func_name="create", groups=False):
 
     arm = obj.data
 
-    # Rigify bone group colors info
-    if groups and len(arm.rigify_colors) > 0:
-        code.append("\n    for i in range(" + str(len(arm.rigify_colors)) + "):")
-        code.append("        arm.rigify_colors.add()\n")
-
-        for i in range(len(arm.rigify_colors)):
-            name = arm.rigify_colors[i].name
-            active = arm.rigify_colors[i].active
-            normal = arm.rigify_colors[i].normal
-            select = arm.rigify_colors[i].select
-            standard_colors_lock = arm.rigify_colors[i].standard_colors_lock
-            code.append('    arm.rigify_colors[' + str(i) + '].name = "' + name + '"')
-            code.append('    arm.rigify_colors[' + str(i) + '].active = Color(' + str(active[:]) + ')')
-            code.append('    arm.rigify_colors[' + str(i) + '].normal = Color(' + str(normal[:]) + ')')
-            code.append('    arm.rigify_colors[' + str(i) + '].select = Color(' + str(select[:]) + ')')
-            code.append('    arm.rigify_colors[' + str(i) + '].standard_colors_lock = ' + str(standard_colors_lock))
-
     # Rigify layer layout info
     if layers and len(arm.rigify_layers) > 0:
         code.append("\n    for i in range(" + str(len(arm.rigify_layers)) + "):")
@@ -1089,12 +798,8 @@ def write_metarig(obj, layers=False, func_name="create", groups=False):
         for i in range(len(arm.rigify_layers)):
             name = arm.rigify_layers[i].name
             row = arm.rigify_layers[i].row
-            set = arm.rigify_layers[i].set
-            group = arm.rigify_layers[i].group
             code.append('    arm.rigify_layers[' + str(i) + '].name = "' + name + '"')
             code.append('    arm.rigify_layers[' + str(i) + '].row = ' + str(row))
-            code.append('    arm.rigify_layers[' + str(i) + '].set = ' + str(set))
-            code.append('    arm.rigify_layers[' + str(i) + '].group = ' + str(group))
 
     # write parents first
     bones = [(len(bone.parent_recursive), bone.name) for bone in arm.edit_bones]
@@ -1133,7 +838,7 @@ def write_metarig(obj, layers=False, func_name="create", groups=False):
             code.append("    pbone.bone.layers = %s" % str(list(pbone.bone.layers)))
         # Rig type parameters
         for param_name in pbone.rigify_parameters.keys():
-            param = getattr(pbone.rigify_parameters, param_name, '')
+            param = getattr(pbone.rigify_parameters, param_name)
             if str(type(param)) == "<class 'bpy_prop_array'>":
                 param = list(param)
             if type(param) == str:
@@ -1170,24 +875,8 @@ def write_metarig(obj, layers=False, func_name="create", groups=False):
 
         code.append("\n    arm.layers = [(x in " + str(active_layers) + ") for x in range(" + str(len(arm.layers)) + ")]")
 
-    if func_name == "create":
-        active_template = arm.rigify_active_template
-        template_name = arm.rigify_templates[active_template].name
-        code.append("\n    # Select proper UI template")
-        code.append("    template_name = '{}'".format(template_name))
-        code.append("    arm_templates = arm.rigify_templates.items()")
-        code.append("    template_index = None")
-        code.append("    for i, template in enumerate(arm_templates):")
-        code.append("        if template[0] == template_name:")
-        code.append("            template_index = i")
-        code.append("            break")
-        code.append("    if template_index is None:")
-        code.append("        template_index = 0 # Default to something...")
-        code.append("    else:")
-        code.append("        arm.rigify_active_template = template_index")
-
     code.append('\nif __name__ == "__main__":')
-    code.append("    " + func_name + "(bpy.context.active_object)\n")
+    code.append("    " + func_name + "(bpy.context.active_object)")
 
     return "\n".join(code)
 
@@ -1248,96 +937,3 @@ def random_id(length=8):
         text += random.choice(chars)
     text += str(hex(int(time.time())))[2:][-tlength:].rjust(tlength, '0')[::-1]
     return text
-
-
-#=============================================
-# Color correction functions
-#=============================================
-
-def linsrgb_to_srgb (linsrgb):
-    """Convert physically linear RGB values into sRGB ones. The transform is
-    uniform in the components, so *linsrgb* can be of any shape.
-
-    *linsrgb* values should range between 0 and 1, inclusively.
-
-    """
-    # From Wikipedia, but easy analogue to the above.
-    gamma = 1.055 * linsrgb**(1./2.4) - 0.055
-    scale = linsrgb * 12.92
-    # return np.where (linsrgb > 0.0031308, gamma, scale)
-    if linsrgb > 0.0031308:
-        return gamma
-    return scale
-
-
-def gamma_correct(color):
-
-    corrected_color = Color()
-    for i, component in enumerate(color):
-        corrected_color[i] = linsrgb_to_srgb(color[i])
-    return corrected_color
-
-
-#=============================================
-# Keyframing functions
-#=============================================
-
-
-def get_keyed_frames(rig):
-    frames = []
-    if rig.animation_data:
-        if rig.animation_data.action:
-            fcus = rig.animation_data.action.fcurves
-            for fc in fcus:
-                for kp in fc.keyframe_points:
-                    if kp.co[0] not in frames:
-                        frames.append(kp.co[0])
-
-    frames.sort()
-
-    return frames
-
-
-def bones_in_frame(f, rig, *args):
-    """
-    True if one of the bones listed in args is animated at frame f
-    :param f: the frame
-    :param rig: the rig
-    :param args: bone names
-    :return:
-    """
-
-    if rig.animation_data and rig.animation_data.action:
-        fcus = rig.animation_data.action.fcurves
-    else:
-        return False
-
-    for fc in fcus:
-        animated_frames = [kp.co[0] for kp in fc.keyframe_points]
-        for bone in args:
-            if bone in fc.data_path.split('"') and f in animated_frames:
-                return True
-
-    return False
-
-
-def overwrite_prop_animation(rig, bone, prop_name, value, frames):
-    act = rig.animation_data.action
-    if not act:
-        return
-
-    bone_name = bone.name
-    curve = None
-
-    for fcu in act.fcurves:
-        words = fcu.data_path.split('"')
-        if words[0] == "pose.bones[" and words[1] == bone_name and words[-2] == prop_name:
-            curve = fcu
-            break
-
-    if not curve:
-        return
-
-    for kp in curve.keyframe_points:
-        if kp.co[0] in frames:
-            kp.co[1] = value
