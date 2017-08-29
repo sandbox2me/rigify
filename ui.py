@@ -107,7 +107,7 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
 
             col = layout.column(align=True)
             col.active = (not 'rig_id' in C.object.data)
-            if len(obj.data.rigify_templates) == 0:
+            if len(context.object.data.rigify_templates) == 0:
                 col.operator("pose.rigify_template_init")
             else:
                 col.label("UI template for rig:")
@@ -115,7 +115,7 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
 
             col.separator()
             row = col.row()
-            row.active = len(obj.data.rigify_templates) != 0
+            row.active = len(context.object.data.rigify_templates) != 0
             row.operator("pose.rigify_generate", text="Generate Rig", icon='POSE_HLT')
 
             row.enabled = enable_generate_and_advanced
