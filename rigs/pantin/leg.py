@@ -539,43 +539,43 @@ def create_sample(obj):
 
     bones = {}
 
-    bone = arm.edit_bones.new('Jambe haut')
+    bone = arm.edit_bones.new('Thigh')
     bone.head[:] = -0.0029, 0.0000, 0.8893
     bone.tail[:] = -0.0283, 0.0000, 0.4894
     bone.roll = 0.0634
     bone.use_connect = False
-    bones['Jambe haut'] = bone.name
-    bone = arm.edit_bones.new('Jambe bas')
+    bones['Thigh'] = bone.name
+    bone = arm.edit_bones.new('Shin')
     bone.head[:] = -0.0283, 0.0000, 0.4894
     bone.tail[:] = -0.0587, 0.0000, 0.0736
     bone.roll = 0.0731
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Jambe haut']]
-    bones['Jambe bas'] = bone.name
-    bone = arm.edit_bones.new('Pied')
+    bone.parent = arm.edit_bones[bones['Thigh']]
+    bones['Shin'] = bone.name
+    bone = arm.edit_bones.new('Foot')
     bone.head[:] = -0.0587, 0.0000, 0.0736
     bone.tail[:] = -0.0030, 0.0000, 0.0227
     bone.roll = -0.8301
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Jambe bas']]
-    bones['Pied'] = bone.name
-    bone = arm.edit_bones.new('Talon')
+    bone.parent = arm.edit_bones[bones['Shin']]
+    bones['Foot'] = bone.name
+    bone = arm.edit_bones.new('Heel')
     bone.head[:] = -0.0587, 0.0000, 0.0736
     bone.tail[:] = -0.0954, 0.0000, 0.0000
     bone.roll = 0.4628
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Jambe bas']]
-    bones['Talon'] = bone.name
-    bone = arm.edit_bones.new('Orteil')
+    bone.parent = arm.edit_bones[bones['Shin']]
+    bones['Heel'] = bone.name
+    bone = arm.edit_bones.new('Toe')
     bone.head[:] = -0.0030, 0.0000, 0.0227
     bone.tail[:] = 0.0558, 0.0000, 0.0000
     bone.roll = -1.2031
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Pied']]
-    bones['Orteil'] = bone.name
+    bone.parent = arm.edit_bones[bones['Foot']]
+    bones['Toe'] = bone.name
 
     bpy.ops.object.mode_set(mode='OBJECT')
-    pbone = obj.pose.bones[bones['Jambe haut']]
+    pbone = obj.pose.bones[bones['Thigh']]
     pbone.rigify_type = 'pantin.leg'
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
@@ -587,7 +587,7 @@ def create_sample(obj):
     except AttributeError:
         pass
     try:
-        pbone.rigify_parameters.joint_name = "Genou"
+        pbone.rigify_parameters.joint_name = "Knee"
     except AttributeError:
         pass
     try:
@@ -602,35 +602,35 @@ def create_sample(obj):
     except AttributeError:
         pass
     try:
-        pbone.rigify_parameters.pelvis_name = "Bassin"
+        pbone.rigify_parameters.pelvis_name = "Pelvis"
     except AttributeError:
         pass
     try:
         pbone.rigify_parameters.duplicate_lr = True
     except AttributeError:
         pass
-    pbone = obj.pose.bones[bones['Jambe bas']]
+    pbone = obj.pose.bones[bones['Shin']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
-    pbone = obj.pose.bones[bones['Pied']]
+    pbone = obj.pose.bones[bones['Foot']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
-    pbone = obj.pose.bones[bones['Talon']]
+    pbone = obj.pose.bones[bones['Heel']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
-    pbone = obj.pose.bones[bones['Orteil']]
+    pbone = obj.pose.bones[bones['Toe']]
     pbone.rigify_type = ''
     pbone.lock_location = (True, True, True)
     pbone.lock_rotation = (True, True, False)

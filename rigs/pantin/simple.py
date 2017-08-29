@@ -407,15 +407,15 @@ def create_sample(obj):
 
     bones = {}
 
-    bone = arm.edit_bones.new('Accessoire')
+    bone = arm.edit_bones.new('Prop')
     bone.head[:] = -0.1701, 0.0000, 0.7032
     bone.tail[:] = -0.3672, 0.0000, 0.0000
     bone.roll = 0.2706
     bone.use_connect = False
-    bones['Accessoire'] = bone.name
+    bones['Prop'] = bone.name
 
     bpy.ops.object.mode_set(mode='OBJECT')
-    pbone = obj.pose.bones[bones['Accessoire']]
+    pbone = obj.pose.bones[bones['Prop']]
     pbone.rigify_type = 'pantin.simple'
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
@@ -453,7 +453,7 @@ def create_sample(obj):
     # except AttributeError:
     #     pass
     try:
-        pbone.rigify_parameters.pelvis_name = "Bassin"
+        pbone.rigify_parameters.pelvis_name = "Pelvis"
     except AttributeError:
         pass
 

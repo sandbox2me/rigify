@@ -233,36 +233,36 @@ def create_sample(obj):
 
     bones = {}
 
-    bone = arm.edit_bones.new('Bassin')
+    bone = arm.edit_bones.new('Pelvis')
     bone.head[:] = -0.0029, 0.0000, 0.8893
     bone.tail[:] = 0.0294, -0.0000, 1.0480
     bone.roll = -2.9413
     bone.use_connect = False
-    bones['Bassin'] = bone.name
-    bone = arm.edit_bones.new('Abdomen')
+    bones['Pelvis'] = bone.name
+    bone = arm.edit_bones.new('Spine')
     bone.head[:] = 0.0294, -0.0000, 1.0480
     bone.tail[:] = -0.0027, 0.0000, 1.1745
     bone.roll = 2.8939
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Bassin']]
-    bones['Abdomen'] = bone.name
+    bone.parent = arm.edit_bones[bones['Pelvis']]
+    bones['Spine'] = bone.name
     bone = arm.edit_bones.new('Thorax')
     bone.head[:] = -0.0027, 0.0000, 1.1745
     bone.tail[:] = -0.0135, 0.0000, 1.3005
     bone.roll = 3.0550
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Abdomen']]
+    bone.parent = arm.edit_bones[bones['Spine']]
     bones['Thorax'] = bone.name
-    bone = arm.edit_bones.new('Buste')
+    bone = arm.edit_bones.new('Chest')
     bone.head[:] = -0.0135, 0.0000, 1.3005
     bone.tail[:] = 0.0005, 0.0000, 1.4038
     bone.roll = -3.0064
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Thorax']]
-    bones['Buste'] = bone.name
+    bones['Chest'] = bone.name
 
     bpy.ops.object.mode_set(mode='OBJECT')
-    pbone = obj.pose.bones[bones['Bassin']]
+    pbone = obj.pose.bones[bones['Pelvis']]
     pbone.rigify_type = 'pantin.torso'
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
@@ -278,10 +278,10 @@ def create_sample(obj):
     except AttributeError:
         pass
     try:
-        pbone.rigify_parameters.root_name = "Racine"
+        pbone.rigify_parameters.root_name = "Root"
     except AttributeError:
         pass
-    pbone = obj.pose.bones[bones['Abdomen']]
+    pbone = obj.pose.bones[bones['Spine']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
@@ -295,7 +295,7 @@ def create_sample(obj):
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
-    pbone = obj.pose.bones[bones['Buste']]
+    pbone = obj.pose.bones[bones['Chest']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)

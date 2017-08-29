@@ -249,29 +249,29 @@ def create_sample(obj):
 
     bones = {}
 
-    bone = arm.edit_bones.new('Bras haut')
+    bone = arm.edit_bones.new('Arm')
     bone.head[:] = -0.0488, 0.0000, 1.3385
     bone.tail[:] = -0.0929, 0.0000, 1.1169
     bone.roll = 0.1969
     bone.use_connect = False
-    bones['Bras haut'] = bone.name
-    bone = arm.edit_bones.new('Bras bas')
+    bones['Arm'] = bone.name
+    bone = arm.edit_bones.new('Forearm')
     bone.head[:] = -0.0929, 0.0000, 1.1169
     bone.tail[:] = -0.0646, 0.0000, 0.8523
     bone.roll = -0.1069
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Bras haut']]
-    bones['Bras bas'] = bone.name
-    bone = arm.edit_bones.new('Main')
+    bone.parent = arm.edit_bones[bones['Arm']]
+    bones['Forearm'] = bone.name
+    bone = arm.edit_bones.new('Hand')
     bone.head[:] = -0.0646, 0.0000, 0.8523
     bone.tail[:] = -0.0646, 0.0000, 0.7518
     bone.roll = 0.0000
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Bras bas']]
-    bones['Main'] = bone.name
+    bone.parent = arm.edit_bones[bones['Forearm']]
+    bones['Hand'] = bone.name
 
     bpy.ops.object.mode_set(mode='OBJECT')
-    pbone = obj.pose.bones[bones['Bras haut']]
+    pbone = obj.pose.bones[bones['Arm']]
     pbone.rigify_type = 'pantin.arm'
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
@@ -290,11 +290,11 @@ def create_sample(obj):
     except AttributeError:
         pass
     try:
-        pbone.rigify_parameters.joint_name = "Coude"
+        pbone.rigify_parameters.joint_name = "Elbow"
     except AttributeError:
         pass
     try:
-        pbone.rigify_parameters.pelvis_name = "Bassin"
+        pbone.rigify_parameters.pelvis_name = "Pelvis"
     except AttributeError:
         pass
     try:
@@ -305,14 +305,14 @@ def create_sample(obj):
         pbone.rigify_parameters.Z_index = 3.0
     except AttributeError:
         pass
-    pbone = obj.pose.bones[bones['Bras bas']]
+    pbone = obj.pose.bones[bones['Forearm']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
-    pbone = obj.pose.bones[bones['Main']]
+    pbone = obj.pose.bones[bones['Hand']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)

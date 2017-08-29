@@ -161,36 +161,36 @@ def create_sample(obj):
 
     bones = {}
 
-    bone = arm.edit_bones.new('Cou')
+    bone = arm.edit_bones.new('Neck')
     bone.head[:] = 0.0005, 0.0000, 1.4038
     bone.tail[:] = 0.0271, 0.0000, 1.4720
     bone.roll = -2.7688
     bone.use_connect = False
-    bones['Cou'] = bone.name
-    bone = arm.edit_bones.new('Tete')
+    bones['Neck'] = bone.name
+    bone = arm.edit_bones.new('Head')
     bone.head[:] = 0.0271, 0.0000, 1.4720
     bone.tail[:] = 0.0592, 0.0000, 1.6173
     bone.roll = -2.9241
     bone.use_connect = True
-    bone.parent = arm.edit_bones[bones['Cou']]
-    bones['Tete'] = bone.name
-    bone = arm.edit_bones.new('Machoire')
+    bone.parent = arm.edit_bones[bones['Neck']]
+    bones['Head'] = bone.name
+    bone = arm.edit_bones.new('Jaw')
     bone.head[:] = 0.0223, 0.0000, 1.4938
     bone.tail[:] = 0.0964, 0.0000, 1.4450
     bone.roll = -0.9887
     bone.use_connect = False
-    bone.parent = arm.edit_bones[bones['Tete']]
-    bones['Machoire'] = bone.name
-    bone = arm.edit_bones.new('Paupiere')
+    bone.parent = arm.edit_bones[bones['Head']]
+    bones['Jaw'] = bone.name
+    bone = arm.edit_bones.new('Eyelid')
     bone.head[:] = 0.0713, -0.0000, 1.5667
     bone.tail[:] = 0.1014, 0.0000, 1.5618
     bone.roll = -1.4091
     bone.use_connect = False
-    bone.parent = arm.edit_bones[bones['Tete']]
-    bones['Paupiere'] = bone.name
+    bone.parent = arm.edit_bones[bones['Head']]
+    bones['Eyelid'] = bone.name
 
     bpy.ops.object.mode_set(mode='OBJECT')
-    pbone = obj.pose.bones[bones['Cou']]
+    pbone = obj.pose.bones[bones['Neck']]
     pbone.rigify_type = 'pantin.head'
     pbone.lock_location = (True, True, True)
     pbone.lock_rotation = (True, True, False)
@@ -205,21 +205,21 @@ def create_sample(obj):
         pbone.rigify_parameters.flip_switch = False
     except AttributeError:
         pass
-    pbone = obj.pose.bones[bones['Tete']]
+    pbone = obj.pose.bones[bones['Head']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (True, True, True)
     pbone.rotation_mode = 'XZY'
-    pbone = obj.pose.bones[bones['Machoire']]
+    pbone = obj.pose.bones[bones['Jaw']]
     pbone.rigify_type = ''
     pbone.lock_location = (True, True, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (True, True, True)
     pbone.rotation_mode = 'XZY'
-    pbone = obj.pose.bones[bones['Paupiere']]
+    pbone = obj.pose.bones[bones['Eyelid']]
     pbone.rigify_type = ''
     pbone.lock_location = (True, True, True)
     pbone.lock_rotation = (True, True, False)
