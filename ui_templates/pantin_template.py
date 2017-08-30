@@ -77,11 +77,14 @@ class Rigify_Swap_Bones(bpy.types.Operator):
         for pb in context.selected_pose_bones:
             swapped_name = swap_LR(pb.name)
             if swapped_name is not None:
-                other = context.object.pose.bones[swapped_name]
+                if swapped_name in context.object.pose.bones:
+                    other = context.object.pose.bones[swapped_name]
 
-                tmp_matrix = pb.matrix_basis.copy()
-                pb.matrix_basis = other.matrix_basis
-                other.matrix_basis = tmp_matrix
+                    tmp_matrix = pb.matrix_basis.copy()
+                    pb.matrix_basis = other.matrix_basis
+                    other.matrix_basis = tmp_matrix
+                else:
+                    self.report({'INFO'}, 'Bone {} is not symmetrical'.format(pb.name))
         return {'FINISHED'}
 
 
