@@ -471,7 +471,7 @@ class RigUI(bpy.types.Panel):
                 return True
             return False
 
-        layout.operator("pose.rigify_swap_bones")
+        layout.operator("pose.rigify_swap_bones" + rig_id)
         layout.separator()
 
         layout.prop(pose_bones["MCH-Flip"], '["flip"]', text="Flip", slider=True)
