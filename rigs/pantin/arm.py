@@ -85,7 +85,7 @@ class Rig:
                 Z_index = self.params.Z_index
 
             for i, b in enumerate(side_org_bones):
-                def_bone_name = b.split('.')[0][4:]
+                def_bone_name = pantin_utils.strip_LR_numbers(strip_org(b))
                 def_bone = pantin_utils.create_deformation(
                     self.obj,
                     b,

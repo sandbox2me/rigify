@@ -189,18 +189,18 @@ class Rig:
                 Z_index = self.params.Z_index
 
             for i, b in enumerate(side_org_bones[:2]):
-                def_bone_name = b.split('.')[0][4:]
+                def_bone_name = pantin_utils.strip_LR_numbers(strip_org(b))
                 def_bone = pantin_utils.create_deformation(
                     self.obj, b,
                     self.params.flip_switch,
                     member_index=Z_index,
                     bone_index=i, new_name=def_bone_name+s)
 
-            def_bone_name = elimb_str.split('.')[0][4:]
+            def_bone_name = pantin_utils.strip_LR_numbers(strip_org(elimb_str))
             def_bone = pantin_utils.create_deformation(
                 self.obj, elimb_str, self.params.flip_switch,
                 member_index=Z_index, bone_index=2, new_name=def_bone_name + s)
-            def_bone_name = toe_ctl.split('.')[0]
+            def_bone_name = pantin_utils.strip_LR_numbers(strip_org(toe_ctl))
             def_bone = pantin_utils.create_deformation(
                 self.obj, toe_pos, self.params.flip_switch,
                 member_index=Z_index, bone_index=3, new_name=def_bone_name + s)

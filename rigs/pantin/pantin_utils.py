@@ -33,9 +33,10 @@ def strip_numbers(name):
     # regexp = re.compile("\.[0-9]+$")
     matches = re.findall("\.[0-9]+$", name)
     if matches:
-        return name[:-len(matches[-1])]
+        match = matches[-1]
+        return name[:-len(match)], name[-len(match):]
     else:
-        return name
+        return name, ''
 
 
 def strip_LR(name):
@@ -49,7 +50,8 @@ def strip_LR(name):
 
 
 def strip_LR_numbers(name):
-    return strip_LR(strip_numbers(name))
+    stripped, numbers = strip_numbers(name)
+    return strip_LR(stripped) + numbers
 
 
 def create_deformation(obj,
