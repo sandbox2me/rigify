@@ -414,29 +414,29 @@ class DATA_PT_members_panel(bpy.types.Panel):
                     row = col.row(align=True)
                     row.alignment = 'EXPAND'
                     row.prop(m, 'index', text="Member")# name.title()+':')
-                    op = row.operator("pose.rigify_reorder_members", icon='TRIA_UP', text="")
+                    op = row.operator("pose.rigify_reorder_members" + rig_id, icon='TRIA_UP', text="")
                     op.list_member_index = i
                     op.direction = 'UP'
-                    op = row.operator("pose.rigify_reorder_members", icon='TRIA_DOWN', text="")
+                    op = row.operator("pose.rigify_reorder_members" + rig_id, icon='TRIA_DOWN', text="")
                     op.list_member_index = i
                     op.direction = 'DOWN'
-                    op = row.operator("pose.rigify_fill_members", icon='FILE_REFRESH', text="")
+                    op = row.operator("pose.rigify_fill_members" + rig_id, icon='FILE_REFRESH', text="")
                     row = col.row()
                     row.template_list("PANTIN_UL_bones_list", "bones_{}".format(i), id_store.pantin_members[i], "bones", id_store.pantin_members[i], "active_bone", rows=3)
 
                     sub = row.column(align=True)
-                    op = sub.operator("pose.rigify_reorder_bones", icon='TRIA_UP', text="")
+                    op = sub.operator("pose.rigify_reorder_bones" + rig_id, icon='TRIA_UP', text="")
                     op.list_member_index = i
                     op.direction = 'UP'
-                    op = sub.operator("pose.rigify_reorder_bones", icon='TRIA_DOWN', text="")
+                    op = sub.operator("pose.rigify_reorder_bones" + rig_id, icon='TRIA_DOWN', text="")
                     op.list_member_index = i
                     op.direction = 'DOWN'
 
                     col.separator()
             col = layout.column(align=True)
-            col.operator("pose.rigify_fill_members")
-            col.operator("pose.rigify_sort_doubles")
-            col.operator("pose.rigify_reapply_order_members")
+            col.operator("pose.rigify_fill_members" + rig_id)
+            col.operator("pose.rigify_sort_doubles" + rig_id)
+            col.operator("pose.rigify_reapply_order_members" + rig_id)
 
 class RigUI(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
