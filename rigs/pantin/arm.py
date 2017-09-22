@@ -46,7 +46,7 @@ class Rig:
         self.org_bones = ([bone_name]
                           + connected_children_names(obj, bone_name)[:2])
         self.params = params
-        if "right_layers" in params:
+        if params["duplicate_lr"] and "right_layers" in params:
             self.right_layers = [bool(l) for l in params["right_layers"]]
         else:
             self.right_layers = None
