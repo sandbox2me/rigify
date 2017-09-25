@@ -196,10 +196,11 @@ class Rig:
                     member_index=Z_index,
                     bone_index=i, new_name=def_bone_name+s)
 
-            def_bone_name = pantin_utils.strip_LR_numbers(strip_org(elimb_str))
+            def_bone_name = pantin_utils.strip_LR_numbers(strip_org(self.org_bones[2]))
             def_bone = pantin_utils.create_deformation(
                 self.obj, elimb_str, self.params.flip_switch,
                 member_index=Z_index, bone_index=2, new_name=def_bone_name + s)
+
             def_bone_name = pantin_utils.strip_LR_numbers(strip_org(toe_ctl))
             def_bone = pantin_utils.create_deformation(
                 self.obj, toe_pos, self.params.flip_switch,
