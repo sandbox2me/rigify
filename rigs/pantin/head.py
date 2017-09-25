@@ -17,13 +17,23 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+from rna_prop_ui import rna_idprop_ui_prop_get
 
 from ...utils import copy_bone
-from ...utils import make_deformer_name, strip_org
+from ...utils import make_mechanism_name, make_deformer_name, strip_org
 from ...utils import create_bone_widget, create_widget, create_cube_widget
 from ...utils import connected_children_names, has_connected_children
 
 from . import pantin_utils
+
+script = """
+head = "%s"
+if is_selected(head):
+    layout.prop(pose_bones[head], \
+'["follow"]', \
+text="Follow (" + head + ")", \
+slider=True)
+"""
 
 
 class Rig:
@@ -33,48 +43,44 @@ class Rig:
 
         self.neck = bone_name
         self.head = connected_children_names(self.obj, bone_name)[0]
-        # sort jaw and eyelid based on their height. ok, that's dirty
-        head_children = list(self.obj.pose.bones[self.head].children)
-        # remove bones which have a type, hence do not belong
-        head_children = [c for c in head_children if not c['rigify_type']]
-        head_children = sorted(head_children, key=lambda b: b.tail.z)
 
-        # self.jaw = head_children[0].name
-        # self.eyelid = head_children[1].name
-
-        self.org_bones = [self.neck, self.head]  # , self.jaw, self.eyelid]
+        self.org_bones = [self.neck, self.head]
 
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
 
         ctrl_chain = []
+        follow_chain = []
 
         eb = self.obj.data.edit_bones
         for i, b in enumerate(self.org_bones):
             # Control bones
-            ctrl_bone = copy_bone(self.obj, b)
+            ctrl_bone = copy_bone(self.obj, b, strip_org(b))
             ctrl_bone_e = eb[ctrl_bone]
 
-            # Name
-            ctrl_bone_e.name = strip_org(b)
+            # Add to list
+            ctrl_chain += [ctrl_bone]
+
+            # Follow bones
+            follow_bone = copy_bone(
+                self.obj,
+                b,
+                make_mechanism_name(strip_org(b)) + ".follow"
+            )
+
+            print('ctrl_bone:', ctrl_bone, eb[ctrl_bone])
+
+            follow_chain += [follow_bone]
+            eb[ctrl_bone].name = ctrl_bone
 
             # Parenting
-            if i == 0:
-                # First bone: neck
-                if eb[b].parent is not None:
-                    bone_parent_name = strip_org(eb[b].parent.name)
-                    ctrl_bone_e.parent = eb[bone_parent_name]
-            # elif i >= len(self.org_bones)-1:
-            #     # Parent jaw and eyelid to the head (1)
-            #     ctrl_bone_e.parent = eb[ctrl_chain[1]]
-            else:
-                # The rest
-                ctrl_bone_e.parent = eb[ctrl_chain[-1]]
-                if self.params.detach:
-                    ctrl_bone_e.use_connect = False
+            bone_parent_name = strip_org(eb[b].parent.name)
+            eb[follow_bone].parent = eb[bone_parent_name]
+            eb[ctrl_bone].use_connect = False
+            eb[ctrl_bone].parent = eb[follow_bone]
+            if self.params.detach: # Detach head
+                eb[ctrl_bone].use_connect = False
 
-            # Add to list
-            ctrl_chain += [ctrl_bone_e.name]
 
             # Def bones
             def_bone = pantin_utils.create_deformation(
@@ -83,8 +89,6 @@ class Rig:
                 self.params.flip_switch,
                 member_index=self.params.Z_index,
                 bone_index=i)
-            # if b == self.eyelid:
-            #     eyelid_def_bone = def_bone
 
         # Parenting
         if self.params.detach:
@@ -100,18 +104,51 @@ class Rig:
 
         neck = ctrl_chain[0]
         head = ctrl_chain[1]
-        # jaw = ctrl_chain[2]
-        # eyelid = ctrl_chain[3]
 
         pantin_utils.create_capsule_widget(
             self.obj, neck, width=widget_size, height=widget_size*0.1)
         pantin_utils.create_aligned_circle_widget(
             self.obj, head, radius=widget_size, head_tail=0.5)
-        # pantin_utils.create_aligned_circle_widget(
-        #     self.obj, jaw, radius=widget_size * 0.3, head_tail=0.5)
 
-        # Constraints
-        for org, ctrl in zip(self.org_bones, ctrl_chain):
+        ### Constraints
+
+        ui_script = ""
+
+        # Follow
+        for org, ctrl, follow in zip(self.org_bones, ctrl_chain, follow_chain):
+            # Set up custom properties
+            prop = rna_idprop_ui_prop_get(pb[ctrl], "follow", create=True)
+            pb[ctrl]["follow"] = 1.0
+            prop["soft_min"] = 0.0
+            prop["soft_max"] = 1.0
+            prop["min"] = 0.0
+            prop["max"] = 1.0
+
+            con = pb[follow].constraints.new('COPY_ROTATION')
+            con.name = "follow"
+            con.target = self.obj
+            con.subtarget = pb[org].parent.name
+            con.use_x = False
+            con.use_y = False
+            con.use_z = True
+            con.invert_z = True
+            con.target_space = 'LOCAL_WITH_PARENT'
+            con.owner_space = 'LOCAL'
+
+            ui_script += script % (ctrl)
+
+            # Drivers
+            driver = self.obj.driver_add(con.path_from_id("influence"))
+            driver.driver.expression = '1-follow'
+            var_pf = driver.driver.variables.new()
+
+            var_pf.type = 'SINGLE_PROP'
+            var_pf.name = 'follow'
+            var_pf.targets[0].id_type = 'OBJECT'
+            var_pf.targets[0].id = self.obj
+            var_pf.targets[0].data_path = pb[ctrl].path_from_id() + '["follow"]'
+
+        # for org, ctrl in zip(self.org_bones, ctrl_chain):
             con = pb[org].constraints.new('COPY_TRANSFORMS')
             con.name = "copy_transforms"
             con.target = self.obj
@@ -130,6 +167,9 @@ class Rig:
         con.min_z = -0.5
         con.max_z = 0.68
         con.owner_space = 'LOCAL'
+
+
+        return [ui_script]
 
 
 def add_parameters(params):
