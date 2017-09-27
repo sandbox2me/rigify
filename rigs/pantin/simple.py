@@ -128,6 +128,8 @@ class Rig:
                 elif self.params.chain_type == 'Dynamic':
                     # Create an empty object to use slow parent
                     # What follows is quite dirty.
+                    ctrl_bone_e.parent = eb[self.org_parent]
+
                     empty_name = self.obj.name + "_" + strip_org(b) + '.dyn'
                     if empty_name in bpy.data.objects:
                         empty_obj = bpy.data.objects[empty_name]
