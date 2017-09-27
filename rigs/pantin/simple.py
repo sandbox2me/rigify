@@ -96,7 +96,7 @@ class Rig:
         side = self.params.object_side
         if side == '.C':
             side = ''
-        
+
         # IK control bone
         if self.params.chain_type == 'IK':
             last_bone = self.org_bones[-1]
@@ -106,7 +106,7 @@ class Rig:
             ctrl_bone_e.tail = eb[last_bone].tail + Vector((0.3, 0, 0))
             align_bone_z_axis(self.obj, ctrl_bone, Vector((0, 1, 0)))
             # ctrl_bone_e.layers = layers
-            
+
         for i, b in enumerate(self.org_bones):
             # Control bones
             if self.params.chain_type in {'Normal', 'Curve'}:
@@ -162,8 +162,12 @@ class Rig:
                             raise MetarigError(
                                 "RIGIFY ERROR: Bone %s does not have a %s side"
                                 % (strip_org(eb[b].parent.name), side))
-                    else:
+                    elif 'MCH-Flip' in eb:
                         ctrl_bone_e.parent = eb['MCH-Flip']
+                    else:
+                        raise MetarigError(
+                            "RIGIFY ERROR: Bone %s needs to have a parent"
+                            % strip_org(eb[b].name))
             # else:
             #     # The rest
             #     ctrl_bone_e.parent = eb[ctrl_chain[-1]]
@@ -378,7 +382,7 @@ def parameters_ui(layout, params):
     #     row.prop(params, "layers", index=21, toggle=True, text="")
     #     row.prop(params, "layers", index=22, toggle=True, text="")
     #     row.prop(params, "layers", index=23, toggle=True, text="")
-    # 
+    #
     #     col = r.column(align=True)
     #     row = col.row(align=True)
     #     row.prop(params, "layers", index=8, toggle=True, text="")
