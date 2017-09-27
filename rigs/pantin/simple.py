@@ -28,6 +28,15 @@ from ...utils import align_bone_z_axis
 
 from . import pantin_utils
 
+# % ctrl_bone, MCH-bone.dyn
+script = """
+simple = "%s"
+if is_selected(simple):
+    layout.prop(pose_bones["%s"].constraints["stretch_to"], \
+'influence', \
+text="Dynamics (" + simple + ")", \
+slider=True)
+"""
 
 class Rig:
     def __init__(self, obj, bone_name, params):
@@ -287,6 +296,10 @@ class Rig:
                 con.volume = 'NO_VOLUME'
                 con.keep_axis = 'PLANE_Z'
                 con.rest_length = pb[ctrl].length
+
+            ui_script = script % (ctrl, dyn_bone)  # % ctrl_bone, MCH-bone.dyn
+
+        return [ui_script]
 
 
 def add_parameters(params):
