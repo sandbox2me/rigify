@@ -81,12 +81,6 @@ class Rig:
 
         eb = self.obj.data.edit_bones
 
-        # # Get parent's layers
-        # if self.params.use_parent_layers and self.org_parent is not None:
-        #     layers = list(eb[self.org_parent].layers)
-        # else:
-        #     layers = self.params.layers
-
 
         ctrl_chain = []
         mch_chain = []
@@ -114,6 +108,7 @@ class Rig:
             if self.params.chain_type in {'Normal', 'Curve', 'Dynamic'}:
                 ctrl_bone = copy_bone(self.obj, b, strip_org(b) + side)
                 ctrl_bone_e = eb[ctrl_bone]
+                ctrl_chain.append(ctrl_bone)
 
                 if self.params.chain_type == 'Curve':
                     ctrl_bone_e.use_connect = False
@@ -125,6 +120,7 @@ class Rig:
                     ctrl_bone_e.tail = (ctrl_bone_e.head
                                     + Vector((0, 0, 1)) * ctrl_bone_e.length)
                     align_bone_z_axis(self.obj, ctrl_bone, Vector((0, 1, 0)))
+
                 elif self.params.chain_type == 'Dynamic':
                     # Create an empty object to use slow parent
                     # What follows is quite dirty.
@@ -148,8 +144,6 @@ class Rig:
                     empty_obj.slow_parent_offset = 3.0
 
 
-                ctrl_chain.append(ctrl_bone)
-                # ctrl_bone_e.layers = layers
 
             # Mechanism bones
             if self.params.chain_type == 'Curve':
@@ -233,11 +227,11 @@ class Rig:
         pb = self.obj.pose.bones
 
         # Pose bone settings
-        if self.params.chain_type == 'Curve':
+        if self.params.chain_type in ('Curve', 'Dynamic'):
             pbone = pb[ctrl_chain[-1]]
             pbone.rotation_mode = 'XZY'
             pbone.lock_location = (False, False, True)
-            pbone.lock_rotation = (True, True, True)
+            pbone.lock_rotation = (True, True, False)
             pbone.lock_rotation_w = False
             pbone.lock_scale = (False, False, False)
 
@@ -313,23 +307,6 @@ def add_parameters(params):
         default=False,
         description="This member may change depth when flipped")
 
-    # params.member_Z_index = bpy.props.FloatProperty(
-    #     name="Indice Z membre",
-    #     default=0.0,
-    #     description="Définit l'ordre des membres dans l'espace")
-    # params.first_bone_Z_index = bpy.props.FloatProperty(
-    #     name="Indice Z premier os",
-    #     default=0.0,
-    #     description="Définit l'ordre des os dans l'espace")
-    # params.flip_switch = bpy.props.BoolProperty(
-    #     name="Ordre change",
-    #     default=True,
-    #     description="Ce membre peut changer de profondeur")
-    # params.duplicate_lr = bpy.props.BoolProperty(
-    #     name="Duplicate LR",
-    #     default=True,
-    #     description="Create two limbs for left and right")
-
     params.object_side = bpy.props.EnumProperty(
         name="Side",
         default='.C',
@@ -346,10 +323,6 @@ def add_parameters(params):
         name="Pelvis Name",
         default="Pelvis",
         description="Name of the pelvis bone in whole rig")
-    # params.use_parent_layers = bpy.props.BoolProperty(
-    #     name="Use parent's layers",
-    #     default=True,
-    #     description="The object will use its parent's layers")
     params.chain_type = bpy.props.EnumProperty(
         name="Chain Type",
         items=(('Normal',)*3, ('IK',)*3, ('Curve',)*3, ('Dynamic',)*3, ('Def',)*3,),
@@ -359,10 +332,6 @@ def add_parameters(params):
         name="Parent to first",
         default=False,
         description="Parent all control bones to the first")
-    # params.layers = bpy.props.BoolVectorProperty(
-    #     size=32,
-    #     description="Layers for the object")
-
 
 def parameters_ui(layout, params):
     """ Create the ui for the rig parameters.
@@ -376,9 +345,6 @@ def parameters_ui(layout, params):
         r.prop(params, "first_bone_Z_index")
     r = layout.row()
     r.prop(params, "flip_switch")
-    # r = layout.row()
-    # r.prop(params, "duplicate_lr")
-    # if not params.duplicate_lr:
     col = layout.column(align=True)
     r = col.row()
     r.label("Side:")
@@ -395,54 +361,6 @@ def parameters_ui(layout, params):
         r.prop(params, "curve_parent_to_first")
     elif params.chain_type == "Dynamic":
         col.label(text="Only one bone allowed in dynamic chain", icon="ERROR")
-
-    # # Layers
-    # col = layout.column(align=True)
-    # col.prop(params, "use_parent_layers")
-    # if not params.use_parent_layers:
-    #     col = layout.column(align=True)
-    #     col.label("Layers:")
-    #     r = col.row()
-    #     col = r.column(align=True)
-    #     row = col.row(align=True)
-    #     row.prop(params, "layers", index=0, toggle=True, text="")
-    #     row.prop(params, "layers", index=1, toggle=True, text="")
-    #     row.prop(params, "layers", index=2, toggle=True, text="")
-    #     row.prop(params, "layers", index=3, toggle=True, text="")
-    #     row.prop(params, "layers", index=4, toggle=True, text="")
-    #     row.prop(params, "layers", index=5, toggle=True, text="")
-    #     row.prop(params, "layers", index=6, toggle=True, text="")
-    #     row.prop(params, "layers", index=7, toggle=True, text="")
-    #     row = col.row(align=True)
-    #     row.prop(params, "layers", index=16, toggle=True, text="")
-    #     row.prop(params, "layers", index=17, toggle=True, text="")
-    #     row.prop(params, "layers", index=18, toggle=True, text="")
-    #     row.prop(params, "layers", index=19, toggle=True, text="")
-    #     row.prop(params, "layers", index=20, toggle=True, text="")
-    #     row.prop(params, "layers", index=21, toggle=True, text="")
-    #     row.prop(params, "layers", index=22, toggle=True, text="")
-    #     row.prop(params, "layers", index=23, toggle=True, text="")
-    #
-    #     col = r.column(align=True)
-    #     row = col.row(align=True)
-    #     row.prop(params, "layers", index=8, toggle=True, text="")
-    #     row.prop(params, "layers", index=9, toggle=True, text="")
-    #     row.prop(params, "layers", index=10, toggle=True, text="")
-    #     row.prop(params, "layers", index=11, toggle=True, text="")
-    #     row.prop(params, "layers", index=12, toggle=True, text="")
-    #     row.prop(params, "layers", index=13, toggle=True, text="")
-    #     row.prop(params, "layers", index=14, toggle=True, text="")
-    #     row.prop(params, "layers", index=15, toggle=True, text="")
-    #     row = col.row(align=True)
-    #     row.prop(params, "layers", index=24, toggle=True, text="")
-    #     row.prop(params, "layers", index=25, toggle=True, text="")
-    #     row.prop(params, "layers", index=26, toggle=True, text="")
-    #     row.prop(params, "layers", index=27, toggle=True, text="")
-    #     row.prop(params, "layers", index=28, toggle=True, text="")
-    #     row.prop(params, "layers", index=29, toggle=True, text="")
-    #     row.prop(params, "layers", index=30, toggle=True, text="")
-    #     row.prop(params, "layers", index=31, toggle=True, text="")
-
 
 def create_sample(obj):
     # generated by rigify.utils.write_metarig
@@ -470,10 +388,6 @@ def create_sample(obj):
         pbone.rigify_parameters.object_side = ".R"
     except AttributeError:
         pass
-    # try:
-    #     pbone.rigify_parameters.use_parent_layers = True
-    # except AttributeError:
-    #     pass
     try:
         pbone.rigify_parameters.use_parent_Z_index = True
     except AttributeError:
@@ -486,16 +400,6 @@ def create_sample(obj):
         pbone.rigify_parameters.flip_switch = False
     except AttributeError:
         pass
-    # try:
-    #     pbone.rigify_parameters.layers = [False, False, False, False, False,
-    #                                       False, False, False, False, False,
-    #                                       False, False, False, False, False,
-    #                                       False, False, False, False, False,
-    #                                       False, False, False, True, False,
-    #                                       False, False, False, False, False,
-    #                                       False, False]
-    # except AttributeError:
-    #     pass
     try:
         pbone.rigify_parameters.pelvis_name = "Pelvis"
     except AttributeError:
