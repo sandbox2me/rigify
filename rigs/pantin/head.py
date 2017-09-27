@@ -68,8 +68,6 @@ class Rig:
                 make_mechanism_name(strip_org(b)) + ".follow"
             )
 
-            print('ctrl_bone:', ctrl_bone, eb[ctrl_bone])
-
             follow_chain += [follow_bone]
             eb[ctrl_bone].name = ctrl_bone
 

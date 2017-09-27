@@ -17,7 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix
 
 from ...utils import MetarigError
 from ...utils import new_bone, copy_bone
@@ -47,6 +47,8 @@ class Rig:
                 "RIGIFY ERROR: Bone %s should not be connected. "
                 "Check bone chain for multiple pantin.simple rigs" % (
                     strip_org(self.org_parent)))
+        if self.params.chain_type == 'Dynamic' and len(self.org_bones) > 1:
+            self.params.chain_type = "Curve"
 
     def generate(self):
         if self.params.use_parent_Z_index and self.org_parent is not None:
@@ -109,7 +111,7 @@ class Rig:
 
         for i, b in enumerate(self.org_bones):
             # Control bones
-            if self.params.chain_type in {'Normal', 'Curve'}:
+            if self.params.chain_type in {'Normal', 'Curve', 'Dynamic'}:
                 ctrl_bone = copy_bone(self.obj, b, strip_org(b) + side)
                 ctrl_bone_e = eb[ctrl_bone]
 
@@ -123,6 +125,26 @@ class Rig:
                     ctrl_bone_e.tail = (ctrl_bone_e.head
                                     + Vector((0, 0, 1)) * ctrl_bone_e.length)
                     align_bone_z_axis(self.obj, ctrl_bone, Vector((0, 1, 0)))
+                elif self.params.chain_type == 'Dynamic':
+                    # Create an empty object to use slow parent
+                    # What follows is quite dirty.
+                    empty_name = self.obj.name + "_" + strip_org(b) + '.dyn'
+                    if empty_name in bpy.data.objects:
+                        empty_obj = bpy.data.objects[empty_name]
+                    else:
+                        empty_obj = bpy.data.objects.new(empty_name, None)
+                    if not empty_name in bpy.context.scene.objects:
+                        bpy.context.scene.objects.link(empty_obj)
+                    empty_obj.empty_draw_type = 'SPHERE'
+                    empty_obj.empty_draw_size = self.obj.data.bones[b].length / 10
+                    empty_obj.hide = True
+
+                    empty_obj.parent = self.obj
+                    empty_obj.parent_type = 'BONE'
+                    empty_obj.parent_bone = ctrl_bone
+                    empty_obj.use_slow_parent = True
+                    empty_obj.slow_parent_offset = 3.0
+
 
                 ctrl_chain.append(ctrl_bone)
                 # ctrl_bone_e.layers = layers
@@ -137,13 +159,21 @@ class Rig:
                 stretch_bone_e.parent = eb[ctrl_bone]
                 mch_chain.append(stretch_bone)
 
-            if self.params.chain_type == 'IK':
+            elif self.params.chain_type == 'IK':
                 ik_bone = copy_bone(
                     self.obj, b,
                     make_mechanism_name(strip_org(b)) + '.ik' + side)
                 ik_bone_e = eb[ik_bone]
                 ik_bone_e.parent = eb[mch_chain[-1] if i > 0 else self.org_parent]
                 mch_chain.append(ik_bone)
+
+            elif self.params.chain_type == 'Dynamic':
+                dyn_bone = copy_bone(
+                    self.obj, b,
+                    make_mechanism_name(strip_org(b)) + '.dyn' + side)
+                dyn_bone_e = eb[dyn_bone]
+                dyn_bone_e.parent = eb[ctrl_bone]
+                mch_chain.append(dyn_bone)
 
             # Parenting
             if self.params.chain_type == 'Normal':
@@ -168,9 +198,6 @@ class Rig:
                         raise MetarigError(
                             "RIGIFY ERROR: Bone %s needs to have a parent"
                             % strip_org(eb[b].name))
-            # else:
-            #     # The rest
-            #     ctrl_bone_e.parent = eb[ctrl_chain[-1]]
 
             # Def bones
             def_bone = pantin_utils.create_deformation(
@@ -212,7 +239,7 @@ class Rig:
             pbone.lock_rotation_w = False
             pbone.lock_scale = (False, False, False)
 
-        if self.params.chain_type in ('IK', 'Curve'):
+        if self.params.chain_type in ('IK', 'Curve', 'Dynamic'):
             # Widgets
             for ctrl_bone in ctrl_chain:
                 global_scale = pb[ctrl_bone].length  # self.obj.dimensions[2]
@@ -222,11 +249,11 @@ class Rig:
                     self.obj, ctrl_bone, radius=widget_size)
 
             # Constraints
-            for org, ctrl in zip(self.org_bones, mch_chain):
+            for org, mch in zip(self.org_bones, mch_chain):
                 con = pb[org].constraints.new('COPY_TRANSFORMS')
                 con.name = "copy_transforms"
                 con.target = self.obj
-                con.subtarget = ctrl
+                con.subtarget = mch
         else:
             # Constraints
             for org, ctrl in zip(self.org_bones, ctrl_chain):
@@ -244,7 +271,7 @@ class Rig:
                 con.volume = 'NO_VOLUME'
                 con.keep_axis = 'PLANE_Z'
 
-        if self.params.chain_type == 'IK':
+        elif self.params.chain_type == 'IK':
             last_bone = mch_chain[-1]
             con = pb[last_bone].constraints.new('IK')
             con.target = self.obj
@@ -255,6 +282,15 @@ class Rig:
             if self.params.do_flip:
                 pantin_utils.create_ik_child_of(
                     self.obj, ctrl_bone, self.params.pelvis_name)
+
+        elif self.params.chain_type == 'Dynamic':
+            for ctrl, mch in zip(ctrl_chain, mch_chain):
+                con = pb[mch].constraints.new('STRETCH_TO')
+                con.name = "stretch_to"
+                con.target = empty_obj
+                con.volume = 'NO_VOLUME'
+                con.keep_axis = 'PLANE_Z'
+                con.rest_length = pb[ctrl].length
 
 
 def add_parameters(params):
@@ -314,7 +350,7 @@ def add_parameters(params):
     #     description="The object will use its parent's layers")
     params.chain_type = bpy.props.EnumProperty(
         name="Chain Type",
-        items=(('Normal',)*3, ('IK',)*3, ('Curve',)*3, ('Def',)*3,),
+        items=(('Normal',)*3, ('IK',)*3, ('Curve',)*3, ('Dynamic',)*3, ('Def',)*3,),
         default="Normal",
         description="Type of chain to be generated")
     params.curve_parent_to_first = bpy.props.BoolProperty(
@@ -355,6 +391,8 @@ def parameters_ui(layout, params):
     r.prop(params, "chain_type")
     if params.chain_type == "Curve":
         r.prop(params, "curve_parent_to_first")
+    elif params.chain_type == "Dynamic":
+        col.label(text="Only one bone allowed in dynamic chain", icon="ERROR")
 
     # # Layers
     # col = layout.column(align=True)
