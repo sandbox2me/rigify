@@ -299,7 +299,7 @@ class Rig:
 
             ui_script = script % (ctrl, dyn_bone)  # % ctrl_bone, MCH-bone.dyn
 
-        return [ui_script]
+            return [ui_script]
 
 
 def add_parameters(params):
