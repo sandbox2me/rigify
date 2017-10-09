@@ -27,6 +27,7 @@ from ...utils import make_mechanism_name, make_deformer_name, strip_org
 from ...utils import create_bone_widget, create_widget, create_cube_widget
 from ...utils import connected_children_names, has_connected_children
 from ...utils import align_bone_x_axis
+from ...utils import get_layers
 
 from . import pantin_utils
 from . import limb_common
@@ -36,11 +37,19 @@ importlib.reload(limb_common)
 
 script = """
 ik_leg = ["%s", "%s", "%s"]
+fk_leg = ["%s", "%s", "%s"]
 if is_selected(ik_leg):
-    layout.prop(pose_bones[ik_leg[2]], \
-'["pelvis_follow"]', \
-text="Follow pelvis (" + ik_leg[2] + ")", \
-slider=True)
+    layout.prop(pose_bones[ik_leg[2]],
+                '["pelvis_follow"]',
+                text="Follow pelvis (" + ik_leg[2] + ")",
+                slider=True
+                )
+if is_selected(ik_leg + fk_leg):
+    layout.prop(pose_bones[ik_leg[2]],
+                '["IK_FK"]',
+                text="IK FK (" + ik_leg[2] + ")",
+                slider=True
+                )
 """
 
 
@@ -78,19 +87,38 @@ class Rig:
         else:
             sides = [params.side]
 
-        self.ik_limbs = {}
+        self.sides = {}
         for s in sides:
-            self.ik_limbs[s] = limb_common.IKLimb(
-                obj, self.org_bones[:3],
-                joint_name, params.do_flip,
-                False, params.pelvis_name,
-                params.duplicate_lr, s, ik_limits=[0.0, 160.0])
+            side_org_bones = limb_common.create_side_org_bones(
+                self.obj, self.org_bones, params.duplicate_lr, s
+            )
+            self.sides[s] = [side_org_bones]
+            self.sides[s].append(limb_common.IKLimb(
+                                 obj,
+                                 self.org_bones[:3],
+                                 side_org_bones,
+                                 joint_name,
+                                 params.do_flip,
+                                 False,
+                                 params.pelvis_name,
+                                 s,
+                                 ik_limits=[0.0, 160.0]))
+            self.sides[s].append(limb_common.FKLimb(obj,
+                                 self.org_bones,
+                                 side_org_bones,
+                                 params.do_flip,
+                                 True,
+                                 params.pelvis_name,
+                                 s))
 
     def generate(self):
         ui_script = ""
-        for s, ik_limb in self.ik_limbs.items():
+        for s, limb in self.sides.items():
+            side_org_bones, ik_limb, fk_limb = limb
             (ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str,
-                elimb_ik, elimb_str, side_org_bones) = (ik_limb.generate())
+                elimb_ik, elimb_str) = (ik_limb.generate())
+            (ulimb_fk, flimb_fk, elimb_fk) = (fk_limb.generate())
+
 
             bpy.ops.object.mode_set(mode='EDIT')
             eb = self.obj.data.edit_bones
@@ -208,11 +236,14 @@ class Rig:
 
             # Set layers if specified
             if s == '.R' and self.right_layers:
-                eb[ulimb_ik].layers = self.right_layers
-                eb[joint_str].layers = self.right_layers
-                eb[elimb_ik].layers = self.right_layers
-                eb[roll_fr].layers = self.right_layers
-                eb[toe_ctl].layers = self.right_layers
+                for b in (ulimb_ik, joint_str, elimb_ik, roll_fr, toe_ctl):
+                    # eb[b].layers = self.right_layers
+                    eb[b].layers = get_layers(22)
+                for b in (ulimb_fk, flimb_fk, elimb_fk):
+                    eb[b].layers = get_layers(23)
+            elif s == '.L':
+                for b in (ulimb_fk, flimb_fk, elimb_fk):
+                    eb[b].layers = get_layers(7)
 
             bpy.ops.object.mode_set(mode='OBJECT')
             pb = self.obj.pose.bones
@@ -401,11 +432,34 @@ class Rig:
             for org, ctrl in zip(
                     side_org_bones, [ulimb_str, flimb_str, elimb_str]):
                 con = pb[org].constraints.new('COPY_TRANSFORMS')
-                con.name = "copy_transforms"
+                con.name = "copy_ik"
                 con.target = self.obj
                 con.subtarget = ctrl
 
-            ui_script += script % (ulimb_ik, joint_str, elimb_ik)
+            for org, ctrl in zip(side_org_bones, [ulimb_fk,
+                                                  flimb_fk,
+                                                  elimb_fk]):
+                con = pb[org].constraints.new('COPY_TRANSFORMS')
+                con.name = "copy_fk"
+                con.target = self.obj
+                con.subtarget = ctrl
+
+                # Drivers
+                driver = self.obj.driver_add(
+                    con.path_from_id("influence"))
+                driver.driver.expression = 'fk'
+                var_fk = driver.driver.variables.new()
+                var_fk.type = 'SINGLE_PROP'
+                var_fk.name = 'fk'
+                var_fk.targets[0].id_type = 'OBJECT'
+                var_fk.targets[0].id = self.obj
+                var_fk.targets[0].data_path = 'pose.bones["{}"]["IK_FK"]'.format(elimb_ik)
+
+
+            ui_script += script % (ulimb_ik, joint_str, elimb_ik,
+                                   ulimb_fk, flimb_fk, elimb_fk
+                                   )
+
             if self.params.do_stretch:
                 ui_script += """    layout.prop(pose_bones[ik_leg[2]], \
 '["foot_stretch"]', \
