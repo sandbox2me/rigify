@@ -32,22 +32,43 @@ from . import pantin_utils
 importlib.reload(pantin_utils)
 
 
+def create_side_org_bones(obj, org_bones, duplicate, side_suffix):
+    """Copy originals with side suffix"""
+    bpy.ops.object.mode_set(mode='EDIT')
+    eb = obj.data.edit_bones
+
+    side_org_bones = []
+    if duplicate:
+        for b in org_bones:
+            side_org_bone = copy_bone(
+                obj, b,
+                pantin_utils.strip_LR_numbers(b) + side_suffix)
+            side_org_bones.append(side_org_bone)
+            eb[side_org_bone].layers = [
+                False if i != 31 else True for i in range(32)
+            ]
+    else:
+        side_org_bones = self.org_bones
+
+    return side_org_bones
+
+
 class IKLimb:
     def __init__(self,
                  obj,
                  org_bones,
+                 side_org_bones,
                  stretch_joint_name,
                  do_flip,
                  pelvis_follow,
                  pelvis_name,
-                 duplicate=False,
                  side_suffix='',
-                 follow_org=False,
                  ik_limits=[-150.0, 150.0, 0.0, 160.0]):
         self.obj = obj
 
         # Get the chain of 3 connected bones
-        self.org_bones = org_bones  # [bone1, bone2, bone3]
+        self.org_bones = org_bones
+        self.side_org_bones = side_org_bones
 
         # Get (optional) parent
         if self.obj.data.bones[org_bones[0]].parent is None:
@@ -61,48 +82,29 @@ class IKLimb:
         self.do_flip = do_flip
         self.pelvis_follow = pelvis_follow
         self.pelvis_name = pelvis_name
-        self.duplicate = duplicate
 
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
 
         eb = self.obj.data.edit_bones
 
-        # Copy originals with side suffix
-        side_org_bones = []
-        if self.duplicate:
-            for b in self.org_bones:
-                side_org_bone = copy_bone(
-                    self.obj, b,
-                    pantin_utils.strip_LR_numbers(b) + self.side_suffix)
-                side_org_bones.append(side_org_bone)
-                eb[side_org_bone].layers = [
-                    False if i != 31 else True for i in range(32)
-                ]
-        else:
-            side_org_bones = self.org_bones
-
         # Create the control bones
         ulimb_ik = copy_bone(
             self.obj,
             self.org_bones[0],
             pantin_utils.strip_LR_numbers(
-                strip_org(self.org_bones[0])) + self.side_suffix)
+                strip_org(self.org_bones[0])) +'.IK' + self.side_suffix)
         flimb_ik = copy_bone(
             self.obj,
             self.org_bones[1],
             make_mechanism_name(
                 pantin_utils.strip_LR_numbers(
-                    strip_org(self.org_bones[1])) + self.side_suffix))
+                    strip_org(self.org_bones[1])) +'.IK' + self.side_suffix))
         elimb_ik = copy_bone(
             self.obj,
             self.org_bones[2],
             pantin_utils.strip_LR_numbers(
-                strip_org(self.org_bones[2])) + self.side_suffix)
-
-        # elimb_mch = copy_bone(
-            # self.obj, self.org_bones[2], make_mechanism_name(
-            #     strip_org(self.org_bones[2])))
+                strip_org(self.org_bones[2])) +'.IK' + self.side_suffix)
 
         ulimb_str = copy_bone(
             self.obj,
@@ -130,12 +132,12 @@ class IKLimb:
                     )) + ".stretch.ik" + self.side_suffix))
 
         joint_str = new_bone(self.obj,
-                             self.stretch_joint_name + self.side_suffix)
+                             self.stretch_joint_name +'.IK' + self.side_suffix)
         eb[joint_str].head = eb[flimb_str].head
         eb[joint_str].tail = (eb[flimb_str].head
                               + Vector((0, 0, 1)) * eb[flimb_str].length/2)
         align_bone_x_axis(self.obj, joint_str, Vector((-1, 0, 0)))
-        #put_bone(self.obj, joint_str, Vector(eb[flimb_str].head))
+        # put_bone(self.obj, joint_str, Vector(eb[flimb_str].head))
 
         # Get edit bones
         ulimb_ik_e = eb[ulimb_ik]
@@ -151,7 +153,7 @@ class IKLimb:
         # Parenting
 
         # Side org chain
-        for b, o_b in zip(side_org_bones[1:], self.org_bones[1:]):
+        for b, o_b in zip(self.side_org_bones[1:], self.org_bones[1:]):
             eb[b].parent = eb[
                 pantin_utils.strip_LR_numbers(
                     eb[o_b].parent.name) + self.side_suffix]
@@ -208,6 +210,13 @@ class IKLimb:
         prop["soft_max"] = 1
         prop["min"] = 0
         prop["max"] = 1
+
+        prop = rna_idprop_ui_prop_get(elimb_ik_p, "IK_FK", create=True)
+        elimb_ik_p["IK_FK"] = 0.0
+        prop["soft_min"] = 0.0
+        prop["soft_max"] = 1.0
+        prop["min"] = 0.0
+        prop["max"] = 1.0
 
         # Constraints
         # Bend hint, ripped off from Rigify' biped
@@ -281,5 +290,93 @@ class IKLimb:
         return [ulimb_ik, ulimb_str,
                 flimb_ik, flimb_str,
                 joint_str,
-                elimb_ik, elimb_str,
-                side_org_bones]
+                elimb_ik, elimb_str]
+
+
+class FKLimb:
+    def __init__(self,
+                 obj,
+                 org_bones,
+                 side_org_bones,
+                 do_flip,
+                 pelvis_follow,
+                 pelvis_name,
+                 side_suffix='',):
+        self.obj = obj
+
+        # Get the chain of 3 connected bones
+        self.org_bones = org_bones  # [bone1, bone2, bone3]
+        self.side_org_bones = side_org_bones  # [bone1, bone2, bone3]
+
+        # Get (optional) parent
+        if self.obj.data.bones[org_bones[0]].parent is None:
+            self.org_parent = None
+        else:
+            self.org_parent = self.obj.data.bones[org_bones[0]].parent.name
+
+        self.side_suffix = side_suffix
+        self.do_flip = do_flip
+        self.pelvis_follow = pelvis_follow
+        self.pelvis_name = pelvis_name
+
+    def generate(self):
+        bpy.ops.object.mode_set(mode='EDIT')
+
+        eb = self.obj.data.edit_bones
+
+        # Create the control bones
+        ulimb_fk = copy_bone(
+            self.obj,
+            self.org_bones[0],
+            pantin_utils.strip_LR_numbers(
+                strip_org(self.org_bones[0])) + '.FK' + self.side_suffix)
+        flimb_fk = copy_bone(
+            self.obj,
+            self.org_bones[1],
+            pantin_utils.strip_LR_numbers(
+                strip_org(self.org_bones[1])) + '.FK' + self.side_suffix)
+        elimb_fk = copy_bone(
+            self.obj,
+            self.org_bones[2],
+            pantin_utils.strip_LR_numbers(
+                strip_org(self.org_bones[2])) + '.FK' + self.side_suffix)
+
+        # Get edit bones
+        ulimb_fk_e = eb[ulimb_fk]
+        flimb_fk_e = eb[flimb_fk]
+        elimb_fk_e = eb[elimb_fk]
+
+        # Parenting
+
+        # Side org chain
+        for b, o_b in zip(self.side_org_bones[1:], self.org_bones[1:]):
+            eb[b].parent = eb[
+                pantin_utils.strip_LR_numbers(
+                    eb[o_b].parent.name) + self.side_suffix]
+
+        if self.org_parent is not None:
+            ulimb_fk_e.use_connect = False
+            ulimb_fk_e.parent = eb[self.org_parent]
+
+        flimb_fk_e.parent = ulimb_fk_e
+        elimb_fk_e.parent = flimb_fk_e
+
+        # Object mode, get pose bones
+        bpy.ops.object.mode_set(mode='OBJECT')
+        pb = self.obj.pose.bones
+
+        ulimb_fk_p = pb[ulimb_fk]
+        flimb_fk_p = pb[flimb_fk]
+        elimb_fk_p = pb[elimb_fk]
+
+        # Set up custom properties
+        prop = rna_idprop_ui_prop_get(elimb_fk_p, "pelvis_follow", create=True)
+        elimb_fk_p["pelvis_follow"] = int(self.pelvis_follow)
+        prop["soft_min"] = 0
+        prop["soft_max"] = 1
+        prop["min"] = 0
+        prop["max"] = 1
+
+        return [ulimb_fk,
+                flimb_fk,
+                elimb_fk]
