@@ -54,6 +54,12 @@ def strip_LR_numbers(name):
     return strip_LR(stripped) + numbers
 
 
+def layers_to_index(layers):
+    """Return the first toggled layer in a layer list."""
+    for i, l in enumerate(layers):
+        if l:
+            return i
+
 def create_deformation(obj,
                        bone_name,
                        flip_switch,
