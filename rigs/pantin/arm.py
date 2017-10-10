@@ -23,6 +23,7 @@ from ...utils import copy_bone
 from ...utils import make_deformer_name, strip_org
 from ...utils import create_bone_widget, create_widget, create_cube_widget
 from ...utils import connected_children_names, has_connected_children
+from ...utils import get_layers
 
 from . import pantin_utils
 from . import limb_common
@@ -54,10 +55,6 @@ class Rig:
         self.org_bones = ([bone_name]
                           + connected_children_names(obj, bone_name)[:2])
         self.params = params
-        if params["duplicate_lr"] and "right_layers" in params:
-            self.right_layers = [bool(l) for l in params["right_layers"]]
-        else:
-            self.right_layers = None
         joint_name = self.params.joint_name
 
         if params.duplicate_lr:
@@ -114,10 +111,19 @@ class Rig:
                     bone_index=i, new_name=def_bone_name + s)
 
             # Set layers if specified
-            if s == '.R' and self.right_layers:
-                eb[ulimb_ik].layers = self.right_layers
-                eb[joint_str].layers = self.right_layers
-                eb[elimb_ik].layers = self.right_layers
+            active_layer = pantin_utils.layers_to_index(eb[ulimb_ik].layers)
+            if s == '.R' and self.params.duplicate_lr:
+                for b in (ulimb_ik, joint_str, elimb_ik):
+                    eb[b].layers = get_layers(active_layer
+                                              + self.params.right_offset)
+                for b in (ulimb_fk, flimb_fk, elimb_fk):
+                    eb[b].layers = get_layers(active_layer
+                                              + self.params.fk_offset
+                                              + self.params.right_offset)
+            elif s == '.L':
+                for b in (ulimb_fk, flimb_fk, elimb_fk):
+                    eb[b].layers = get_layers(active_layer
+                                              + self.params.fk_offset)
 
             bpy.ops.object.mode_set(mode='OBJECT')
             pb = self.obj.pose.bones
@@ -202,9 +208,17 @@ def add_parameters(params):
         name="Joint Name",
         default="Joint",
         description="Name of the middle joint")
-    params.right_layers = bpy.props.BoolVectorProperty(
-        size=32,
-        description="Layers for the duplicated limb to be on")
+    params.right_offset = bpy.props.IntProperty(
+        name="Right Offset",
+        default=16,
+        description="Number of layers to offset the right side")
+    params.fk_offset = bpy.props.IntProperty(
+        name="FK Offset",
+        default=1,
+        description="Number of layers to offset the FK controls")
+    # params.right_layers = bpy.props.BoolVectorProperty(
+    #     size=32,
+    #     description="Layers for the duplicated limb to be on")
 
 
 def parameters_ui(layout, params):
@@ -218,56 +232,13 @@ def parameters_ui(layout, params):
     c = layout.column()
     c.prop(params, "do_flip")
     c.prop(params, "pelvis_name")
+    c.prop(params, "fk_offset")
     r = layout.row()
     r.prop(params, "duplicate_lr")
 
     if params.duplicate_lr:
-        r = layout.row()
-        r.active = params.duplicate_lr
-
-        # Layers for the right leg
-        col = r.column(align=True)
-        row = col.row(align=True)
-        row.prop(params, "right_layers", index=0, toggle=True, text="")
-        row.prop(params, "right_layers", index=1, toggle=True, text="")
-        row.prop(params, "right_layers", index=2, toggle=True, text="")
-        row.prop(params, "right_layers", index=3, toggle=True, text="")
-        row.prop(params, "right_layers", index=4, toggle=True, text="")
-        row.prop(params, "right_layers", index=5, toggle=True, text="")
-        row.prop(params, "right_layers", index=6, toggle=True, text="")
-        row.prop(params, "right_layers", index=7, toggle=True, text="")
-        row = col.row(align=True)
-        row.prop(params, "right_layers", index=16, toggle=True, text="")
-        row.prop(params, "right_layers", index=17, toggle=True, text="")
-        row.prop(params, "right_layers", index=18, toggle=True, text="")
-        row.prop(params, "right_layers", index=19, toggle=True, text="")
-        row.prop(params, "right_layers", index=20, toggle=True, text="")
-        row.prop(params, "right_layers", index=21, toggle=True, text="")
-        row.prop(params, "right_layers", index=22, toggle=True, text="")
-        row.prop(params, "right_layers", index=23, toggle=True, text="")
-
-        col = r.column(align=True)
-        row = col.row(align=True)
-        row.prop(params, "right_layers", index=8, toggle=True, text="")
-        row.prop(params, "right_layers", index=9, toggle=True, text="")
-        row.prop(params, "right_layers", index=10, toggle=True, text="")
-        row.prop(params, "right_layers", index=11, toggle=True, text="")
-        row.prop(params, "right_layers", index=12, toggle=True, text="")
-        row.prop(params, "right_layers", index=13, toggle=True, text="")
-        row.prop(params, "right_layers", index=14, toggle=True, text="")
-        row.prop(params, "right_layers", index=15, toggle=True, text="")
-        row = col.row(align=True)
-        row.prop(params, "right_layers", index=24, toggle=True, text="")
-        row.prop(params, "right_layers", index=25, toggle=True, text="")
-        row.prop(params, "right_layers", index=26, toggle=True, text="")
-        row.prop(params, "right_layers", index=27, toggle=True, text="")
-        row.prop(params, "right_layers", index=28, toggle=True, text="")
-        row.prop(params, "right_layers", index=29, toggle=True, text="")
-        row.prop(params, "right_layers", index=30, toggle=True, text="")
-        row.prop(params, "right_layers", index=31, toggle=True, text="")
-
-    if not params.duplicate_lr:
-        r = layout.row()
+        r.prop(params, "right_offset")
+    else:
         r.prop(params, "side", expand=True)
 
 
