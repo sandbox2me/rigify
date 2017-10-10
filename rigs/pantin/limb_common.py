@@ -325,11 +325,14 @@ class FKLimb:
         eb = self.obj.data.edit_bones
 
         # Create the control bones
-        ulimb_fk = copy_bone(
+
+        ulimb_fk_name = pantin_utils.strip_LR_numbers(
+            strip_org(self.org_bones[0])) + '.FK' + self.side_suffix
+        ulimb_fk, ulimb_follow = pantin_utils.make_follow(
             self.obj,
             self.org_bones[0],
-            pantin_utils.strip_LR_numbers(
-                strip_org(self.org_bones[0])) + '.FK' + self.side_suffix)
+            ctrl_name=ulimb_fk_name
+        )
         flimb_fk = copy_bone(
             self.obj,
             self.org_bones[1],
@@ -354,9 +357,6 @@ class FKLimb:
                 pantin_utils.strip_LR_numbers(
                     eb[o_b].parent.name) + self.side_suffix]
 
-        if self.org_parent is not None:
-            ulimb_fk_e.use_connect = False
-            ulimb_fk_e.parent = eb[self.org_parent]
 
         flimb_fk_e.parent = ulimb_fk_e
         elimb_fk_e.parent = flimb_fk_e
@@ -370,12 +370,13 @@ class FKLimb:
         elimb_fk_p = pb[elimb_fk]
 
         # Set up custom properties
-        prop = rna_idprop_ui_prop_get(elimb_fk_p, "pelvis_follow", create=True)
-        elimb_fk_p["pelvis_follow"] = int(self.pelvis_follow)
+        prop = rna_idprop_ui_prop_get(ulimb_fk_p, "pelvis_follow", create=True)
+        ulimb_fk_p["pelvis_follow"] = int(self.pelvis_follow)
         prop["soft_min"] = 0
         prop["soft_max"] = 1
         prop["min"] = 0
         prop["max"] = 1
+
 
         return [ulimb_fk,
                 flimb_fk,

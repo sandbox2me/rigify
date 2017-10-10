@@ -50,6 +50,11 @@ if is_selected(ik_leg + fk_leg):
                 text="IK FK (" + ik_leg[2] + ")",
                 slider=True
                 )
+if is_selected(fk_leg):
+    layout.prop(pose_bones[fk_leg[0]],
+                '["follow"]',
+                text="Follow (" + fk_leg[0] + ")",
+                slider=True)
 """
 
 
@@ -112,9 +117,9 @@ class Rig:
         for s, limb in self.sides.items():
             side_org_bones, ik_limb, fk_limb = limb
             (ulimb_ik, ulimb_str, flimb_ik, flimb_str, joint_str,
-                elimb_ik, elimb_str) = (ik_limb.generate())
-            (ulimb_fk, flimb_fk, elimb_fk) = (fk_limb.generate())
+                elimb_ik, elimb_str) = ik_limb.generate()
 
+            ulimb_fk, flimb_fk, elimb_fk = fk_limb.generate()
 
             bpy.ops.object.mode_set(mode='EDIT')
             eb = self.obj.data.edit_bones

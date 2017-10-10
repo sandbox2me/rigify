@@ -18,10 +18,12 @@
 
 import bpy
 from mathutils import Vector, Matrix
+from rna_prop_ui import rna_idprop_ui_prop_get
 from math import pi, cos, sin
 import re
 
-from ...utils import make_deformer_name, strip_org, copy_bone
+from ...utils import make_deformer_name, make_mechanism_name
+from ...utils import strip_org, copy_bone
 from ...utils import create_widget
 from ...utils import create_circle_polygon
 from ...utils import align_bone_z_axis
@@ -184,6 +186,66 @@ def create_ik_child_of(obj, bone, pelvis_name):
     var_pf.targets[0].id_type = 'OBJECT'
     var_pf.targets[0].id = obj
     var_pf.targets[0].data_path = bone_p.path_from_id() + '["pelvis_follow"]'
+
+
+def make_follow(obj, b, ctrl_name=None):
+    eb = obj.data.edit_bones
+
+    # Control bone
+    if ctrl_name is None:
+        ctrl_name = strip_org(b)
+    ctrl_bone = copy_bone(obj, b, ctrl_name)
+
+    # Follow bone
+
+    follow_bone = copy_bone(
+        obj,
+        b,
+        make_mechanism_name(strip_org(b)) + ".follow"
+    )
+
+    # Parenting
+    bone_parent_name = strip_org(eb[b].parent.name)
+    eb[follow_bone].parent = eb[bone_parent_name]
+    eb[ctrl_bone].use_connect = False
+    eb[ctrl_bone].parent = eb[follow_bone]
+
+    bpy.ops.object.mode_set(mode='OBJECT')
+    pb = obj.pose.bones
+
+    # Set up custom properties
+    prop = rna_idprop_ui_prop_get(pb[ctrl_bone], "follow", create=True)
+    pb[ctrl_bone]["follow"] = 1.0
+    prop["soft_min"] = 0.0
+    prop["soft_max"] = 1.0
+    prop["min"] = 0.0
+    prop["max"] = 1.0
+
+    con = pb[follow_bone].constraints.new('COPY_ROTATION')
+    con.name = "follow"
+    con.target = obj
+    con.subtarget = strip_org(pb[b].parent.name)
+    con.use_x = False
+    con.use_y = False
+    con.use_z = True
+    con.invert_z = True
+    con.target_space = 'LOCAL_WITH_PARENT'
+    # TODO investigate strange behaviour with FLIP
+    con.owner_space = 'LOCAL'
+
+    # Drivers
+    driver = obj.driver_add(con.path_from_id("influence"))
+    driver.driver.expression = '1-follow'
+    var_pf = driver.driver.variables.new()
+
+    var_pf.type = 'SINGLE_PROP'
+    var_pf.name = 'follow'
+    var_pf.targets[0].id_type = 'OBJECT'
+    var_pf.targets[0].id = obj
+    var_pf.targets[0].data_path = pb[ctrl_bone].path_from_id() + '["follow"]'
+    bpy.ops.object.mode_set(mode='EDIT')
+
+    return ctrl_bone, follow_bone
 
 
 def create_axis_line_widget(rig,

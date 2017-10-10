@@ -48,37 +48,22 @@ class Rig:
 
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
+        ui_script = ""
 
         ctrl_chain = []
         follow_chain = []
 
         eb = self.obj.data.edit_bones
         for i, b in enumerate(self.org_bones):
-            # Control bones
-            ctrl_bone = copy_bone(self.obj, b, strip_org(b))
-            ctrl_bone_e = eb[ctrl_bone]
+
+            ctrl_bone, follow_bone = pantin_utils.make_follow(self.obj, b)
+
+            ui_script += script % (ctrl_bone)
 
             # Add to list
             ctrl_chain += [ctrl_bone]
 
-            # Follow bones
-            follow_bone = copy_bone(
-                self.obj,
-                b,
-                make_mechanism_name(strip_org(b)) + ".follow"
-            )
-
-            follow_chain += [follow_bone]
             eb[ctrl_bone].name = ctrl_bone
-
-            # Parenting
-            bone_parent_name = strip_org(eb[b].parent.name)
-            eb[follow_bone].parent = eb[bone_parent_name]
-            eb[ctrl_bone].use_connect = False
-            eb[ctrl_bone].parent = eb[follow_bone]
-            if self.params.detach: # Detach head
-                eb[ctrl_bone].use_connect = False
-
 
             # Def bones
             def_bone = pantin_utils.create_deformation(
@@ -108,45 +93,9 @@ class Rig:
         pantin_utils.create_aligned_circle_widget(
             self.obj, head, radius=widget_size, head_tail=0.5)
 
-        ### Constraints
+        # Constraints
 
-        ui_script = ""
-
-        # Follow
-        for org, ctrl, follow in zip(self.org_bones, ctrl_chain, follow_chain):
-            # Set up custom properties
-            prop = rna_idprop_ui_prop_get(pb[ctrl], "follow", create=True)
-            pb[ctrl]["follow"] = 1.0
-            prop["soft_min"] = 0.0
-            prop["soft_max"] = 1.0
-            prop["min"] = 0.0
-            prop["max"] = 1.0
-
-            con = pb[follow].constraints.new('COPY_ROTATION')
-            con.name = "follow"
-            con.target = self.obj
-            con.subtarget = pb[org].parent.name
-            con.use_x = False
-            con.use_y = False
-            con.use_z = True
-            con.invert_z = True
-            con.target_space = 'LOCAL_WITH_PARENT'
-            con.owner_space = 'LOCAL'
-
-            ui_script += script % (ctrl)
-
-            # Drivers
-            driver = self.obj.driver_add(con.path_from_id("influence"))
-            driver.driver.expression = '1-follow'
-            var_pf = driver.driver.variables.new()
-
-            var_pf.type = 'SINGLE_PROP'
-            var_pf.name = 'follow'
-            var_pf.targets[0].id_type = 'OBJECT'
-            var_pf.targets[0].id = self.obj
-            var_pf.targets[0].data_path = pb[ctrl].path_from_id() + '["follow"]'
-
-        # for org, ctrl in zip(self.org_bones, ctrl_chain):
+        for org, ctrl in zip(self.org_bones, ctrl_chain):
             con = pb[org].constraints.new('COPY_TRANSFORMS')
             con.name = "copy_transforms"
             con.target = self.obj
@@ -165,7 +114,6 @@ class Rig:
         con.min_z = -0.5
         con.max_z = 0.68
         con.owner_space = 'LOCAL'
-
 
         return [ui_script]
 

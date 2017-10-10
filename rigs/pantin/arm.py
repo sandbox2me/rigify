@@ -46,6 +46,11 @@ if is_selected(ik_arm + fk_arm):
                 text="IK FK (" + ik_arm[2] + ")",
                 slider=True
                 )
+if is_selected(fk_arm):
+    layout.prop(pose_bones[fk_arm[0]],
+                '["follow"]',
+                text="Follow (" + fk_arm[0] + ")",
+                slider=True)
 """
 
 
