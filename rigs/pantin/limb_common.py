@@ -48,7 +48,7 @@ def create_side_org_bones(obj, org_bones, duplicate, side_suffix):
                 False if i != 31 else True for i in range(32)
             ]
     else:
-        side_org_bones = self.org_bones
+        side_org_bones = org_bones
 
     return side_org_bones
 

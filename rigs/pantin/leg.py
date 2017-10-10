@@ -232,14 +232,15 @@ class Rig:
 
             # Set layers if specified
             active_layer = pantin_utils.layers_to_index(eb[ulimb_ik].layers)
-            if s == '.R' and self.params.duplicate_lr:
+            right_offset = self.params.right_offset if self.params.duplicate_lr else 0
+            if s == '.R':
                 for b in (ulimb_ik, joint_str, elimb_ik, roll_fr, toe_ctl):
                     eb[b].layers = get_layers(active_layer
-                                              + self.params.right_offset)
+                                              + right_offset)
                 for b in (ulimb_fk, flimb_fk, elimb_fk):
                     eb[b].layers = get_layers(active_layer
                                               + self.params.fk_offset
-                                              + self.params.right_offset)
+                                              + right_offset)
             elif s == '.L':
                 for b in (ulimb_fk, flimb_fk, elimb_fk):
                     eb[b].layers = get_layers(active_layer
@@ -532,11 +533,13 @@ def parameters_ui(layout, params):
     r = layout.row()
     r.prop(params, "duplicate_lr")
 
-    r = layout.row()
     if params.duplicate_lr:
         r.prop(params, "right_offset")
     else:
         r.prop(params, "side", expand=True)
+        print(params.side)
+        if params.side == ".R":
+            layout.prop(params, "right_offset")
 
 
 def create_sample(obj):
