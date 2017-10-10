@@ -36,8 +36,8 @@ importlib.reload(pantin_utils)
 importlib.reload(limb_common)
 
 script = """
-ik_leg = ["%s", "%s", "%s"]
-fk_leg = ["%s", "%s", "%s"]
+ik_leg = ["%s", "%s", "%s", "%s"]
+fk_leg = ["%s", "%s", "%s", "%s"]
 if is_selected(ik_leg):
     layout.prop(pose_bones[ik_leg[2]],
                 '["pelvis_follow"]',
@@ -140,10 +140,14 @@ class Rig:
                 pantin_utils.strip_LR_numbers(
                     make_mechanism_name(
                         strip_org(self.org_bones[4]))) + '.fr' + s)
-            toe_ctl = copy_bone(
+            toe_ik_ctl = copy_bone(
                 self.obj, self.org_bones[4],
                 pantin_utils.strip_LR_numbers(
-                    strip_org(self.org_bones[4])) + s)
+                    strip_org(self.org_bones[4])) + '.IK' + s)
+            toe_fk_ctl = copy_bone(
+                self.obj, self.org_bones[4],
+                pantin_utils.strip_LR_numbers(
+                    strip_org(self.org_bones[4])) + '.FK' + s)
             toe_pos = copy_bone(
                 self.obj, self.org_bones[4],
                 pantin_utils.strip_LR_numbers(
@@ -191,8 +195,11 @@ class Rig:
             eb[toe_fr].use_connect = False
             eb[toe_fr].parent = eb[heel_fr]
 
-            eb[toe_ctl].use_connect = True
-            eb[toe_ctl].parent = eb[toe_fr]
+            eb[toe_ik_ctl].use_connect = True
+            eb[toe_ik_ctl].parent = eb[toe_fr]
+
+            eb[toe_fk_ctl].use_connect = True
+            eb[toe_fk_ctl].parent = eb[elimb_fk]
 
             eb[toe_pos].use_connect = False
             eb[toe_pos].parent = eb[elimb_str]
@@ -212,7 +219,8 @@ class Rig:
             else:
                 Z_index = self.params.Z_index
 
-            for i, b in enumerate(side_org_bones[:2]):
+            side_org_bones = side_org_bones[:3] + side_org_bones[-1:] # Ignore heel
+            for i, b in enumerate(side_org_bones):
                 def_bone_name = pantin_utils.strip_LR_numbers(strip_org(b))
                 def_bone = pantin_utils.create_deformation(
                     self.obj, b,
@@ -220,29 +228,20 @@ class Rig:
                     member_index=Z_index,
                     bone_index=i, new_name=def_bone_name+s)
 
-            def_bone_name = pantin_utils.strip_LR_numbers(strip_org(self.org_bones[2]))
-            def_bone = pantin_utils.create_deformation(
-                self.obj, elimb_str, self.params.flip_switch,
-                member_index=Z_index, bone_index=2, new_name=def_bone_name + s)
-
-            def_bone_name = pantin_utils.strip_LR_numbers(strip_org(toe_ctl))
-            def_bone = pantin_utils.create_deformation(
-                self.obj, toe_pos, self.params.flip_switch,
-                member_index=Z_index, bone_index=3, new_name=def_bone_name + s)
 
             # Set layers if specified
             active_layer = pantin_utils.layers_to_index(eb[ulimb_ik].layers)
             right_offset = self.params.right_offset if self.params.duplicate_lr else 0
             if s == '.R':
-                for b in (ulimb_ik, joint_str, elimb_ik, roll_fr, toe_ctl):
+                for b in (ulimb_ik, joint_str, elimb_ik, roll_fr, toe_ik_ctl):
                     eb[b].layers = get_layers(active_layer
                                               + right_offset)
-                for b in (ulimb_fk, flimb_fk, elimb_fk):
+                for b in (ulimb_fk, flimb_fk, elimb_fk, toe_fk_ctl):
                     eb[b].layers = get_layers(active_layer
                                               + self.params.fk_offset
                                               + right_offset)
             elif s == '.L':
-                for b in (ulimb_fk, flimb_fk, elimb_fk):
+                for b in (ulimb_fk, flimb_fk, elimb_fk, toe_fk_ctl):
                     eb[b].layers = get_layers(active_layer
                                               + self.params.fk_offset)
 
@@ -296,7 +295,7 @@ class Rig:
                 (right, down + (up - down) * 2 / 3),
                 (right, down))
             pantin_utils.create_aligned_polygon_widget(
-                self.obj, toe_ctl, toe_verts)
+                self.obj, toe_ik_ctl, toe_verts)
 
             pantin_utils.create_aligned_crescent_widget(
                 self.obj, roll_fr, radius=side_factor * pb[roll_fr].length / 2)
@@ -386,7 +385,7 @@ class Rig:
             con = pb[toe_pos].constraints.new('COPY_ROTATION')
             con.name = "copy rotation"
             con.target = self.obj
-            con.subtarget = toe_ctl
+            con.subtarget = toe_ik_ctl
             #con.invert_x = True
             con.target_space = 'POSE'
             con.owner_space = 'POSE'
@@ -431,7 +430,7 @@ class Rig:
                                                    + '["foot_stretch"]')
 
             for org, ctrl in zip(
-                    side_org_bones, [ulimb_str, flimb_str, elimb_str]):
+                    side_org_bones, [ulimb_str, flimb_str, elimb_str, toe_ik_ctl]):
                 con = pb[org].constraints.new('COPY_TRANSFORMS')
                 con.name = "copy_ik"
                 con.target = self.obj
@@ -439,7 +438,8 @@ class Rig:
 
             for org, ctrl in zip(side_org_bones, [ulimb_fk,
                                                   flimb_fk,
-                                                  elimb_fk]):
+                                                  elimb_fk,
+                                                  toe_fk_ctl]):
                 con = pb[org].constraints.new('COPY_TRANSFORMS')
                 con.name = "copy_fk"
                 con.target = self.obj
@@ -457,8 +457,8 @@ class Rig:
                 var_fk.targets[0].data_path = 'pose.bones["{}"]["IK_FK"]'.format(elimb_ik)
 
 
-            ui_script += script % (ulimb_ik, joint_str, elimb_ik,
-                                   ulimb_fk, flimb_fk, elimb_fk
+            ui_script += script % (ulimb_ik, joint_str, elimb_ik, toe_ik_ctl,
+                                   ulimb_fk, flimb_fk, elimb_fk, toe_fk_ctl,
                                    )
 
             if self.params.do_stretch:
@@ -508,9 +508,6 @@ def add_parameters(params):
         name="FK Offset",
         default=1,
         description="Number of layers to offset the FK controls")
-    # params.right_layers = bpy.props.BoolVectorProperty(
-    #     size=32,
-    #     description="Layers for the duplicated limb to be on")
     params.do_stretch = bpy.props.BoolProperty(
         name="Do Stretch",
         default=False,
@@ -537,7 +534,6 @@ def parameters_ui(layout, params):
         r.prop(params, "right_offset")
     else:
         r.prop(params, "side", expand=True)
-        print(params.side)
         if params.side == ".R":
             layout.prop(params, "right_offset")
 
@@ -600,17 +596,6 @@ def create_sample(obj):
         pbone.rigify_parameters.joint_name = "Knee"
     except AttributeError:
         pass
-    # try:
-    #     pbone.rigify_parameters.right_layers = [
-    #         False, False, False, False, False,
-    #         False, False, False, False, False,
-    #         False, False, False, False, False,
-    #         False, False, False, False, False,
-    #         False, False, True, False, False,
-    #         False, False, False, False, False,
-    #         False, False]
-    # except AttributeError:
-    #     pass
     try:
         pbone.rigify_parameters.pelvis_name = "Pelvis"
     except AttributeError:

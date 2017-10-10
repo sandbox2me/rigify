@@ -241,7 +241,6 @@ def parameters_ui(layout, params):
         r.prop(params, "right_offset")
     else:
         r.prop(params, "side", expand=True)
-        print(params.side)
         if params.side == ".R":
             layout.prop(params, "right_offset")
 
