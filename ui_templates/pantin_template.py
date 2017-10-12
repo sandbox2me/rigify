@@ -88,6 +88,100 @@ class Rigify_Swap_Bones(bpy.types.Operator):
         return {'FINISHED'}
 
 
+############################
+## IK/FK Switch operators ##
+############################
+
+def get_connected_parent_chain(pbone):
+    chain = [pbone]
+    if pbone.bone.use_connect:
+        chain = get_connected_parent_chain(pbone.parent) + chain
+    return chain
+
+def get_connected_children_chain(pbone):
+    chain = [pbone]
+    for c in pbone.children:
+        if c.bone.use_connect:
+            chain += get_connected_children_chain(c)
+    return chain
+
+def get_connected_bone_chain(pbone):
+    chain = get_connected_parent_chain(pbone)[:-1]
+    chain += get_connected_children_chain(pbone)
+    return chain
+
+def get_name_from_org(name, suffix='.IK'):
+    if '.R' in name:
+        side = '.R'
+    elif '.L' in name:
+        side = '.L'
+    else:
+        side = ''
+    return name[4:].replace(side, suffix + side)
+
+class Rigify_FK_to_IK(bpy.types.Operator):
+    """ Snap selected member from FK to IK
+    """
+    bl_idname = "pose.rigify_fk_to_ik" + rig_id
+    bl_label = "Snap FK to IK"
+    bl_options = {'UNDO'}
+
+
+    @classmethod
+    def poll(cls, context):
+        return (context.active_object != None and context.mode == 'POSE')
+
+    def execute(self, context):
+        # Get list of corresponding org bones
+        obj = context.object
+        bone = context.active_pose_bone
+
+        org_bone = obj.pose.bones['ORG-' + bone.name.replace('.IK', '').replace('.FK', '')]
+        bones = get_connected_bone_chain(org_bone)
+        print(bones)
+
+        mats = {}
+
+        for i in range(len(bones)): # Recalculate matrices once for each bone in the chain. Couldn't find better :/
+            for org in bones:
+                # if ".IK" in pb.name:
+                #     org = obj.pose.bones['ORG-' + pb.name.replace('.IK', '')]
+                fk_name = get_name_from_org(org.name, '.FK')
+                if fk_name in obj.pose.bones:
+                    fk  = obj.pose.bones[fk_name]
+                    if org in mats:
+                        fk.matrix = mats[org]
+                    else:
+                        mats[org] = org.matrix.copy()
+                else:
+                    continue
+
+            bpy.context.scene.update() # Force update
+
+        for org in bones:
+            ik_name = get_name_from_org(org.name)
+            if (ik_name in obj.pose.bones
+                    and 'IK_FK' in obj.pose.bones[ik_name]):
+                obj.pose.bones[ik_name]['IK_FK'] = 1.0
+        return {'FINISHED'}
+
+class Rigify_IK_to_FK(bpy.types.Operator):
+    """ Snap selected member from IK to FK
+    """
+    bl_idname = "pose.rigify_ik_to_fk" + rig_id
+    bl_label = "Snap IK to FK"
+    bl_options = {'UNDO'}
+
+
+    @classmethod
+    def poll(cls, context):
+        return (context.active_object != None and context.mode == 'POSE')
+
+    def execute(self, context):
+        self.report({'WARNING'}, 'Not implemented. Sorry.')
+        return {'CANCELLED'}
+
+
 ###################################
 ## Bone Z Index Operators and UI ##
 ###################################
@@ -476,6 +570,10 @@ class RigUI(bpy.types.Panel):
 
         layout.operator("pose.rigify_swap_bones" + rig_id)
         layout.separator()
+        col = layout.column(align=True)
+        col.operator("pose.rigify_ik_to_fk" + rig_id)
+        col.operator("pose.rigify_fk_to_ik" + rig_id)
+        layout.separator()
 
         layout.prop(pose_bones["MCH-Flip"], '["flip"]', text="Flip", slider=True)
         layout.separator()
@@ -545,6 +643,8 @@ UI_REGISTER = '''
 
 def register():
     bpy.utils.register_class(Rigify_Swap_Bones)
+    bpy.utils.register_class(Rigify_FK_to_IK)
+    bpy.utils.register_class(Rigify_IK_to_FK)
     bpy.utils.register_class(RigUI)
     bpy.utils.register_class(RigLayers)
 
@@ -563,6 +663,8 @@ def register():
 
 def unregister():
     bpy.utils.unregister_class(Rigify_Swap_Bones)
+    bpy.utils.unregister_class(Rigify_FK_to_IK)
+    bpy.utils.unregister_class(Rigify_IK_to_FK)
     bpy.utils.unregister_class(RigUI)
     bpy.utils.unregister_class(RigLayers)
 
