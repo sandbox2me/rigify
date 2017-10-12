@@ -138,14 +138,11 @@ class Rigify_FK_to_IK(bpy.types.Operator):
 
         org_bone = obj.pose.bones['ORG-' + bone.name.replace('.IK', '').replace('.FK', '')]
         bones = get_connected_bone_chain(org_bone)
-        print(bones)
 
         mats = {}
 
         for i in range(len(bones)): # Recalculate matrices once for each bone in the chain. Couldn't find better :/
             for org in bones:
-                # if ".IK" in pb.name:
-                #     org = obj.pose.bones['ORG-' + pb.name.replace('.IK', '')]
                 fk_name = get_name_from_org(org.name, '.FK')
                 if fk_name in obj.pose.bones:
                     fk  = obj.pose.bones[fk_name]
@@ -178,8 +175,40 @@ class Rigify_IK_to_FK(bpy.types.Operator):
         return (context.active_object != None and context.mode == 'POSE')
 
     def execute(self, context):
-        self.report({'WARNING'}, 'Not implemented. Sorry.')
-        return {'CANCELLED'}
+        # Get list of corresponding org bones
+        obj = context.object
+        bone = context.active_pose_bone
+
+        org_bone = obj.pose.bones['ORG-' + bone.name.replace('.IK', '').replace('.FK', '')]
+        bones = get_connected_bone_chain(org_bone)
+
+        mats = {}
+
+        for i in range(len(bones)): # Recalculate matrices once for each bone in the chain. Couldn't find better :/
+            for org in bones:
+                ik_name = get_name_from_org(org.name, '.IK')
+                if ik_name in obj.pose.bones:
+                    ik  = obj.pose.bones[ik_name]
+                    # This is useful in case the CTRL bone is offset from the ORG bone (eg. foot.IK)
+                    diff_mat = (
+                        org.bone.matrix_local.inverted()
+                        * ik.bone.matrix_local
+                    )
+                    if org in mats:
+                        ik.matrix = mats[org] * diff_mat
+                    else:
+                        mats[org] = org.matrix.copy()
+                else:
+                    continue
+
+            bpy.context.scene.update() # Force update
+
+        for org in bones:
+            ik_name = get_name_from_org(org.name)
+            if (ik_name in obj.pose.bones
+                    and 'IK_FK' in obj.pose.bones[ik_name]):
+                obj.pose.bones[ik_name]['IK_FK'] = 0.0
+        return {'FINISHED'}
 
 
 ###################################
