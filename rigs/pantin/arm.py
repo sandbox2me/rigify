@@ -60,7 +60,6 @@ class Rig:
         self.org_bones = ([bone_name]
                           + connected_children_names(obj, bone_name)[:2])
         self.params = params
-        joint_name = self.params.joint_name
 
         if params.duplicate_lr:
             sides = ['.L', '.R']
@@ -76,7 +75,6 @@ class Rig:
             self.sides[s].append(limb_common.IKLimb(obj,
                                                     self.org_bones,
                                                     side_org_bones,
-                                                    joint_name,
                                                     params.do_flip,
                                                     True,
                                                     params.pelvis_name,
@@ -210,10 +208,6 @@ def add_parameters(params):
         name="Pelvis Name",
         default="Pelvis",
         description="Name of the pelvis bone in whole rig")
-    params.joint_name = bpy.props.StringProperty(
-        name="Joint Name",
-        default="Joint",
-        description="Name of the middle joint")
     params.right_offset = bpy.props.IntProperty(
         name="Right Offset",
         default=16,
@@ -233,8 +227,6 @@ def parameters_ui(layout, params):
     r = layout.row()
     r.prop(params, "Z_index")
     r.prop(params, "flip_switch")
-    c = layout.column()
-    c.prop(params, "joint_name")
     c = layout.column()
     c.prop(params, "do_flip")
     c.prop(params, "pelvis_name")
@@ -295,10 +287,6 @@ def create_sample(obj):
                                                 True, False, False, False,
                                                 False, False, False, False,
                                                 False, False, False, False]
-    except AttributeError:
-        pass
-    try:
-        pbone.rigify_parameters.joint_name = "Elbow"
     except AttributeError:
         pass
     try:

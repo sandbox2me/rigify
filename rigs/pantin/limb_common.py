@@ -58,7 +58,6 @@ class IKLimb:
                  obj,
                  org_bones,
                  side_org_bones,
-                 stretch_joint_name,
                  do_flip,
                  pelvis_follow,
                  pelvis_name,
@@ -76,7 +75,6 @@ class IKLimb:
         else:
             self.org_parent = self.obj.data.bones[org_bones[0]].parent.name
 
-        self.stretch_joint_name = stretch_joint_name
         self.side_suffix = side_suffix
         self.ik_limits = ik_limits
         self.do_flip = do_flip
@@ -132,7 +130,9 @@ class IKLimb:
                     )) + ".stretch.ik" + self.side_suffix))
 
         joint_str = new_bone(self.obj,
-                             self.stretch_joint_name +'.IK' + self.side_suffix)
+                             pantin_utils.strip_LR_numbers(
+                                 strip_org(self.org_bones[1]))
+                             + '.IK' + self.side_suffix)
         eb[joint_str].head = eb[flimb_str].head
         eb[joint_str].tail = (eb[flimb_str].head
                               + Vector((0, 0, 1)) * eb[flimb_str].length/2)

@@ -81,7 +81,6 @@ class Rig:
 
         self.org_bones = [leg, shin, foot, heel, toe]
         self.params = params
-        joint_name = self.params.joint_name
 
         if params.duplicate_lr:
             sides = ['.L', '.R']
@@ -98,7 +97,6 @@ class Rig:
                                  obj,
                                  self.org_bones[:3],
                                  side_org_bones,
-                                 joint_name,
                                  params.do_flip,
                                  False,
                                  params.pelvis_name,
@@ -501,10 +499,6 @@ def add_parameters(params):
         name="Pelvis Name",
         default="Pelvis",
         description="Name of the pelvis bone in whole rig")
-    params.joint_name = bpy.props.StringProperty(
-        name="Joint Name",
-        default="Joint",
-        description="Name of the middle joint")
     params.right_offset = bpy.props.IntProperty(
         name="Right Offset",
         default=16,
@@ -526,7 +520,6 @@ def parameters_ui(layout, params):
     r.prop(params, "Z_index")
     r.prop(params, "flip_switch")
     r = layout.row()
-    r.prop(params, "joint_name")
     r.prop(params, "do_stretch")
     c = layout.column()
     c.prop(params, "do_flip")
@@ -595,10 +588,6 @@ def create_sample(obj):
     pbone.rotation_mode = 'XZY'
     try:
         pbone.rigify_parameters.Z_index = 2.0
-    except AttributeError:
-        pass
-    try:
-        pbone.rigify_parameters.joint_name = "Knee"
     except AttributeError:
         pass
     try:
