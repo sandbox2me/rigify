@@ -119,95 +119,68 @@ def get_name_from_org(name, suffix='.IK'):
         side = ''
     return name[4:].replace(side, suffix + side)
 
-class Rigify_FK_to_IK(bpy.types.Operator):
-    """ Snap selected member from FK to IK
+class Rigify_IK_Switch(bpy.types.Operator):
+    """ Snap selected member from IK to FK or from FK to IK
     """
-    bl_idname = "pose.rigify_fk_to_ik" + rig_id
-    bl_label = "Snap FK to IK"
+    bl_idname = "pose.rigify_ik_switch" + rig_id
+    bl_label = "Snap IK/FK"
     bl_options = {'UNDO'}
 
+    to_ik = bpy.props.BoolProperty()
 
     @classmethod
     def poll(cls, context):
         return (context.active_object != None and context.mode == 'POSE')
 
     def execute(self, context):
-        # Get list of corresponding org bones
         obj = context.object
         bone = context.active_pose_bone
 
-        org_bone = obj.pose.bones['ORG-' + bone.name.replace('.IK', '').replace('.FK', '')]
+        dst_suffix = '.FK' if self.to_ik else '.IK'
+
+        # Get ORG bones list, whoses transforms will be applied
+        org_name = 'ORG-' + bone.name.replace('.IK', '').replace('.FK', '')
+        if not org_name in obj.pose.bones:
+            self.report({'WARNING'}, 'Bone {} not IK/FK'.format(bone.name))
+            return {'CANCELLED'}
+        org_bone = obj.pose.bones[org_name]
         bones = get_connected_bone_chain(org_bone)
+
+        # Set flip to 0, to avoid constraint matrix problems
+        previous_flip = obj.pose.bones["MCH-Flip"]["flip"]
+        obj.pose.bones["MCH-Flip"]["flip"] = 0
+        obj.update_tag({"DATA"}) # Mark data to be updated, to recalculate matrices
+        context.scene.update() # Force update
 
         mats = {}
 
         for i in range(len(bones)): # Recalculate matrices once for each bone in the chain. Couldn't find better :/
             for org in bones:
-                fk_name = get_name_from_org(org.name, '.FK')
-                if fk_name in obj.pose.bones:
-                    fk  = obj.pose.bones[fk_name]
+                dst_name = get_name_from_org(org.name, dst_suffix)
+                if dst_name in obj.pose.bones:
+                    dst_bone = obj.pose.bones[dst_name]
+                    diff_mat = org.bone.matrix_local.inverted() * dst_bone.bone.matrix_local
                     if org in mats:
-                        fk.matrix = mats[org]
+                        dst_bone.matrix = mats[org] * diff_mat
                     else:
                         mats[org] = org.matrix.copy()
                 else:
                     continue
 
-            bpy.context.scene.update() # Force update
+            context.scene.update() # Force update
 
+        # Get the bone having the IK_FK prop, and set it according to destination mode
         for org in bones:
             ik_name = get_name_from_org(org.name)
             if (ik_name in obj.pose.bones
                     and 'IK_FK' in obj.pose.bones[ik_name]):
-                obj.pose.bones[ik_name]['IK_FK'] = 1.0
-        return {'FINISHED'}
+                switch_value = 1.0 if self.to_ik else 0.0
+                obj.pose.bones[ik_name]['IK_FK'] = switch_value  # 0.0
+                break
 
-class Rigify_IK_to_FK(bpy.types.Operator):
-    """ Snap selected member from IK to FK
-    """
-    bl_idname = "pose.rigify_ik_to_fk" + rig_id
-    bl_label = "Snap IK to FK"
-    bl_options = {'UNDO'}
-
-
-    @classmethod
-    def poll(cls, context):
-        return (context.active_object != None and context.mode == 'POSE')
-
-    def execute(self, context):
-        # Get list of corresponding org bones
-        obj = context.object
-        bone = context.active_pose_bone
-
-        org_bone = obj.pose.bones['ORG-' + bone.name.replace('.IK', '').replace('.FK', '')]
-        bones = get_connected_bone_chain(org_bone)
-
-        mats = {}
-
-        for i in range(len(bones)): # Recalculate matrices once for each bone in the chain. Couldn't find better :/
-            for org in bones:
-                ik_name = get_name_from_org(org.name, '.IK')
-                if ik_name in obj.pose.bones:
-                    ik  = obj.pose.bones[ik_name]
-                    # This is useful in case the CTRL bone is offset from the ORG bone (eg. foot.IK)
-                    diff_mat = (
-                        org.bone.matrix_local.inverted()
-                        * ik.bone.matrix_local
-                    )
-                    if org in mats:
-                        ik.matrix = mats[org] * diff_mat
-                    else:
-                        mats[org] = org.matrix.copy()
-                else:
-                    continue
-
-            bpy.context.scene.update() # Force update
-
-        for org in bones:
-            ik_name = get_name_from_org(org.name)
-            if (ik_name in obj.pose.bones
-                    and 'IK_FK' in obj.pose.bones[ik_name]):
-                obj.pose.bones[ik_name]['IK_FK'] = 0.0
+        obj.pose.bones["MCH-Flip"]["flip"] = previous_flip
+        obj.update_tag({"DATA"})
+        context.scene.update() # Force update
         return {'FINISHED'}
 
 
@@ -600,8 +573,8 @@ class RigUI(bpy.types.Panel):
         layout.operator("pose.rigify_swap_bones" + rig_id)
         layout.separator()
         col = layout.column(align=True)
-        col.operator("pose.rigify_ik_to_fk" + rig_id)
-        col.operator("pose.rigify_fk_to_ik" + rig_id)
+        col.operator("pose.rigify_ik_switch" + rig_id, text="Snap FK to IK").to_ik = True
+        col.operator("pose.rigify_ik_switch" + rig_id, text="Snap IK to FK").to_ik = False
         layout.separator()
 
         layout.prop(pose_bones["MCH-Flip"], '["flip"]', text="Flip", slider=True)
@@ -672,8 +645,7 @@ UI_REGISTER = '''
 
 def register():
     bpy.utils.register_class(Rigify_Swap_Bones)
-    bpy.utils.register_class(Rigify_FK_to_IK)
-    bpy.utils.register_class(Rigify_IK_to_FK)
+    bpy.utils.register_class(Rigify_IK_Switch)
     bpy.utils.register_class(RigUI)
     bpy.utils.register_class(RigLayers)
 
@@ -692,8 +664,7 @@ def register():
 
 def unregister():
     bpy.utils.unregister_class(Rigify_Swap_Bones)
-    bpy.utils.unregister_class(Rigify_FK_to_IK)
-    bpy.utils.unregister_class(Rigify_IK_to_FK)
+    bpy.utils.unregister_class(Rigify_IK_Switch)
     bpy.utils.unregister_class(RigUI)
     bpy.utils.unregister_class(RigLayers)
 
