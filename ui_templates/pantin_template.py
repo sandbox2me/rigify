@@ -488,8 +488,8 @@ class DATA_PT_members_panel(bpy.types.Panel):
         if context.mode not in ('POSE', 'OBJECT'):
             return False
         try:
-            return ("rig_id" in context.active_object.data)
-            # return (context.active_object.data.get("rig_id") == rig_id)
+            # return ("rig_id" in context.active_object.data)
+            return (context.active_object.data.get("rig_id") == rig_id)
         except (AttributeError, KeyError, TypeError):
             return False
 
@@ -545,8 +545,8 @@ class RigUI(bpy.types.Panel):
         if context.mode != 'POSE':
             return False
         try:
-            return ("rig_id" in context.active_object.data)
-            # return (context.active_object.data.get("rig_id") == rig_id)
+            # return ("rig_id" in context.active_object.data)
+            return (context.active_object.data.get("rig_id") == rig_id)
         except (AttributeError, KeyError, TypeError):
             return False
 
@@ -597,8 +597,8 @@ class RigLayers(bpy.types.Panel):
     @classmethod
     def poll(self, context):
         try:
-            return ("rig_id" in context.active_object.data)
-            # return (context.active_object.data.get("rig_id") == rig_id)
+            # return ("rig_id" in context.active_object.data)
+            return (context.active_object.data.get("rig_id") == rig_id)
         except (AttributeError, KeyError, TypeError):
             return False
 
