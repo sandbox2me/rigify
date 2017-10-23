@@ -100,24 +100,37 @@ class Rigify_Select_Member(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     layer = bpy.props.IntProperty()
+    add = bpy.props.BoolProperty(default=False)
+    sub = bpy.props.BoolProperty(default=False)
 
     @classmethod
     def poll(cls, context):
-        return (context.active_object != None and context.mode == 'POSE')
+        return (context.active_object != None and context.mode in ('POSE', 'OBJECT'))
+
+    def invoke(self, context, event):
+        self.add = event.shift
+        self.sub = event.ctrl
+        return self.execute(context)
 
     def execute(self, context):
         obj = context.object
+        if not obj.data.layers[self.layer]:
+            obj.data.layers[self.layer] = True
         for pb in obj.pose.bones:
             if pb.bone.layers[self.layer]:
-                pb.bone.select = True
+                if self.sub:
+                    pb.bone.select = False
+                else:
+                    pb.bone.select = True
             else:
-                pb.bone.select = False
+                if not self.add and not self.sub:
+                    pb.bone.select = False
         return {'FINISHED'}
 
 
-############################
-## IK/FK Switch operators ##
-############################
+###########################
+## IK/FK Switch operator ##
+###########################
 
 def get_connected_parent_chain(pbone):
     chain = [pbone]
@@ -187,10 +200,14 @@ class Rigify_IK_Switch(bpy.types.Operator):
                 if dst_name in obj.pose.bones:
                     dst_bone = obj.pose.bones[dst_name]
                     diff_mat = org.bone.matrix_local.inverted() * dst_bone.bone.matrix_local
-                    if org in mats:
+                    if org in mats: # Second pass: apply transforms
                         dst_bone.matrix = mats[org] * diff_mat
-                    else:
+                        dst_bone.keyframe_insert('location')
+                        dst_bone.keyframe_insert('rotation_euler')
+                    else: # First pass: record transforms
                         mats[org] = org.matrix.copy()
+                        dst_bone.keyframe_insert('location', frame=context.scene.frame_current - 1)
+                        dst_bone.keyframe_insert('rotation_euler', frame=context.scene.frame_current - 1)
                 else:
                     continue
 
@@ -202,7 +219,12 @@ class Rigify_IK_Switch(bpy.types.Operator):
             if (ik_name in obj.pose.bones
                     and 'IK_FK' in obj.pose.bones[ik_name]):
                 switch_value = 1.0 if self.to_ik else 0.0
-                obj.pose.bones[ik_name]['IK_FK'] = switch_value  # 0.0
+                obj.keyframe_insert('pose.bones["{}"]["IK_FK"]'.format(ik_name),
+                                    frame=context.scene.frame_current - 1)
+                obj.pose.bones[ik_name]['IK_FK'] = switch_value
+                print(switch_value)
+                obj.keyframe_insert('pose.bones["{}"]["IK_FK"]'.format(ik_name),
+                                    frame=context.scene.frame_current)
                 break
 
         obj.pose.bones["MCH-Flip"]["flip"] = previous_flip
