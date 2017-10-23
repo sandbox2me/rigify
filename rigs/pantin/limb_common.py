@@ -212,11 +212,11 @@ class IKLimb:
         prop["max"] = 1
 
         prop = rna_idprop_ui_prop_get(elimb_ik_p, "IK_FK", create=True)
-        elimb_ik_p["IK_FK"] = 0.0
-        prop["soft_min"] = 0.0
-        prop["soft_max"] = 1.0
-        prop["min"] = 0.0
-        prop["max"] = 1.0
+        elimb_ik_p["IK_FK"] = 0
+        prop["soft_min"] = 0
+        prop["soft_max"] = 1
+        prop["min"] = 0
+        prop["max"] = 1
 
         # Constraints
         # Bend hint, ripped off from Rigify' biped

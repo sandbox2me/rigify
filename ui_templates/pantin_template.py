@@ -167,14 +167,32 @@ class Rigify_IK_Switch(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     to_ik = bpy.props.BoolProperty()
+    keyframe_insert = bpy.props.BoolProperty(default=False)
 
     @classmethod
     def poll(cls, context):
         return (context.active_object != None and context.mode == 'POSE')
 
     def execute(self, context):
+        def set_fk_ik_prop(switch_value, keyframe_insert=False):
+            # Get the bone having the IK_FK prop, and set it according to destination mode
+            for org in bones:
+                ik_name = get_name_from_org(org.name)
+                if (ik_name in obj.pose.bones
+                        and 'IK_FK' in obj.pose.bones[ik_name]):
+                    if keyframe_insert:
+                        obj.keyframe_insert('pose.bones["{}"]["IK_FK"]'.format(ik_name),
+                                            frame=context.scene.frame_current - 1)
+                    obj.pose.bones[ik_name]['IK_FK'] = switch_value
+                    if keyframe_insert:
+                        obj.keyframe_insert('pose.bones["{}"]["IK_FK"]'.format(ik_name),
+                                            frame=context.scene.frame_current)
+                    break
+
         obj = context.object
         bone = context.active_pose_bone
+
+        switch_value = int(self.to_ik)
 
         dst_suffix = '.FK' if self.to_ik else '.IK'
         src_suffix = '.IK' if self.to_ik else '.FK'
@@ -188,12 +206,17 @@ class Rigify_IK_Switch(bpy.types.Operator):
         bones = get_connected_bone_chain(org_bone)
 
         # Set flip to 0, to avoid constraint matrix problems
-        previous_flip = obj.pose.bones["MCH-Flip"]["flip"]
-        obj.pose.bones["MCH-Flip"]["flip"] = 0
-        obj.update_tag({"DATA"}) # Mark data to be updated, to recalculate matrices
-        context.scene.update() # Force update
+        if "MCH-Flip" in obj.pose.bones:
+            previous_flip = obj.pose.bones["MCH-Flip"]["flip"]
+            obj.pose.bones["MCH-Flip"]["flip"] = 0
+            obj.update_tag({"DATA"}) # Mark data to be updated, to recalculate matrices
+            context.scene.update() # Force update
 
         mats = {}
+
+        set_fk_ik_prop(int(not switch_value))
+        obj.update_tag({"DATA"}) # Mark data to be updated, to recalculate matrices
+        context.scene.update() # Force update
 
         for i in range(len(bones)): # Recalculate matrices once for each bone in the chain. Couldn't find better :/
             for org in bones:
@@ -203,39 +226,32 @@ class Rigify_IK_Switch(bpy.types.Operator):
                     diff_mat = org.bone.matrix_local.inverted() * dst_bone.bone.matrix_local
                     if org in mats: # Second pass: apply transforms
                         dst_bone.matrix = mats[org] * diff_mat
-                        dst_bone.keyframe_insert('location')
-                        dst_bone.keyframe_insert('rotation_euler')
+                        if self.keyframe_insert:
+                            dst_bone.keyframe_insert('location')
+                            dst_bone.keyframe_insert('rotation_euler')
                     else: # First pass: record transforms
                         mats[org] = org.matrix.copy()
-                        dst_bone.keyframe_insert('location', frame=context.scene.frame_current - 1)
-                        dst_bone.keyframe_insert('rotation_euler', frame=context.scene.frame_current - 1)
+                        if self.keyframe_insert:
+                            dst_bone.keyframe_insert('location', frame=context.scene.frame_current - 1)
+                            dst_bone.keyframe_insert('rotation_euler', frame=context.scene.frame_current - 1)
                 else:
                     continue
 
             context.scene.update() # Force update
 
-        src_name = get_name_from_org(org.name, src_suffix)
-        src_bone = obj.pose.bones[src_name]
-        for l_i in range(32):
-            if dst_bone.bone.layers[l_i]:
-                obj.data.layers[l_i] = True
-            if src_bone.bone.layers[l_i]:
-                obj.data.layers[l_i] = False
+        # Hide other layer
+        if self.keyframe_insert:
+            src_name = get_name_from_org(org.name, src_suffix)
+            src_bone = obj.pose.bones[src_name]
+            for l_i in range(32):
+                if dst_bone.bone.layers[l_i]:
+                    obj.data.layers[l_i] = True
+                if src_bone.bone.layers[l_i]:
+                    obj.data.layers[l_i] = False
 
-        # Get the bone having the IK_FK prop, and set it according to destination mode
-        for org in bones:
-            ik_name = get_name_from_org(org.name)
-            if (ik_name in obj.pose.bones
-                    and 'IK_FK' in obj.pose.bones[ik_name]):
-                switch_value = 1.0 if self.to_ik else 0.0
-                obj.keyframe_insert('pose.bones["{}"]["IK_FK"]'.format(ik_name),
-                                    frame=context.scene.frame_current - 1)
-                obj.pose.bones[ik_name]['IK_FK'] = switch_value
-                print(switch_value)
-                obj.keyframe_insert('pose.bones["{}"]["IK_FK"]'.format(ik_name),
-                                    frame=context.scene.frame_current)
-                break
+        set_fk_ik_prop(switch_value, self.keyframe_insert)
 
+        # Reset flip value
         obj.pose.bones["MCH-Flip"]["flip"] = previous_flip
         obj.update_tag({"DATA"})
         context.scene.update() # Force update
@@ -628,8 +644,23 @@ class RigUI(bpy.types.Panel):
         layout.operator("pose.rigify_swap_bones" + rig_id)
         layout.separator()
         col = layout.column(align=True)
-        col.operator("pose.rigify_ik_switch" + rig_id, text="Snap FK to IK").to_ik = True
-        col.operator("pose.rigify_ik_switch" + rig_id, text="Snap IK to FK").to_ik = False
+
+        row = col.row(align=True)
+        op = row.operator("pose.rigify_ik_switch" + rig_id, text="Snap FK to IK")
+        op.to_ik = True
+        op.keyframe_insert = False
+        op = row.operator("pose.rigify_ik_switch" + rig_id, text="", icon="KEY_HLT")
+        op.to_ik = True
+        op.keyframe_insert = True
+
+        row = col.row(align=True)
+        op = row.operator("pose.rigify_ik_switch" + rig_id, text="Snap IK to FK")
+        op.to_ik = False
+        op.keyframe_insert = False
+        op = row.operator("pose.rigify_ik_switch" + rig_id, text="", icon="KEY_HLT")
+        op.to_ik = False
+        op.keyframe_insert = True
+
         layout.separator()
 
         layout.prop(pose_bones["MCH-Flip"], '["flip"]', text="Flip", slider=True)
