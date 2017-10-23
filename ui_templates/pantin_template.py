@@ -241,7 +241,9 @@ class Rigify_IK_Switch(bpy.types.Operator):
 
         # Hide other layer
         if self.keyframe_insert:
-            src_name = get_name_from_org(org.name, src_suffix)
+            dst_name = get_name_from_org(org_name, dst_suffix)
+            dst_bone = obj.pose.bones[dst_name]
+            src_name = get_name_from_org(org_name, src_suffix)
             src_bone = obj.pose.bones[src_name]
             for l_i in range(32):
                 if dst_bone.bone.layers[l_i]:
