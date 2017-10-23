@@ -702,6 +702,13 @@ class RigLayers(bpy.types.Panel):
     keys = list(rows.keys())
     keys.sort()
 
+    visibility_code = """        icon = ('SMALL_TRI_RIGHT_VEC'
+            if context.active_pose_bone
+            and context.active_pose_bone.bone.layers[{index}]
+            else 'NONE'
+        )
+"""
+
     for key in keys:
         code += "\n        row = col.row()\n"
         i = 0
@@ -709,11 +716,12 @@ class RigLayers(bpy.types.Panel):
             if i > 3:
                 code += "\n        row = col.row()\n"
                 i = 0
+            code += visibility_code.format(index=str(l[1]))
             code += """        sub = row.row(align=True)
-        sub.prop(context.active_object.data, 'layers', index=%s, toggle=True, text='%s')
+        sub.prop(context.active_object.data, 'layers', index={index}, toggle=True, text='{text}', icon=icon)
         op = sub.operator("pose.rigify_select_member" + rig_id, icon='HAND', text="")
-        op.layer = %s
-""" % (str(l[1]), l[0], str(l[1]))
+        op.layer = {index}
+""".format(index=str(l[1]), text=l[0])  # % (str(l[1]), l[0], str(l[1]))
             i += 1
 
     # Def layer (for parenting)
@@ -722,11 +730,13 @@ class RigLayers(bpy.types.Panel):
     code += "\n        row = col.row()"
     code += "\n        row.separator()\n"
     code += "\n        row = col.row()\n"
-    code += "        row.prop(context.active_object.data, 'layers', index=29, toggle=True, text='Deformation')\n"
+    code += visibility_code.format(index=str(29))
+    code += "        row.prop(context.active_object.data, 'layers', index=29, toggle=True, text='Deformation', icon=icon)\n"
 
     # Root layer
     code += "\n        row = col.row()\n"
-    code += "        row.prop(context.active_object.data, 'layers', index=28, toggle=True, text='Root')\n"
+    code += visibility_code.format(index=str(28))
+    code += "        row.prop(context.active_object.data, 'layers', index=28, toggle=True, text='Root', icon=icon)\n"
 
     return code
 
