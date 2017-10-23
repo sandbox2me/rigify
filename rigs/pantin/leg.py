@@ -259,6 +259,7 @@ class Rig:
             pb[foot_fr].rotation_mode = 'XZY'
 
             # Widgets
+            # IK
             global_scale = self.obj.dimensions[2]
             member_factor = 0.06
             if s == '.R':
@@ -270,6 +271,19 @@ class Rig:
                 self.obj, ulimb_ik, number_verts=3, radius=widget_size)
             pantin_utils.create_aligned_circle_widget(
                 self.obj, joint_str, radius=widget_size)
+
+            # FK
+            widget_size = 0.5
+            for bone in (ulimb_fk, flimb_fk, elimb_fk, toe_fk_ctl):
+                pantin_utils.create_capsule_widget(
+                    self.obj,
+                    bone,
+                    length=widget_size,
+                    width=widget_size*0.2,
+                    head_tail=0.5,
+                    horizontal=False,
+                    overshoot=True
+                )
 
             # Foot WGT
             down = pb[heel_fr].head.z

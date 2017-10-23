@@ -116,7 +116,7 @@ class Rig:
         eb[inter].parent = eb[main_ctrl]
         eb[left_ctrl].parent = eb[inter]
         eb[right_ctrl].parent = eb[inter]
-        
+
         # # Def bones
         for i, b in enumerate([left_ctrl, right_ctrl]):
             def_bone = pantin_utils.create_deformation(
@@ -132,7 +132,7 @@ class Rig:
 
         # Widgets
         pantin_utils.create_capsule_widget(
-            self.obj, main_ctrl, width=pb[self.org_bone].length, height=pb[self.org_bone].length*0.7, align=False)
+            self.obj, main_ctrl, length=pb[self.org_bone].length, width=pb[self.org_bone].length*0.7, horizontal=False)
         for b in [left_ctrl, right_ctrl]:
             pantin_utils.create_aligned_circle_widget(
                 self.obj, b, radius=pb[b].length / 4)

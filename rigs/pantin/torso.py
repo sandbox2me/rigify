@@ -166,8 +166,8 @@ class Rig:
             pantin_utils.create_capsule_widget(
                 self.obj,
                 bone,
-                width=widget_size,
-                height=widget_size*0.1,
+                length=widget_size,
+                width=widget_size*0.1,
                 head_tail=0.5)
             # create_widget(self.obj, bone)
 

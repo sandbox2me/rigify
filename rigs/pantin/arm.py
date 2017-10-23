@@ -133,6 +133,7 @@ class Rig:
             pb = self.obj.pose.bones
 
             # Widgets
+            # IK
             global_scale = self.obj.dimensions[2]
             member_factor = 0.06
             if s == '.R':
@@ -146,6 +147,19 @@ class Rig:
                 self.obj, joint_str, radius=widget_size * 0.7)
             pantin_utils.create_aligned_circle_widget(
                 self.obj, elimb_ik, radius=widget_size)
+
+            # FK
+            widget_size = 0.5
+            for bone in (ulimb_fk, flimb_fk, elimb_fk):
+                pantin_utils.create_capsule_widget(
+                    self.obj,
+                    bone,
+                    length=widget_size,
+                    width=widget_size*0.2,
+                    head_tail=0.5,
+                    horizontal=False,
+                    overshoot=True
+                )
 
             # Constraints
             for org, ctrl in zip(side_org_bones, [ulimb_str,

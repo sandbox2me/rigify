@@ -260,12 +260,26 @@ class Rig:
                 con.target = self.obj
                 con.subtarget = mch
         else:
+            # Widgets
+            widget_size = 0.5
+            for bone in ctrl_chain:
+                pantin_utils.create_capsule_widget(
+                    self.obj,
+                    bone,
+                    length=widget_size,
+                    width=widget_size*0.1,
+                    head_tail=0.5,
+                    horizontal=False
+                )
+
             # Constraints
             for org, ctrl in zip(self.org_bones, ctrl_chain):
                 con = pb[org].constraints.new('COPY_TRANSFORMS')
                 con.name = "copy_transforms"
                 con.target = self.obj
                 con.subtarget = ctrl
+
+        ui_script = None
 
         if self.params.chain_type == 'Curve':
             for ctrl, mch in zip(ctrl_chain[1:], mch_chain):
@@ -299,6 +313,7 @@ class Rig:
 
             ui_script = script % (ctrl, dyn_bone)  # % ctrl_bone, MCH-bone.dyn
 
+        if ui_script is not None:
             return [ui_script]
 
 

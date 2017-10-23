@@ -89,7 +89,7 @@ class Rig:
         head = ctrl_chain[1]
 
         pantin_utils.create_capsule_widget(
-            self.obj, neck, width=widget_size, height=widget_size*0.1)
+            self.obj, neck, length=widget_size, width=widget_size*0.1)
         pantin_utils.create_aligned_circle_widget(
             self.obj, head, radius=widget_size, head_tail=0.5)
 

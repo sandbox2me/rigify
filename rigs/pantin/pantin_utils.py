@@ -279,12 +279,13 @@ def create_axis_line_widget(rig,
         mesh.update()
 
 
-def create_capsule_polygon(number_verts, width, height=0.1,
-                           length_co=0, width_co=2):
+def create_capsule_polygon(number_verts, length, width=0.1,
+                           length_co=0, width_co=2,
+                           overshoot=False):
     """ Create a capsule shape.
         number_verts: number of vertices of the poligon
+        length: the length of the capsule
         width: the width of the capsule
-        height: the height of the capsule
     """
 
     verts = []
@@ -295,13 +296,11 @@ def create_capsule_polygon(number_verts, width, height=0.1,
         for i in range(0, number_verts//2+1):
             angle = 2*pi*i/number_verts - pi / 2 - (side+1) * (pi/2)
             vert = [0, 0, 0]
-            vert[length_co] = cos(angle) * height/2 - (width - height/2) * side
-            vert[width_co] = sin(angle) * height/2
+            vert[length_co] = cos(angle) * width/2 - (length - width/2) * side
+            if overshoot:
+                vert[length_co] -= (width / 2) * side
+            vert[width_co] = sin(angle) * width/2
             verts.append(vert)
-            # verts.append((
-            #     cos(angle) * height/2 - (width - height/2) * side,
-            #     0,
-            #     sin(angle) * height/2))
             if v_ind < number_verts+1:
                 edges.append((v_ind, v_ind+1))
                 v_ind += 1
@@ -313,12 +312,13 @@ def create_capsule_polygon(number_verts, width, height=0.1,
 
 def create_capsule_widget(rig,
                           bone_name,
+                          length=None,
                           width=None,
-                          height=None,
                           head_tail=0.0,
-                          align=True,
+                          horizontal=True,
+                          overshoot=False,
                           bone_transform_name=None):
-    """ Create a basic line widget which remains horizontal.
+    """ Create a basic line widget which optionally remains horizontal.
     """
     obj = create_widget(rig, bone_name, bone_transform_name)
     if obj is not None:
@@ -327,20 +327,20 @@ def create_capsule_widget(rig,
         # print(pbone.matrix.translation)
         pos = pbone.matrix.translation
 
+        if length is None:
+            length = pbone.length * 2
         if width is None:
-            width = pbone.length * 2
-        if height is None:
-            height = width * 0.1
+            width = length * 0.1
 
-        head_tail_vector = pbone.vector * head_tail
-        if align:
-            verts, edges = create_capsule_polygon(32, width, height)
+        if horizontal:
+            head_tail_vector = pbone.vector * head_tail
+            verts, edges = create_capsule_polygon(16, length, width, overshoot=overshoot)
             verts = [(pbone.matrix * pbone.length).inverted()
                  * (pos + Vector(v) + head_tail_vector) for v in verts]
         else:
-            verts, edges = create_capsule_polygon(32, width, height, 1, 0)
-            verts = [1/pbone.length
-                 * (Vector(v) + head_tail_vector) for v in verts]
+            head_tail_vector = Vector((0, 1, 0)) * head_tail
+            verts, edges = create_capsule_polygon(16, length, width, 1, 0, overshoot=overshoot)
+            verts = [(Vector(v) + head_tail_vector) for v in verts]
 
         mesh = obj.data
         mesh.from_pydata(verts, edges, [])
