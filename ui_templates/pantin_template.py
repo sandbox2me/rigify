@@ -177,6 +177,7 @@ class Rigify_IK_Switch(bpy.types.Operator):
         bone = context.active_pose_bone
 
         dst_suffix = '.FK' if self.to_ik else '.IK'
+        src_suffix = '.IK' if self.to_ik else '.FK'
 
         # Get ORG bones list, whoses transforms will be applied
         org_name = 'ORG-' + bone.name.replace('.IK', '').replace('.FK', '')
@@ -212,6 +213,14 @@ class Rigify_IK_Switch(bpy.types.Operator):
                     continue
 
             context.scene.update() # Force update
+
+        src_name = get_name_from_org(org.name, src_suffix)
+        src_bone = obj.pose.bones[src_name]
+        for l_i in range(32):
+            if dst_bone.bone.layers[l_i]:
+                obj.data.layers[l_i] = True
+            if src_bone.bone.layers[l_i]:
+                obj.data.layers[l_i] = False
 
         # Get the bone having the IK_FK prop, and set it according to destination mode
         for org in bones:
