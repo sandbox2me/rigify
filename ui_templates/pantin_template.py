@@ -88,6 +88,33 @@ class Rigify_Swap_Bones(bpy.types.Operator):
         return {'FINISHED'}
 
 
+########################
+## Selection operator ##
+########################
+
+class Rigify_Select_Member(bpy.types.Operator):
+    """ Select control bones in member
+    """
+    bl_idname = "pose.rigify_select_member" + rig_id
+    bl_label = "Select control bones in member"
+    bl_options = {'UNDO'}
+
+    layer = bpy.props.IntProperty()
+
+    @classmethod
+    def poll(cls, context):
+        return (context.active_object != None and context.mode == 'POSE')
+
+    def execute(self, context):
+        obj = context.object
+        for pb in obj.pose.bones:
+            if pb.bone.layers[self.layer]:
+                pb.bone.select = True
+            else:
+                pb.bone.select = False
+        return {'FINISHED'}
+
+
 ############################
 ## IK/FK Switch operators ##
 ############################
@@ -425,7 +452,6 @@ class PantinBones(bpy.types.PropertyGroup):
 bpy.utils.register_class(PantinBones)
 
 def member_index_update(self, context):
-    """TODODODOD"""
     for m in self.id_data.pantin_members:
         for bone in m.bones:
             self.id_data.pose.bones[bone.name]['member_index'] = m.index
@@ -434,8 +460,6 @@ def member_index_update(self, context):
         if not b.bone.use_deform:
             continue
 
-        # if b['member_index'] == active_member_index:
-        #     b['member_index'] = other_member_index
 
 
 class PantinMembers(bpy.types.PropertyGroup):
@@ -623,7 +647,11 @@ class RigLayers(bpy.types.Panel):
             if i > 3:
                 code += "\n        row = col.row()\n"
                 i = 0
-            code += "        row.prop(context.active_object.data, 'layers', index=%s, toggle=True, text='%s')\n" % (str(l[1]), l[0])
+            code += """        sub = row.row(align=True)
+        sub.prop(context.active_object.data, 'layers', index=%s, toggle=True, text='%s')
+        op = sub.operator("pose.rigify_select_member" + rig_id, icon='HAND', text="")
+        op.layer = %s
+""" % (str(l[1]), l[0], str(l[1]))
             i += 1
 
     # Def layer (for parenting)
@@ -645,6 +673,7 @@ UI_REGISTER = '''
 
 def register():
     bpy.utils.register_class(Rigify_Swap_Bones)
+    bpy.utils.register_class(Rigify_Select_Member)
     bpy.utils.register_class(Rigify_IK_Switch)
     bpy.utils.register_class(RigUI)
     bpy.utils.register_class(RigLayers)
@@ -664,6 +693,7 @@ def register():
 
 def unregister():
     bpy.utils.unregister_class(Rigify_Swap_Bones)
+    bpy.utils.unregister_class(Rigify_Select_Member)
     bpy.utils.unregister_class(Rigify_IK_Switch)
     bpy.utils.unregister_class(RigUI)
     bpy.utils.unregister_class(RigLayers)
