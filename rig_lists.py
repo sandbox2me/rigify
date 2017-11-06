@@ -17,19 +17,35 @@
 #======================= END GPL LICENSE BLOCK ========================
 
 import os
+import bpy
 
 from . import utils
 
 
-def get_rig_list(path):
+def get_rig_list(path, mode='relative'):
     """ Recursively searches for rig types, and returns a list.
+
+    :param path
+    :type path:str
+    :param mode: path is absolute or relative?
+    :type mode: str
     """
+
+    if mode == 'relative':
+        base_path = ''
+        MODULE_DIR = os.path.dirname(__file__)
+        RIG_DIR_ABS = os.path.join(MODULE_DIR, utils.RIG_DIR)
+        SEARCH_DIR_ABS = os.path.join(RIG_DIR_ABS, path)
+    elif mode == 'absolute':
+        base_path = path
+        SEARCH_DIR_ABS = path
+    else:
+        return
+
     rigs_dict = dict()
     rigs = []
-    implementation_rigs = []
-    MODULE_DIR = os.path.dirname(__file__)
-    RIG_DIR_ABS = os.path.join(MODULE_DIR, utils.RIG_DIR)
-    SEARCH_DIR_ABS = os.path.join(RIG_DIR_ABS, path)
+    impl_rigs = []
+
     files = os.listdir(SEARCH_DIR_ABS)
     files.sort()
 
@@ -45,29 +61,36 @@ def get_rig_list(path):
 
         if is_dir:
             # Check directories
-            module_name = os.path.join(path, f).replace(os.sep, ".")
-            rig = utils.get_rig_type(module_name)
+            if mode == 'relative':
+                module_name = os.path.join(path, f).replace(os.sep, ".")
+                rig = utils.get_rig_type(module_name, base_path=base_path)
+            else:
+                module_name = "__init__"
+                rig = utils.get_rig_type(module_name, base_path=base_path + f + os.sep)
             # Check if it's a rig itself
             if hasattr(rig, "Rig"):
                 rigs += [f]
             else:
                 # Check for sub-rigs
-                sub_dict = get_rig_list(os.path.join(path, f, ""))  # "" adds a final slash
+                sub_dict = get_rig_list(os.path.join(path, f, ""), mode=mode)  # "" adds a final slash
                 rigs.extend(["%s.%s" % (f, l) for l in sub_dict['rig_list']])
-                implementation_rigs.extend(["%s.%s" % (f, l) for l in sub_dict['implementation_rigs']])
+                impl_rigs.extend(["%s.%s" % (f, l) for l in sub_dict['implementation_rigs']])
         elif f.endswith(".py"):
             # Check straight-up python files
             t = f[:-3]
-            module_name = os.path.join(path, t).replace(os.sep, ".")
-            rig = utils.get_rig_type(module_name)
+            if mode == 'relative':
+                module_name = os.path.join(path, t).replace(os.sep, ".")
+            else:
+                module_name = t
+            rig = utils.get_rig_type(module_name, base_path=base_path)
             if hasattr(rig, "Rig"):
                 rigs += [t]
             if hasattr(rig, 'IMPLEMENTATION') and rig.IMPLEMENTATION:
-                implementation_rigs += [t]
+                impl_rigs += [t]
     rigs.sort()
 
     rigs_dict['rig_list'] = rigs
-    rigs_dict['implementation_rigs'] = implementation_rigs
+    rigs_dict['implementation_rigs'] = impl_rigs
 
     return rigs_dict
 
@@ -87,3 +110,12 @@ rig_list = rigs_dict['rig_list']
 implementation_rigs = rigs_dict['implementation_rigs']
 collection_list = get_collection_list(rig_list)
 col_enum_list = [("All", "All", ""), ("None", "None", "")] + [(c, c, "") for c in collection_list]
+
+
+def get_external_rigs():
+    external_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
+    if external_folder:
+        external_rigs_dict = get_rig_list(external_folder, mode='absolute')
+        external_rig_list = external_rigs_dict['rig_list']
+        external_implementation_rigs = external_rigs_dict['implementation_rigs']
+        return external_rigs_dict

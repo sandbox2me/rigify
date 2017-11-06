@@ -45,6 +45,7 @@ import sys
 import os
 from bpy.types import AddonPreferences
 from bpy.props import BoolProperty
+from bpy.props import StringProperty
 
 
 class RigifyPreferences(AddonPreferences):
@@ -118,6 +119,29 @@ class RigifyPreferences(AddonPreferences):
 
             register()
 
+    def update_external_rigs(self, context):
+
+        if self.legacy_mode:
+            return
+
+        custom_rigs_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
+
+        if custom_rigs_folder not in sys.path:
+            sys.path.append(bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder)
+
+        external_rigs_dict = rig_lists.get_external_rigs()
+        if external_rigs_dict:
+
+            rig_lists.rigs_dict['external'] = external_rigs_dict
+
+            # Add external rig parameters
+            for rig in external_rigs_dict['rig_list']:
+                r = utils.get_rig_type(rig, custom_rigs_folder)
+                try:
+                    r.add_parameters(RigifyParameters)
+                except AttributeError:
+                    pass
+
     legacy_mode = BoolProperty(
         name='Rigify Legacy Mode',
         description='Select if you want to use Rigify in legacy mode',
@@ -125,7 +149,17 @@ class RigifyPreferences(AddonPreferences):
         update=update_legacy
     )
 
+    custom_rigs_folder = StringProperty(
+        name='Rigify Custom Rigs',
+        description='Folder Containing User Defined Rig Types',
+        default='',
+        subtype='DIR_PATH',
+        update=update_external_rigs
+    )
+
     show_expanded = BoolProperty()
+
+    show_rigs_folder_expanded = BoolProperty()
 
     def draw(self, context):
         layout = self.layout
@@ -149,6 +183,24 @@ class RigifyPreferences(AddonPreferences):
         sub.prop(self, 'legacy_mode')
 
         if expand:
+            split = col.row().split(percentage=0.15)
+            split.label('Description:')
+            split.label(text='This is the folder containing user defined Rig Types')
+
+        box = column.box()
+        rigs_expand = getattr(self, 'show_rigs_folder_expanded')
+        icon = 'TRIA_DOWN' if rigs_expand else 'TRIA_RIGHT'
+        col = box.column()
+        row = col.row()
+        sub = row.row()
+        sub.context_pointer_set('addon_prefs', self)
+        sub.alignment = 'LEFT'
+        op = sub.operator('wm.context_toggle', text='', icon=icon,
+                          emboss=False)
+        op.data_path = 'addon_prefs.show_rigs_folder_expanded'
+        row.prop(self, 'custom_rigs_folder')
+
+        if rigs_expand:
             split = col.row().split(percentage=0.15)
             split.label('Description:')
             split.label(text='When enabled the add-on will run in legacy mode using the old 2.76b feature set.')
@@ -333,6 +385,10 @@ def register():
         except AttributeError:
             pass
 
+    external_rigs_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
+    if external_rigs_folder and not 'external' in rig_lists.rigs_dict:
+        bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder = external_rigs_folder
+
 
 def unregister():
     del bpy.types.PoseBone.rigify_type
@@ -361,6 +417,9 @@ def unregister():
     bpy.utils.unregister_class(RigifySelectionColors)
 
     bpy.utils.unregister_class(RigifyArmatureLayer)
+
+    if bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder in sys.path:
+        sys.path.remove(bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder)
     bpy.utils.unregister_class(RigifyPreferences)
 
     metarig_menu.unregister()

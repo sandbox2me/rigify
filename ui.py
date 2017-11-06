@@ -173,6 +173,18 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
                     a = id_store.rigify_types.add()
                     a.name = r
 
+            if 'external' in rig_lists.rigs_dict:
+                for r in rig_lists.rigs_dict['external']['rig_list']:
+                    if collection_name == "All":
+                        a = id_store.rigify_types.add()
+                        a.name = r
+                    elif r.startswith(collection_name + '.'):
+                        a = id_store.rigify_types.add()
+                        a.name = r
+                    elif (collection_name == "None") and ("." not in r):
+                        a = id_store.rigify_types.add()
+                        a.name = r
+
             # Rig type list
             row = layout.row()
             row.template_list("UI_UL_list", "rigify_types", id_store, "rigify_types", id_store, 'rigify_active_type')
@@ -598,6 +610,20 @@ class BONE_PT_rigify_buttons(bpy.types.Panel):
                 a = id_store.rigify_types.add()
                 a.name = r
 
+        if 'external' in rig_lists.rigs_dict:
+            for r in rig_lists.rigs_dict['external']['rig_list']:
+                if r in rig_lists.rigs_dict['external']['implementation_rigs']:
+                    continue
+                if collection_name == "All":
+                    a = id_store.rigify_types.add()
+                    a.name = r
+                elif r.startswith(collection_name + '.'):
+                    a = id_store.rigify_types.add()
+                    a.name = r
+                elif collection_name == "None" and len(r.split('.')) == 1:
+                    a = id_store.rigify_types.add()
+                    a.name = r
+
         # Rig type field
         row = layout.row()
         row.prop_search(bone, "rigify_type", id_store, "rigify_types", text="Rig type:")
@@ -605,7 +631,11 @@ class BONE_PT_rigify_buttons(bpy.types.Panel):
         # Rig type parameters / Rig type non-exist alert
         if rig_name != "":
             try:
-                rig = get_rig_type(rig_name)
+                if rig_name in rig_lists.rigs_dict['external']['rig_list']:
+                    custom_rigs_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
+                    rig = get_rig_type(rig_name, custom_rigs_folder)
+                else:
+                    rig = get_rig_type(rig_name)
                 rig.Rig
             except (ImportError, AttributeError):
                 row = layout.row()
@@ -812,7 +842,11 @@ class Sample(bpy.types.Operator):
             use_global_undo = context.user_preferences.edit.use_global_undo
             context.user_preferences.edit.use_global_undo = False
             try:
-                rig = get_rig_type(self.metarig_type)
+                if 'external' in rig_lists.rigs_dict and self.metarig_type in rig_lists.rigs_dict['external']['rig_list']:
+                    custom_rigs_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
+                    rig = get_rig_type(self.metarig_type, custom_rigs_folder)
+                else:
+                    rig = get_rig_type(self.metarig_type)
                 create_sample = rig.create_sample
             except (ImportError, AttributeError):
                 raise Exception("rig type '" + self.metarig_type + "' has no sample.")

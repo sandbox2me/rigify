@@ -21,6 +21,7 @@
 import bpy
 import imp
 import importlib
+import importlib.util
 import math
 import random
 import time
@@ -904,12 +905,19 @@ def copy_attributes(a, b):
                 pass
 
 
-def get_rig_type(rig_type):
+def get_rig_type(rig_type, base_path=''):
     """ Fetches a rig module by name, and returns it.
     """
-    name = ".%s.%s" % (RIG_DIR, rig_type)
-    submod = importlib.import_module(name, package=MODULE_NAME)
-    importlib.reload(submod)
+    if not base_path:
+        name = ".%s.%s" % (RIG_DIR, rig_type)
+        submod = importlib.import_module(name, package=MODULE_NAME)
+        importlib.reload(submod)
+    else:
+        if '.' in rig_type:
+            rig_type = str.join(os.sep, rig_type.split('.'))
+        spec = importlib.util.spec_from_file_location(rig_type, base_path + rig_type + '.py')
+        submod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(submod)
     return submod
 
 
