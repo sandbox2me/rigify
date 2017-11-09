@@ -126,16 +126,16 @@ class RigifyPreferences(AddonPreferences):
 
         custom_rigs_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
 
+        if custom_rigs_folder == "":
+            rig_lists.rigs_dict['external'] = {}
+
         if custom_rigs_folder not in sys.path:
             sys.path.append(bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder)
 
-        external_rigs_dict = rig_lists.get_external_rigs()
-        if external_rigs_dict:
-
-            rig_lists.rigs_dict['external'] = external_rigs_dict
-
+        rig_lists.get_external_rigs()
+        if rig_lists.rigs_dict['external']:
             # Add external rig parameters
-            for rig in external_rigs_dict['rig_list']:
+            for rig in rig_lists.rigs_dict['external']['rig_list']:
                 r = utils.get_rig_type(rig, custom_rigs_folder)
                 try:
                     r.add_parameters(RigifyParameters)
@@ -387,6 +387,7 @@ def register():
 
     external_rigs_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
     if external_rigs_folder and not 'external' in rig_lists.rigs_dict:
+        #force update on reload
         bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder = external_rigs_folder
 
 

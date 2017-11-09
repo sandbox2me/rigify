@@ -80,9 +80,11 @@ def get_rig_list(path, mode='relative'):
             t = f[:-3]
             if mode == 'relative':
                 module_name = os.path.join(path, t).replace(os.sep, ".")
+                rig = utils.get_rig_type(module_name, base_path=base_path)
             else:
-                module_name = t
-            rig = utils.get_rig_type(module_name, base_path=base_path)
+                external_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
+                module_name = os.path.join(path, t).replace(external_folder, '').replace(os.sep, ".")
+                rig = utils.get_rig_type(module_name, base_path=external_folder)
             if hasattr(rig, "Rig"):
                 rigs += [t]
             if hasattr(rig, 'IMPLEMENTATION') and rig.IMPLEMENTATION:
@@ -116,6 +118,4 @@ def get_external_rigs():
     external_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
     if external_folder:
         external_rigs_dict = get_rig_list(external_folder, mode='absolute')
-        external_rig_list = external_rigs_dict['rig_list']
-        external_implementation_rigs = external_rigs_dict['implementation_rigs']
-        return external_rigs_dict
+        rigs_dict['external'] = external_rigs_dict

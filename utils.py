@@ -548,6 +548,41 @@ def create_sphere_widget(rig, bone_name, bone_transform_name=None):
         mesh.update()
 
 
+def create_circle_polygon(number_verts, axis, radius=1.0, head_tail=0.0):
+    """ Creates a basic circle around of an axis selected.
+        number_verts: number of vertices of the poligon
+        axis: axis normal to the circle
+        radius: the radius of the circle
+        head_tail: where along the length of the bone the circle is (0.0=head, 1.0=tail)
+    """
+    verts = []
+    edges = []
+    angle = 2 * math.pi / number_verts
+    i = 0
+
+    assert(axis in 'XYZ')
+
+    while i < (number_verts):
+        a = math.cos(i * angle)
+        b = math.sin(i * angle)
+
+        if axis == 'X':
+            verts.append((head_tail, a * radius, b * radius))
+        elif axis == 'Y':
+            verts.append((a * radius, head_tail, b * radius))
+        elif axis == 'Z':
+            verts.append((a * radius, b * radius, head_tail))
+
+        if i < (number_verts - 1):
+            edges.append((i , i + 1))
+
+        i += 1
+
+    edges.append((0, number_verts - 1))
+
+    return verts, edges
+
+
 def create_limb_widget(rig, bone_name, bone_transform_name=None):
     """ Creates a basic limb widget, a line that spans the length of the
         bone, with a circle around the center.
@@ -914,8 +949,16 @@ def get_rig_type(rig_type, base_path=''):
         importlib.reload(submod)
     else:
         if '.' in rig_type:
-            rig_type = str.join(os.sep, rig_type.split('.'))
-        spec = importlib.util.spec_from_file_location(rig_type, base_path + rig_type + '.py')
+            module_subpath = str.join(os.sep, rig_type.split('.'))
+            package = rig_type.split('.')[0]
+            importlib.import_module(package)
+            for sub in rig_type.split('.')[1:]:
+                package = '.'.join([package, sub])
+                importlib.import_module(package)
+        else:
+            module_subpath = rig_type
+
+        spec = importlib.util.spec_from_file_location(rig_type, base_path + module_subpath + '.py')
         submod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(submod)
     return submod

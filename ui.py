@@ -173,7 +173,7 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
                     a = id_store.rigify_types.add()
                     a.name = r
 
-            if 'external' in rig_lists.rigs_dict:
+            if 'external' in rig_lists.rigs_dict and rig_lists.rigs_dict['external']:
                 for r in rig_lists.rigs_dict['external']['rig_list']:
                     if collection_name == "All":
                         a = id_store.rigify_types.add()
