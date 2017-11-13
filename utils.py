@@ -125,6 +125,14 @@ def strip_mch(name):
     else:
         return name
 
+def strip_def(name):
+    """ Returns the name with DEF_PREFIX stripped from it.
+        """
+    if name.startswith(DEF_PREFIX):
+        return name[len(DEF_PREFIX):]
+    else:
+        return name
+
 def org(name):
     """ Prepends the ORG_PREFIX to a name if it doesn't already have
         it, and returns it.
