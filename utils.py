@@ -1321,3 +1321,62 @@ def overwrite_prop_animation(rig, bone, prop_name, value, frames):
     for kp in curve.keyframe_points:
         if kp.co[0] in frames:
             kp.co[1] = value
+
+
+#=============================================
+# Glue utilities
+#=============================================
+
+
+def make_constraints_from_string(owner, target, subtarget, fstring):
+    """
+    Creates and applies constraints on owner bone based on formatted string
+    :param owner: the owner pose_bone
+    :param target: the target object
+    :param subtarget: the bone subtarget name
+    :param fstring: formatted string
+    :return:
+    """
+
+    # regex is (type)(influence*)(space-space*)(use_offset*)(head_tail*)
+
+    separator = '#'
+
+    regex = '^(CL|CR|CS|CT)([0-9]*\.?[0-9]+)*([LWP]{2})*(O*)([0-9]*\.?[0-9]+)*$'
+
+    constraint_type = {'CL': 'COPY_LOCATION', 'CR': 'COPY_ROTATION', 'CS': 'COPY_SCALE', 'CT': 'COPY_TRANSFORMS'}
+    constraint_space = {'L': 'LOCAL', 'W': 'WORLD', 'P': 'POSE'}
+
+    cns_blocks = fstring.split(separator)
+
+    for cns in cns_blocks:
+        re_object = re.match(regex, cns)
+        if not re_object:
+            continue
+        else:
+            cns_props = re_object.groups()
+        cns_type = constraint_type[cns_props[0]]
+        const = owner.constraints.new(cns_type)
+        const.target = target
+        const.subtarget = subtarget
+        if cns_type == 'COPY_LOCATION':
+            const.influence = float(cns_props[1]) if bool(cns_props[1]) else 1.0
+            const.target_space = constraint_space[cns_props[2][0]] if bool(cns_props[2]) else "LOCAL"
+            const.owner_space = constraint_space[cns_props[2][1]] if bool(cns_props[2]) else "LOCAL"
+            const.use_offset = bool(cns_props[3])
+            const.head_tail = float(cns_props[4]) if bool(cns_props[4]) else 0.0
+        if cns_type == 'COPY_ROTATION':
+            const.influence = float(cns_props[1]) if bool(cns_props[1]) else 1.0
+            const.target_space = constraint_space[cns_props[2][0]] if bool(cns_props[2]) else "LOCAL"
+            const.owner_space = constraint_space[cns_props[2][1]] if bool(cns_props[2]) else "LOCAL"
+            const.use_offset = bool(cns_props[3])
+        if cns_type == 'COPY_SCALE':
+            const.influence = float(cns_props[1]) if bool(cns_props[1]) else 1.0
+            const.target_space = constraint_space[cns_props[2][0]] if bool(cns_props[2]) else "LOCAL"
+            const.owner_space = constraint_space[cns_props[2][1]] if bool(cns_props[2]) else "LOCAL"
+            const.use_offset = bool(cns_props[3])
+        if cns_type == 'COPY_TRANSFORMS':
+            const.influence = float(cns_props[1]) if bool(cns_props[1]) else 1.0
+            const.target_space = constraint_space[cns_props[2][0]] if bool(cns_props[2]) else "LOCAL"
+            const.owner_space = constraint_space[cns_props[2][1]] if bool(cns_props[2]) else "LOCAL"
+            const.head_tail = float(cns_props[4]) if bool(cns_props[4]) else 0.0
