@@ -297,10 +297,10 @@ class Rig:
             con.subtarget = ctrl_bone
             con.chain_count = len(self.org_bones)
 
-            # Pelvis follow
-            if self.params.do_flip:
-                pantin_utils.create_ik_child_of(
-                    self.obj, ctrl_bone, self.params.pelvis_name)
+            # # Pelvis follow
+            # if self.params.do_flip:
+            #     pantin_utils.create_ik_child_of(
+            #         self.obj, ctrl_bone, self.params.pelvis_name)
 
         elif self.params.chain_type == 'Dynamic':
             for ctrl, mch in zip(ctrl_chain, mch_chain):

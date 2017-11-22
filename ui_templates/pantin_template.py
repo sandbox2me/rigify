@@ -18,6 +18,7 @@
 
 UI_SLIDERS = '''
 import bpy
+from rna_prop_ui import rna_idprop_ui_prop_get
 from mathutils import Matrix, Vector
 from math import acos, pi
 
@@ -47,6 +48,54 @@ def z_index_same(member_index, flip, bone_index, extra_offset=0.0):
         return -member_index * MEMBER_OFFSET - bone_index * BONE_OFFSET - extra_offset * MEMBER_OFFSET
     else:
         return member_index * MEMBER_OFFSET + bone_index * BONE_OFFSET + extra_offset * MEMBER_OFFSET
+
+#######################
+## Root modification ##
+#######################
+
+# Get rig object
+for obj in bpy.data.objects:
+    if (obj.data is not None
+            and "rig_id" in obj.data
+            and obj.data["rig_id"] == rig_id):
+        break
+
+# Set up custom properties
+pb = obj.pose.bones
+root = pb["root"]
+prop = rna_idprop_ui_prop_get(root, "flip", create=True)
+root["flip"] = 0
+prop["soft_min"] = 0
+prop["soft_max"] = 1
+prop["min"] = 0
+prop["max"] = 1
+
+root.rotation_mode = 'XZY'
+
+# Set up driver if not existing
+root = obj.pose.bones["root"]
+data_path = root.path_from_id("rotation_euler")
+# Get if driver was created already
+for d in obj.animation_data.drivers:
+    if d.data_path == data_path:
+        do_create_driver = False
+
+        break
+    else:
+        do_create_driver = True
+
+if do_create_driver:
+    driver = obj.driver_add(data_path, 2)
+    driver.driver.expression = 'flip * pi'
+    var_fs = driver.driver.variables.new()
+
+    var_fs.type = 'SINGLE_PROP'
+    var_fs.name = 'flip'
+    var_fs.targets[0].id_type = 'OBJECT'
+    var_fs.targets[0].id = obj
+    var_fs.targets[0].data_path = (pb["root"].path_from_id()
+                                   + '["flip"]')
+
 
 
 #######################
@@ -206,11 +255,10 @@ class Rigify_IK_Switch(bpy.types.Operator):
         bones = get_connected_bone_chain(org_bone)
 
         # Set flip to 0, to avoid constraint matrix problems
-        if "MCH-Flip" in obj.pose.bones:
-            previous_flip = obj.pose.bones["MCH-Flip"]["flip"]
-            obj.pose.bones["MCH-Flip"]["flip"] = 0
-            obj.update_tag({"DATA"}) # Mark data to be updated, to recalculate matrices
-            context.scene.update() # Force update
+        previous_flip = obj.pose.bones["root"]["flip"]
+        obj.pose.bones["root"]["flip"] = 0
+        obj.update_tag({"DATA"}) # Mark data to be updated, to recalculate matrices
+        context.scene.update() # Force update
 
         mats = {}
 
@@ -254,7 +302,7 @@ class Rigify_IK_Switch(bpy.types.Operator):
         set_fk_ik_prop(switch_value, self.keyframe_insert)
 
         # Reset flip value
-        obj.pose.bones["MCH-Flip"]["flip"] = previous_flip
+        obj.pose.bones["root"]["flip"] = previous_flip
         obj.update_tag({"DATA"})
         context.scene.update() # Force update
         return {'FINISHED'}
@@ -665,7 +713,7 @@ class RigUI(bpy.types.Panel):
 
         layout.separator()
 
-        layout.prop(pose_bones["MCH-Flip"], '["flip"]', text="Flip", slider=True)
+        layout.prop(pose_bones["root"], '["flip"]', text="Flip", slider=True)
         layout.separator()
 
 '''

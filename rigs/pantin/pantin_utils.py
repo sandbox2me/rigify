@@ -142,50 +142,50 @@ def create_deformation(obj,
     var_flip.name = 'flip'
     var_flip.targets[0].id_type = 'OBJECT'
     var_flip.targets[0].id = obj
-    var_flip.targets[0].data_path = 'pose.bones["MCH-Flip"]["flip"]'
+    var_flip.targets[0].data_path = 'pose.bones["root"]["flip"]'
 
     bpy.ops.object.mode_set(mode='EDIT')
     return def_name
 
 
-def create_ik_child_of(obj, bone, pelvis_name):
-    # TODO get real bone name. From UI?
-    flip_bone_name = 'MCH-Flip'
-    pb = obj.pose.bones
-    bone_p = pb[bone]
-
-    con1 = bone_p.constraints.new('CHILD_OF')
-    con1.name = "Child Normal"
-    con1.target = obj
-    con1.subtarget = pelvis_name
-    con1.inverse_matrix = pb[pelvis_name].matrix.inverted()
-
-    con2 = bone_p.constraints.new('CHILD_OF')
-    con2.name = "Child Flipped"
-    con2.target = obj
-    con2.subtarget = flip_bone_name
-    con2.inverse_matrix = pb[flip_bone_name].matrix.inverted()
-
-    # Drivers
-    driver = obj.driver_add(con1.path_from_id("influence"))
-    driver.driver.expression = 'pelvis_follow'
-    var_pf = driver.driver.variables.new()
-
-    var_pf.type = 'SINGLE_PROP'
-    var_pf.name = 'pelvis_follow'
-    var_pf.targets[0].id_type = 'OBJECT'
-    var_pf.targets[0].id = obj
-    var_pf.targets[0].data_path = bone_p.path_from_id() + '["pelvis_follow"]'
-
-    driver = obj.driver_add(con2.path_from_id("influence"))
-    driver.driver.expression = '1-pelvis_follow'
-    var_pf = driver.driver.variables.new()
-
-    var_pf.type = 'SINGLE_PROP'
-    var_pf.name = 'pelvis_follow'
-    var_pf.targets[0].id_type = 'OBJECT'
-    var_pf.targets[0].id = obj
-    var_pf.targets[0].data_path = bone_p.path_from_id() + '["pelvis_follow"]'
+# def create_ik_child_of(obj, bone, pelvis_name):
+#     # TODO get real bone name. From UI?
+#     flip_bone_name = 'MCH-Flip'
+#     pb = obj.pose.bones
+#     bone_p = pb[bone]
+#
+#     con1 = bone_p.constraints.new('CHILD_OF')
+#     con1.name = "Child Normal"
+#     con1.target = obj
+#     con1.subtarget = pelvis_name
+#     con1.inverse_matrix = pb[pelvis_name].matrix.inverted()
+#
+#     con2 = bone_p.constraints.new('CHILD_OF')
+#     con2.name = "Child Flipped"
+#     con2.target = obj
+#     con2.subtarget = flip_bone_name
+#     con2.inverse_matrix = pb[flip_bone_name].matrix.inverted()
+#
+#     # Drivers
+#     driver = obj.driver_add(con1.path_from_id("influence"))
+#     driver.driver.expression = 'pelvis_follow'
+#     var_pf = driver.driver.variables.new()
+#
+#     var_pf.type = 'SINGLE_PROP'
+#     var_pf.name = 'pelvis_follow'
+#     var_pf.targets[0].id_type = 'OBJECT'
+#     var_pf.targets[0].id = obj
+#     var_pf.targets[0].data_path = bone_p.path_from_id() + '["pelvis_follow"]'
+#
+#     driver = obj.driver_add(con2.path_from_id("influence"))
+#     driver.driver.expression = '1-pelvis_follow'
+#     var_pf = driver.driver.variables.new()
+#
+#     var_pf.type = 'SINGLE_PROP'
+#     var_pf.name = 'pelvis_follow'
+#     var_pf.targets[0].id_type = 'OBJECT'
+#     var_pf.targets[0].id = obj
+#     var_pf.targets[0].data_path = bone_p.path_from_id() + '["pelvis_follow"]'
 
 
 def make_follow(obj, b, ctrl_name=None):

@@ -139,6 +139,32 @@ class IKLimb:
         align_bone_x_axis(self.obj, joint_str, Vector((-1, 0, 0)))
         # put_bone(self.obj, joint_str, Vector(eb[flimb_str].head))
 
+        # Pelvis follow
+        elimb_ik_root = copy_bone(
+            self.obj,
+            self.org_bones[2],
+            make_mechanism_name(
+                pantin_utils.strip_LR_numbers(
+                    strip_org(
+                        self.org_bones[2]
+                    )) + ".ik_root" + self.side_suffix))
+        elimb_ik_parent = copy_bone(
+            self.obj,
+            self.org_bones[2],
+            make_mechanism_name(
+                pantin_utils.strip_LR_numbers(
+                    strip_org(
+                        self.org_bones[2]
+                    )) + ".ik_parent" + self.side_suffix))
+        elimb_ik_socket = copy_bone(
+            self.obj,
+            self.org_bones[2],
+            make_mechanism_name(
+                pantin_utils.strip_LR_numbers(
+                    strip_org(
+                        self.org_bones[2]
+                    )) + ".ik_socket" + self.side_suffix))
+
         # Get edit bones
         ulimb_ik_e = eb[ulimb_ik]
         flimb_ik_e = eb[flimb_ik]
@@ -149,6 +175,10 @@ class IKLimb:
         elimb_str_e = eb[elimb_str]
 
         joint_str_e = eb[joint_str]
+
+        elimb_ik_root_e = eb[elimb_ik_root]
+        elimb_ik_parent_e = eb[elimb_ik_parent]
+        elimb_ik_socket_e = eb[elimb_ik_socket]
 
         # Parenting
 
@@ -165,8 +195,14 @@ class IKLimb:
         flimb_ik_e.use_connect = False
         flimb_ik_e.parent = ulimb_ik_e
 
+        elimb_ik_root_e.use_connect = False
+        elimb_ik_root_e.parent = None
+        elimb_ik_parent_e.use_connect = False
+        elimb_ik_parent_e.parent = eb[self.side_org_bones[0]].parent
+        elimb_ik_socket_e.use_connect = False
+        elimb_ik_socket_e.parent = None
         elimb_ik_e.use_connect = False
-        elimb_ik_e.parent = None
+        elimb_ik_e.parent = elimb_ik_socket_e
 
         if self.org_parent is not None:
             ulimb_str_e.use_connect = False
@@ -264,9 +300,27 @@ class IKLimb:
         con.keep_axis = 'PLANE_Z'
 
         # Pelvis follow
-        if self.do_flip:
-            pantin_utils.create_ik_child_of(
-                self.obj, elimb_ik, self.pelvis_name)
+        con = pb[elimb_ik_socket].constraints.new('COPY_TRANSFORMS')
+        con.name = "copy root"
+        con.target = self.obj
+        con.subtarget = elimb_ik_root
+
+        con = pb[elimb_ik_socket].constraints.new('COPY_TRANSFORMS')
+        con.name = "copy socket"
+        con.target = self.obj
+        con.subtarget = elimb_ik_parent
+
+        # Drivers
+        driver = self.obj.driver_add(con.path_from_id("influence"))
+        driver.driver.expression = 'pelvis_follow'
+        var = driver.driver.variables.new()
+
+        var.type = 'SINGLE_PROP'
+        var.name = 'pelvis_follow'
+        var.targets[0].id_type = 'OBJECT'
+        var.targets[0].id = self.obj
+        var.targets[0].data_path = (pb[elimb_ik].path_from_id()
+                                       + '["pelvis_follow"]')
 
         # IK Limits
         ulimb_ik_p.lock_ik_x = True
