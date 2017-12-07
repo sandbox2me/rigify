@@ -56,7 +56,9 @@ class Rig:
         eb = self.obj.data.edit_bones
         for i, b in enumerate(self.org_bones):
 
-            ctrl_bone, follow_bone = pantin_utils.make_follow(self.obj, b)
+            target = eb[b].parent_recursive[-1].name
+            target = strip_org(target)
+            ctrl_bone, follow_bone = pantin_utils.make_follow(self.obj, b, target)
 
             ui_script += script % (ctrl_bone)
 

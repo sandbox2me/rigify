@@ -188,7 +188,7 @@ def create_deformation(obj,
 #     var_pf.targets[0].data_path = bone_p.path_from_id() + '["pelvis_follow"]'
 
 
-def make_follow(obj, b, ctrl_name=None):
+def make_follow(obj, b, target, ctrl_name=None):
     eb = obj.data.edit_bones
 
     # Control bone
@@ -203,6 +203,8 @@ def make_follow(obj, b, ctrl_name=None):
         b,
         make_mechanism_name(strip_org(b)) + ".follow"
     )
+    eb[follow_bone].tail = eb[follow_bone].head + Vector((0, 0, 0.1))
+    align_bone_z_axis(obj, follow_bone, Vector((0, 1, 0)))
 
     # Parenting
     bone_parent_name = strip_org(eb[b].parent.name)
@@ -224,14 +226,13 @@ def make_follow(obj, b, ctrl_name=None):
     con = pb[follow_bone].constraints.new('COPY_ROTATION')
     con.name = "follow"
     con.target = obj
-    con.subtarget = strip_org(pb[b].parent.name)
-    con.use_x = False
-    con.use_y = False
+    con.subtarget = target
+    con.use_x = True
+    con.use_y = True
     con.use_z = True
-    con.invert_z = True
-    con.target_space = 'LOCAL_WITH_PARENT'
+    con.target_space = 'WORLD'
     # TODO investigate strange behaviour with FLIP
-    con.owner_space = 'LOCAL'
+    con.owner_space = 'WORLD'
 
     # Drivers
     driver = obj.driver_add(con.path_from_id("influence"))
