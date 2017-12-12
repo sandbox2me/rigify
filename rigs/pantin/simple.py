@@ -78,6 +78,10 @@ class Rig:
             bone_Z_index = 0
             for b in pb:
                 if b.bone.use_deform and b.name.startswith('DEF-'):
+                    if not 'member_index' in b:
+                        raise MetarigError(
+                            "RIGIFY ERROR: One rig bone with should not be connected. "
+                            "Check armature for connected bones.")
                     if (b['member_index'] == member_Z_index
                             and b['bone_index'] > bone_Z_index):
                         bone_Z_index = b['bone_index']
