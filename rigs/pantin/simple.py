@@ -313,6 +313,14 @@ class Rig:
 
             ui_script = script % (ctrl, dyn_bone)  # % ctrl_bone, MCH-bone.dyn
 
+        elif self.params.chain_type == 'Def':
+            # Modify constraints to add side suffix
+            if side in ('.L', '.R'):
+                for b in self.org_bones:
+                    for con in pb[b].constraints:
+                        if hasattr(con, 'subtarget'):
+                            con.subtarget += side
+
         if ui_script is not None:
             return [ui_script]
 
