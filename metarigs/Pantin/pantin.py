@@ -585,7 +585,7 @@ def create(obj):
     pbone.lock_location = (True, True, True)
     pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
-    pbone.lock_scale = (True, True, True)
+    pbone.lock_scale = (False, False, True)
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     try:
@@ -593,7 +593,7 @@ def create(obj):
     except AttributeError:
         pass
     try:
-        pbone.rigify_parameters.chain_type = "Curve"
+        pbone.rigify_parameters.chain_type = "Normal"
     except AttributeError:
         pass
     pbone = obj.pose.bones[bones['Eyelid']]
