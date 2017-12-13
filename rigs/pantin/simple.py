@@ -32,7 +32,7 @@ from . import pantin_utils
 script = """
 simple = "%s"
 if is_selected(simple):
-    layout.prop(pose_bones["%s"].constraints["stretch_to"], \
+    layout.prop(pose_bones["%s"].constraints["damped_track"], \
 'influence', \
 text="Dynamics (" + simple + ")", \
 slider=True)
@@ -154,7 +154,7 @@ class Rig:
                     empty_obj.parent_type = 'BONE'
                     empty_obj.parent_bone = ctrl_bone
                     empty_obj.use_slow_parent = True
-                    empty_obj.slow_parent_offset = 3.0
+                    empty_obj.slow_parent_offset = 1.0
 
 
 
@@ -308,12 +308,12 @@ class Rig:
 
         elif self.params.chain_type == 'Dynamic':
             for ctrl, mch in zip(ctrl_chain, mch_chain):
-                con = pb[mch].constraints.new('STRETCH_TO')
-                con.name = "stretch_to"
+                con = pb[mch].constraints.new('DAMPED_TRACK')
+                con.name = "damped_track"
                 con.target = empty_obj
-                con.volume = 'NO_VOLUME'
-                con.keep_axis = 'PLANE_Z'
-                con.rest_length = pb[ctrl].length
+                # con.volume = 'NO_VOLUME'
+                # con.keep_axis = 'PLANE_Z'
+                # con.rest_length = pb[ctrl].length
 
             ui_script = script % (ctrl, dyn_bone)  # % ctrl_bone, MCH-bone.dyn
 
