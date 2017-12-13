@@ -322,7 +322,8 @@ class Rig:
             if side in ('.L', '.R'):
                 for b in self.org_bones:
                     for con in pb[b].constraints:
-                        if hasattr(con, 'subtarget'):
+                        if (hasattr(con, 'subtarget')
+                                and con.subtarget + side in pb):
                             con.subtarget += side
 
         if ui_script is not None:
