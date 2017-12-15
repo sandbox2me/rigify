@@ -19,60 +19,55 @@
 import bpy
 from rna_prop_ui import rna_idprop_ui_prop_get
 
+from ...utils import copy_bone
 from ...utils import make_mechanism_name, make_deformer_name, strip_org
 from ...utils import create_bone_widget, create_widget, create_cube_widget
 from ...utils import connected_children_names, has_connected_children
 
 from . import pantin_utils
 
-script = """
-head = "%s"
-if is_selected(head):
-    layout.prop(pose_bones[head], \
-'["follow"]', \
-text="Follow (" + head + ")", \
-slider=True)
-"""
-
-
 class Rig:
     def __init__(self, obj, bone_name, params):
         self.obj = obj
         self.params = params
 
-        self.neck = bone_name
-        self.head = connected_children_names(self.obj, bone_name)[0]
+        # self.head = connected_children_names(self.obj, bone_name)[0]
 
-        self.org_bones = [self.neck, self.head]
+        self.org_bone = bone_name
 
     def generate(self):
         bpy.ops.object.mode_set(mode='EDIT')
-        ui_script = ""
-
-        ctrl_chain = []
-        follow_chain = []
 
         eb = self.obj.data.edit_bones
-        for i, b in enumerate(self.org_bones):
 
-            target = eb[b].parent_recursive[-1].name
-            target = strip_org(target)
-            ctrl_bone, follow_bone = pantin_utils.make_follow(self.obj, b, target)
+        trackers = []
+        flaps = []
 
-            ui_script += script % (ctrl_bone)
+        # Left and right tracking bones
+        for side in ['.L', '.R']:
+            tracker = copy_bone(
+                self.obj, self.org_bone,
+                make_mechanism_name(
+                    strip_org(self.org_bone)) + side
+            )
+            trackers.append(tracker)
 
-            # Add to list
-            ctrl_chain += [ctrl_bone]
-
-            eb[ctrl_bone].name = ctrl_bone
+        # Front and rear bones
+        for i, flap in enumerate(['.Front', '.Rear']):
+            flap_b = copy_bone(
+                self.obj, self.org_bone,
+                make_mechanism_name(
+                    strip_org(self.org_bone)) + flap
+            )
+            flaps.append(flap_b)
 
             # Def bones
             def_bone = pantin_utils.create_deformation(
-                self.obj,
-                b,
-                self.params.flip_switch,
+                self.obj, flap_b,
+                flip_switch=True,
                 member_index=self.params.Z_index,
-                bone_index=i)
+                bone_index=i,
+                new_name=strip_org(self.org_bone) + flap)
 
         # Parenting
         if self.params.detach:
@@ -81,53 +76,73 @@ class Rig:
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
 
-        # Widgets
-        global_scale = self.obj.dimensions[2]
-        member_factor = 0.08
-        widget_size = global_scale * member_factor
-
-        neck = ctrl_chain[0]
-        head = ctrl_chain[1]
-
-        pantin_utils.create_capsule_widget(
-            self.obj, neck, length=widget_size, width=widget_size*0.1)
-        pantin_utils.create_aligned_circle_widget(
-            self.obj, head, radius=widget_size, head_tail=0.5)
-
         # Constraints
 
-        for org, ctrl in zip(self.org_bones, ctrl_chain):
-            con = pb[org].constraints.new('COPY_TRANSFORMS')
-            con.name = "copy_transforms"
+        for f, shin in zip(trackers, (self.params.shin_name_l,
+                                   self.params.shin_name_r)
+                           ):
+            con = pb[f].constraints.new('DAMPED_TRACK')
+            con.name = "Track " + shin
             con.target = self.obj
-            con.subtarget = ctrl
+            con.subtarget = "ORG-" + shin
 
-        con = pb[neck].constraints.new('LIMIT_ROTATION')
-        con.name = "limit_rotation"
-        con.use_limit_z = True
-        con.min_z = -1.14
-        con.max_z = 1.5
-        con.owner_space = 'LOCAL'
+        for f_i, f in enumerate(flaps):
+            for s_i, shin in enumerate((self.params.shin_name_l, self.params.shin_name_r)):
+                con = pb[f].constraints.new('DAMPED_TRACK')
+                con.name = "Track " + shin
+                con.target = self.obj
+                con.subtarget = "ORG-" + shin
 
-        con = pb[head].constraints.new('LIMIT_ROTATION')
-        con.name = "limit_rotation"
-        con.use_limit_z = True
-        con.min_z = -0.5
-        con.max_z = 0.68
-        con.owner_space = 'LOCAL'
+                # Drivers
+                driver = self.obj.driver_add(con.path_from_id("influence"))
 
-        return [ui_script]
+                # Relative component: which leg to track
+                if f_i != s_i:
+                    relative = 'L > R'
+                else:
+                    relative = 'L <= R'
+
+                if s_i == 0:  # Left
+                    absolute = 'L '
+                else:  # Right
+                    absolute = 'R '
+
+                # # Absolute component: do not track if rotation is below / above 0
+                # if f_i == 0:  # Front
+                #     absolute += ' and < 0'
+                # else:  # Rear
+                #     absolute += ' and > 0'
+
+                driver.driver.expression = '1 if {} else 0'.format(relative)
+
+                var = driver.driver.variables.new()
+                var.type = 'TRANSFORMS'
+                var.name = 'L'
+                var.targets[0].id = self.obj
+                var.targets[0].bone_target = trackers[0]
+                var.targets[0].transform_type = 'ROT_Z'
+                var.targets[0].transform_space = 'LOCAL_SPACE'
+
+                var = driver.driver.variables.new()
+                var.type = 'TRANSFORMS'
+                var.name = 'R'
+                var.targets[0].id = self.obj
+                var.targets[0].bone_target = trackers[1]
+                var.targets[0].transform_type = 'ROT_Z'
+                var.targets[0].transform_space = 'LOCAL_SPACE'
+
+        # return []
 
 
 def add_parameters(params):
     params.Z_index = bpy.props.FloatProperty(
         name="Z index", default=0.0, description="Defines member's Z order")
-    params.flip_switch = bpy.props.BoolProperty(
-        name="Flip Switch", default=False,
-        description="This member may change depth when flipped")
-    params.detach = bpy.props.BoolProperty(
-        name="Detach Head", default=False,
-        description="Off with her head!")
+    params.shin_name_l = bpy.props.StringProperty(
+        name="Left Shin Name", default="Shin.L",
+        description="The left shin bone for the skirt to track")
+    params.shin_name_r = bpy.props.StringProperty(
+        name="Right Shin Name", default="Shin.R",
+        description="The right shin bone for the skirt to track")
 
 
 def parameters_ui(layout, params):
@@ -136,9 +151,9 @@ def parameters_ui(layout, params):
     r = layout.row()
     r.prop(params, "Z_index")
     r = layout.row()
-    r.prop(params, "flip_switch")
+    r.prop(params, "shin_name_l")
     r = layout.row()
-    r.prop(params, "detach")
+    r.prop(params, "shin_name_r")
 
 
 def create_sample(obj):

@@ -193,6 +193,13 @@ def create(obj):
     bone.use_connect = True
     bone.parent = arm.edit_bones[bones['Pelvis']]
     bones['Spine'] = bone.name
+    bone = arm.edit_bones.new('Skirt')
+    bone.head[:] = -0.0029, 0.0000, 0.8893
+    bone.tail[:] = -0.0242, 0.0000, 0.5546
+    bone.roll = 0.0634
+    bone.use_connect = False
+    bone.parent = arm.edit_bones[bones['Pelvis']]
+    bones['Skirt'] = bone.name
     bone = arm.edit_bones.new('Shin')
     bone.head[:] = -0.0283, 0.0000, 0.4894
     bone.tail[:] = -0.0587, 0.0000, 0.0736
@@ -445,14 +452,6 @@ def create(obj):
     except AttributeError:
         pass
     try:
-        pbone.rigify_parameters.joint_name = "Knee"
-    except AttributeError:
-        pass
-    try:
-        pbone.rigify_parameters.right_layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False]
-    except AttributeError:
-        pass
-    try:
         pbone.rigify_parameters.pelvis_name = "Pelvis"
     except AttributeError:
         pass
@@ -468,6 +467,14 @@ def create(obj):
     pbone.lock_scale = (True, True, True)
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+    pbone = obj.pose.bones[bones['Skirt']]
+    pbone.rigify_type = 'pantin.skirt'
+    pbone.lock_location = (False, False, False)
+    pbone.lock_rotation = (False, False, False)
+    pbone.lock_rotation_w = False
+    pbone.lock_scale = (False, False, False)
+    pbone.rotation_mode = 'QUATERNION'
+    pbone.bone.layers = [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     pbone = obj.pose.bones[bones['Shin']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
@@ -544,14 +551,6 @@ def create(obj):
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
-    try:
-        pbone.rigify_parameters.right_layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False]
-    except AttributeError:
-        pass
-    try:
-        pbone.rigify_parameters.joint_name = "Elbow"
-    except AttributeError:
-        pass
     try:
         pbone.rigify_parameters.pelvis_name = "Pelvis"
     except AttributeError:
