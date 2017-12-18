@@ -107,13 +107,13 @@ class Rig:
                 else:  # Right
                     absolute = 'R '
 
-                # # Absolute component: do not track if rotation is below / above 0
-                # if f_i == 0:  # Front
-                #     absolute += ' and < 0'
-                # else:  # Rear
-                #     absolute += ' and > 0'
+                # Absolute component: do not track if rotation is below / above 0
+                if f_i == 0:  # Front
+                    absolute += ' < 0'
+                else:  # Rear
+                    absolute += ' > 0'
 
-                driver.driver.expression = '1 if {} else 0'.format(relative)
+                driver.driver.expression = '1 if {} and {} else 0'.format(relative, absolute)
 
                 var = driver.driver.variables.new()
                 var.type = 'TRANSFORMS'
