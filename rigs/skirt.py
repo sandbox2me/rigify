@@ -131,6 +131,13 @@ class Rig:
                 var.targets[0].transform_type = 'ROT_Z'
                 var.targets[0].transform_space = 'LOCAL_SPACE'
 
+        #     # hack: apply bas rotation
+        # for f in trackers:
+        #     # bpy.ops.object.mode_set(mode='OBJECT')
+        #     m = self.obj.pose.bones[f].matrix.copy()
+        #     bpy.ops.object.mode_set(mode='EDIT')
+        #     self.obj.data.edit_bones[f].matrix = m
+        #     bpy.ops.object.mode_set(mode='OBJECT')
         # return []
 
 
