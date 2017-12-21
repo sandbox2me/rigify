@@ -22,10 +22,10 @@ from mathutils import Vector
 from math import radians, degrees
 import importlib
 
-from ...utils import copy_bone, new_bone, put_bone
-from ...utils import make_mechanism_name, make_deformer_name, strip_org
-from ...utils import connected_children_names, has_connected_children
-from ...utils import align_bone_x_axis
+from rigify.utils import copy_bone, new_bone, put_bone
+from rigify.utils import make_mechanism_name, make_deformer_name, strip_org
+from rigify.utils import connected_children_names, has_connected_children
+from rigify.utils import align_bone_x_axis
 
 from . import pantin_utils
 

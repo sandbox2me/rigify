@@ -19,10 +19,10 @@
 import bpy
 from rna_prop_ui import rna_idprop_ui_prop_get
 
-from ...utils import copy_bone
-from ...utils import make_mechanism_name, make_deformer_name, strip_org
-from ...utils import create_bone_widget, create_widget, create_cube_widget
-from ...utils import connected_children_names, has_connected_children
+from rigify.utils import copy_bone
+from rigify.utils import make_mechanism_name, make_deformer_name, strip_org
+from rigify.utils import create_bone_widget, create_widget, create_cube_widget
+from rigify.utils import connected_children_names, has_connected_children
 
 from . import pantin_utils
 

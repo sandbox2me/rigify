@@ -22,12 +22,12 @@ from math import pi, radians
 from mathutils import Vector
 import importlib
 
-from ...utils import new_bone, copy_bone, flip_bone
-from ...utils import make_mechanism_name, make_deformer_name, strip_org
-from ...utils import create_bone_widget, create_widget, create_cube_widget
-from ...utils import connected_children_names, has_connected_children
-from ...utils import align_bone_x_axis
-from ...utils import get_layers
+from rigify.utils import new_bone, copy_bone, flip_bone
+from rigify.utils import make_mechanism_name, make_deformer_name, strip_org
+from rigify.utils import create_bone_widget, create_widget, create_cube_widget
+from rigify.utils import connected_children_names, has_connected_children
+from rigify.utils import align_bone_x_axis
+from rigify.utils import get_layers
 
 from . import pantin_utils
 from . import limb_common

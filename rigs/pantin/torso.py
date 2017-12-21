@@ -21,11 +21,11 @@ from rna_prop_ui import rna_idprop_ui_prop_get
 from mathutils import Vector
 import importlib
 
-from ...utils import new_bone, copy_bone
-from ...utils import make_deformer_name, make_mechanism_name,  strip_org
-from ...utils import create_bone_widget, create_widget, create_cube_widget
-from ...utils import connected_children_names, has_connected_children
-from ...utils import align_bone_x_axis, align_bone_z_axis
+from rigify.utils import new_bone, copy_bone
+from rigify.utils import make_deformer_name, make_mechanism_name,  strip_org
+from rigify.utils import create_bone_widget, create_widget, create_cube_widget
+from rigify.utils import connected_children_names, has_connected_children
+from rigify.utils import align_bone_x_axis, align_bone_z_axis
 
 from . import pantin_utils
 

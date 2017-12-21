@@ -22,11 +22,11 @@ from rna_prop_ui import rna_idprop_ui_prop_get
 from math import pi, cos, sin
 import re
 
-from ...utils import make_deformer_name, make_mechanism_name
-from ...utils import strip_org, copy_bone
-from ...utils import create_widget
-from ...utils import create_circle_polygon
-from ...utils import align_bone_z_axis
+from rigify.utils import make_deformer_name, make_mechanism_name
+from rigify.utils import strip_org, copy_bone
+from rigify.utils import create_widget
+from rigify.utils import create_circle_polygon
+from rigify.utils import align_bone_z_axis
 
 
 def strip_numbers(name):

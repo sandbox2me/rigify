@@ -19,11 +19,11 @@
 import bpy
 from mathutils import Vector
 
-from ...utils import new_bone, copy_bone
-from ...utils import make_mechanism_name, make_deformer_name, strip_org
-from ...utils import create_bone_widget, create_widget, create_cube_widget
-from ...utils import connected_children_names, has_connected_children
-from ...utils import align_bone_x_axis
+from rigify.utils import new_bone, copy_bone
+from rigify.utils import make_mechanism_name, make_deformer_name, strip_org
+from rigify.utils import create_bone_widget, create_widget, create_cube_widget
+from rigify.utils import connected_children_names, has_connected_children
+from rigify.utils import align_bone_x_axis
 
 from . import pantin_utils
 
@@ -67,7 +67,7 @@ class Rig:
         if self.org_parent is not None:
             ctrl_g_eb.use_connect = False
             ctrl_g_eb.parent = eb[self.org_parent]
-        
+
         # Right control
         ctrl_r_name = strip_org(self.ur.split('_')[0]+'.R')
         ctrl_r = new_bone(self.obj, ctrl_r_name)
@@ -91,13 +91,13 @@ class Rig:
         ctrl_lc = new_bone(self.obj, ctrl_lc_name)
         eb[ctrl_lc].head = (eb[self.lc].head + eb[self.lc].tail) / 2
         eb[ctrl_lc].tail = eb[ctrl_lc].head + Vector((0, 0, 1)) * eb[self.lc].length
-        
+
         for b in [ctrl_r, ctrl_uc, ctrl_lc, ctrl_l]:
             align_bone_x_axis(self.obj, b, Vector((-1, 0, 0)))
             eb[b].layers = eb[self.lc].layers
             eb[b].parent = eb[self.mouth]
             ctrl_chain.append(b)
-            
+
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
         for b in [ctrl_r, ctrl_uc, ctrl_lc, ctrl_l]:
