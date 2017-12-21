@@ -19,6 +19,7 @@
 # <pep8 compliant>
 
 import bpy
+import os
 from bpy.props import StringProperty
 from mathutils import Color
 
@@ -844,6 +845,7 @@ class Sample(bpy.types.Operator):
             try:
                 if 'external' in rig_lists.rigs_dict and self.metarig_type in rig_lists.rigs_dict['external']['rig_list']:
                     custom_rigs_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
+                    custom_rigs_folder = os.path.join(custom_rigs_folder, 'rigs', '')
                     rig = get_rig_type(self.metarig_type, custom_rigs_folder)
                 else:
                     rig = get_rig_type(self.metarig_type)
@@ -1417,4 +1419,3 @@ def unregister():
     bpy.utils.unregister_class(OBJECT_OT_Rot2Pole)
 
     rot_mode.unregister()
-

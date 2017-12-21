@@ -130,10 +130,13 @@ class RigifyPreferences(AddonPreferences):
             rig_lists.rigs_dict.pop('external')
             return
 
-        if custom_rigs_folder not in sys.path:
-            sys.path.append(bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder)
+        if 'rigs' in os.listdir(custom_rigs_folder):
+            custom_rigs_folder = os.path.join(custom_rigs_folder, 'rigs', '')
 
-        rig_lists.get_external_rigs()
+        if custom_rigs_folder not in sys.path:
+            sys.path.append(custom_rigs_folder)
+
+        rig_lists.get_external_rigs(custom_rigs_folder)
         if rig_lists.rigs_dict['external']:
             # Add external rig parameters
             for rig in rig_lists.rigs_dict['external']['rig_list']:
