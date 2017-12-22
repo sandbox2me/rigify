@@ -33,9 +33,8 @@ from .utils import create_root_widget
 from .utils import random_id
 from .utils import copy_attributes
 from .utils import gamma_correct
-from .rig_ui_template import UI_SLIDERS, layers_ui, UI_REGISTER
-
 from . import rig_lists
+from .utils import get_ui_template_module
 
 RIG_MODULE = "rigs"
 ORG_LAYER = [n == 31 for n in range(0, 32)]  # Armature layer that original bones should be moved to.
@@ -496,11 +495,14 @@ def generate_rig(context, metarig):
 
     id_store.rigify_rig_ui = script.name
 
-    script.write(UI_SLIDERS % rig_id)
+    id_store = context.armature
+    template_name = id_store.rigify_templates[id_store.rigify_active_template].name
+    template = get_ui_template_module(template_name)
+    script.write(template.UI_SLIDERS % rig_id)
     for s in ui_scripts:
         script.write("\n        " + s.replace("\n", "\n        ") + "\n")
-    script.write(layers_ui(vis_layers, layer_layout))
-    script.write(UI_REGISTER)
+    script.write(template.layers_ui(vis_layers, layer_layout))
+    script.write(template.UI_REGISTER)
     script.use_module = True
 
     # Run UI script
@@ -624,7 +626,9 @@ def get_bone_rigs(obj, bone_name, halt_on_missing=False):
 
         # Get the rig
         try:
-            if rig_type in rig_lists.rigs_dict['external']['rig_list']:
+            if (
+                    'external' in rig_lists.rigs_dict
+                    and rig_type in rig_lists.rigs_dict['external']['rig_list']):
                 custom_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_folder
                 custom_rigs_folder = os.path.join(custom_folder, RIG_DIR, '')
                 rig = get_rig_type(rig_type, custom_rigs_folder)

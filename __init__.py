@@ -37,8 +37,9 @@ if "bpy" in locals():
     importlib.reload(utils)
     importlib.reload(metarig_menu)
     importlib.reload(rig_lists)
+    importlib.reload(template_list)
 else:
-    from . import utils, rig_lists, generate, ui, metarig_menu
+    from . import utils, rig_lists, template_list, generate, ui, metarig_menu
 
 import bpy
 import sys
@@ -46,7 +47,6 @@ import os
 from bpy.types import AddonPreferences
 from bpy.props import BoolProperty
 from bpy.props import StringProperty
-
 
 class RigifyPreferences(AddonPreferences):
     # this must match the addon name, use '__package__'
@@ -276,6 +276,10 @@ class RigifySelectionColors(bpy.types.PropertyGroup):
                                            )
 
 
+class RigifyTemplate(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty()
+
+
 class RigifyParameters(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty()
 
@@ -308,6 +312,7 @@ def register():
     metarig_menu.register()
 
     bpy.utils.register_class(RigifyName)
+    bpy.utils.register_class(RigifyTemplate)
     bpy.utils.register_class(RigifyParameters)
 
     bpy.utils.register_class(RigifyColorSet)
@@ -395,6 +400,9 @@ def register():
     if (ui and 'legacy' in str(ui)) or bpy.context.user_preferences.addons['rigify'].preferences.legacy_mode:
         # update legacy on restart or reload
         bpy.context.user_preferences.addons['rigify'].preferences.legacy_mode = True
+    IDStore = bpy.types.Armature
+    IDStore.rigify_templates = bpy.props.CollectionProperty(type=RigifyTemplate)
+    IDStore.rigify_active_template = bpy.props.IntProperty(name="Rigify Active Template", description="The selected ui template", default=1)
 
     # Add rig parameters
     for rig in rig_lists.rig_list:
@@ -431,7 +439,12 @@ def unregister():
     del IDStore.rigify_transfer_start_frame
     del IDStore.rigify_transfer_end_frame
 
+    IDStore = bpy.types.Armature
+    del IDStore.rigify_templates
+    del IDStore.rigify_active_template
+
     bpy.utils.unregister_class(RigifyName)
+    bpy.utils.unregister_class(RigifyTemplate)
     bpy.utils.unregister_class(RigifyParameters)
 
     bpy.utils.unregister_class(RigifyColorSet)

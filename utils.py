@@ -32,6 +32,7 @@ from rna_prop_ui import rna_idprop_ui_prop_get
 
 RIG_DIR = "rigs"  # Name of the directory where rig types are kept
 METARIG_DIR = "metarigs"  # Name of the directory where metarigs are kept
+TEMPLATE_DIR = "ui_templates"  # Name of the directory where ui templates are kept
 
 ORG_PREFIX = "ORG-"  # Prefix of original bones.
 MCH_PREFIX = "MCH-"  # Prefix of mechanism bones.
@@ -996,6 +997,15 @@ def get_metarig_module(metarig_name, base_path):
     return submod
 
 
+def get_ui_template_module(template_name):
+    """ Fetches a ui template module by name, and returns it.
+    """
+    name = ".%s.%s" % (TEMPLATE_DIR, template_name)
+    submod = importlib.import_module(name, package=MODULE_NAME)
+    importlib.reload(submod)
+    return submod
+
+
 def connected_children_names(obj, bone_name):
     """ Returns a list of bone names (in order) of the bones that form a single
         connected chain starting with the given bone as a parent.
@@ -1180,8 +1190,24 @@ def write_metarig(obj, layers=False, func_name="create", groups=False):
 
         code.append("\n    arm.layers = [(x in " + str(active_layers) + ") for x in range(" + str(len(arm.layers)) + ")]")
 
+    if func_name == "create":
+        active_template = arm.rigify_active_template
+        template_name = arm.rigify_templates[active_template].name
+        code.append("\n    # Select proper UI template")
+        code.append("    template_name = '{}'".format(template_name))
+        code.append("    arm_templates = arm.rigify_templates.items()")
+        code.append("    template_index = None")
+        code.append("    for i, template in enumerate(arm_templates):")
+        code.append("        if template[0] == template_name:")
+        code.append("            template_index = i")
+        code.append("            break")
+        code.append("    if template_index is None:")
+        code.append("        template_index = 0 # Default to something...")
+        code.append("    else:")
+        code.append("        arm.rigify_active_template = template_index")
+
     code.append('\nif __name__ == "__main__":')
-    code.append("    " + func_name + "(bpy.context.active_object)")
+    code.append("    " + func_name + "(bpy.context.active_object)\n")
 
     return "\n".join(code)
 
@@ -1192,7 +1218,7 @@ def write_widget(obj):
     script = ""
     script += "def create_thing_widget(rig, bone_name, size=1.0, bone_transform_name=None):\n"
     script += "    obj = create_widget(rig, bone_name, bone_transform_name)\n"
-    script += "    if obj != None:\n"
+    script += "    if obj is not None:\n"
 
     # Vertices
     if len(obj.data.vertices) > 0:
