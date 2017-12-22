@@ -111,11 +111,12 @@ class DATA_PT_rigify_buttons(bpy.types.Panel):
 
             col = layout.column(align=True)
             col.active = (not 'rig_id' in C.object.data)
-            if len(context.object.data.rigify_templates) == 0:
-                col.operator("pose.rigify_template_init")
-            else:
-                col.label("UI template for rig:")
-                col.template_list("DATA_UL_rigify_template_list", "rigify_templates", armature_id_store, "rigify_templates", armature_id_store, "rigify_active_template")
+            if len(template_list.template_list) > 1:
+                if len(context.object.data.rigify_templates) == 0:
+                    col.operator("pose.rigify_template_init")
+                else:
+                    col.label("UI template for rig:")
+                    col.template_list("DATA_UL_rigify_template_list", "rigify_templates", armature_id_store, "rigify_templates", armature_id_store, "rigify_active_template")
 
             col.separator()
             row = col.row()
