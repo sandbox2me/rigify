@@ -21,13 +21,15 @@ import os
 from . import utils
 
 
-def get_template_list():
+def get_template_list(path=''):
     """ Searches for template types, and returns a list.
     """
-    rigs = []
-    MODULE_DIR = os.path.dirname(__file__)
-    TTE_DIR_ABS = os.path.join(MODULE_DIR, utils.TEMPLATE_DIR)
-    files = os.listdir(TTE_DIR_ABS)
+    if not path:
+        MODULE_DIR = os.path.dirname(__file__)
+        TEMPLATE_DIR_ABS = os.path.join(MODULE_DIR, utils.TEMPLATE_DIR)
+    else:
+        TEMPLATE_DIR_ABS = path
+    files = os.listdir(TEMPLATE_DIR_ABS)
     files.sort()
 
     files = [f for f in files if f.endswith(".py")]
@@ -45,5 +47,14 @@ def fill_ui_template_list(obj):
         a = armature_id_store.rigify_templates.add()
         a.name = t[:-3]
 
+
 # Public variables
 template_list = get_template_list()
+
+
+def get_external_templates(custom_templates_folder):
+    global template_list
+    template_list = get_template_list()
+    if custom_templates_folder:
+        external_templates_list = get_template_list(custom_templates_folder)
+        template_list.extend(external_templates_list)

@@ -997,12 +997,27 @@ def get_metarig_module(metarig_name, base_path):
     return submod
 
 
-def get_ui_template_module(template_name):
+def get_ui_template_module(template_name, base_path=''):
     """ Fetches a ui template module by name, and returns it.
     """
-    name = ".%s.%s" % (TEMPLATE_DIR, template_name)
-    submod = importlib.import_module(name, package=MODULE_NAME)
-    importlib.reload(submod)
+    if not base_path:
+        name = ".%s.%s" % (TEMPLATE_DIR, template_name)
+        submod = importlib.import_module(name, package=MODULE_NAME)
+        importlib.reload(submod)
+    else:
+        if '.' in template_name:
+            module_subpath = str.join(os.sep, template_name.split('.'))
+            package = template_name.split('.')[0]
+            importlib.import_module(package)
+            for sub in template_name.split('.')[1:]:
+                package = '.'.join([package, sub])
+                importlib.import_module(package)
+        else:
+            module_subpath = template_name
+
+        spec = importlib.util.spec_from_file_location(template_name, base_path + module_subpath + '.py')
+        submod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(submod)
     return submod
 
 

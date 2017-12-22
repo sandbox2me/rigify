@@ -28,13 +28,13 @@ from rna_prop_ui import rna_idprop_ui_prop_get
 
 from .utils import MetarigError, new_bone, get_rig_type
 from .utils import ORG_PREFIX, MCH_PREFIX, DEF_PREFIX, WGT_PREFIX, ROOT_NAME, make_original_name
-from .utils import RIG_DIR
+from .utils import RIG_DIR, TEMPLATE_DIR
 from .utils import create_root_widget
 from .utils import random_id
 from .utils import copy_attributes
 from .utils import gamma_correct
-from . import rig_lists
 from .utils import get_ui_template_module
+from . import rig_lists
 
 RIG_MODULE = "rigs"
 ORG_LAYER = [n == 31 for n in range(0, 32)]  # Armature layer that original bones should be moved to.
@@ -497,7 +497,12 @@ def generate_rig(context, metarig):
 
     id_store = context.armature
     template_name = id_store.rigify_templates[id_store.rigify_active_template].name
-    template = get_ui_template_module(template_name)
+    try:
+        template = get_ui_template_module(template_name)
+    except:
+        custom_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_folder
+        custom_templates_folder = os.path.join(custom_folder, TEMPLATE_DIR, '')
+        template = get_ui_template_module(template_name, custom_templates_folder)
     script.write(template.UI_SLIDERS % rig_id)
     for s in ui_scripts:
         script.write("\n        " + s.replace("\n", "\n        ") + "\n")

@@ -132,6 +132,7 @@ class RigifyPreferences(AddonPreferences):
             if 'external' in metarig_menu.metarigs_dict:
                 metarig_menu.metarigs_dict.pop('external')
             custom_metarigs_folder = ''
+            custom_templates_folder = ''
 
         else:
             # Reload rigs
@@ -158,7 +159,12 @@ class RigifyPreferences(AddonPreferences):
                 if custom_metarigs_folder not in sys.path:
                     sys.path.append(custom_metarigs_folder)
 
+            # Reload templates
+            if utils.TEMPLATE_DIR in os.listdir(custom_folder):
+                custom_templates_folder = os.path.join(custom_folder, utils.TEMPLATE_DIR)
+
         metarig_menu.get_external_metarigs(custom_metarigs_folder)
+        template_list.get_external_templates(custom_templates_folder)
 
     legacy_mode = BoolProperty(
         name='Rigify Legacy Mode',
@@ -402,7 +408,7 @@ def register():
         bpy.context.user_preferences.addons['rigify'].preferences.legacy_mode = True
     IDStore = bpy.types.Armature
     IDStore.rigify_templates = bpy.props.CollectionProperty(type=RigifyTemplate)
-    IDStore.rigify_active_template = bpy.props.IntProperty(name="Rigify Active Template", description="The selected ui template", default=1)
+    IDStore.rigify_active_template = bpy.props.IntProperty(name="Rigify Active Template", description="The selected ui template", default=0)
 
     # Add rig parameters
     for rig in rig_lists.rig_list:
