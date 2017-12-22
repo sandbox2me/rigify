@@ -29,6 +29,7 @@ from .utils import unique_name
 from .utils import upgradeMetarigTypes, outdated_types
 from .utils import get_keyed_frames, bones_in_frame
 from .utils import overwrite_prop_animation
+from .utils import RIG_DIR
 from .rigs.utils import get_limb_generated_names
 from . import rig_lists
 from . import generate
@@ -633,7 +634,8 @@ class BONE_PT_rigify_buttons(bpy.types.Panel):
         if rig_name != "":
             try:
                 if rig_name in rig_lists.rigs_dict['external']['rig_list']:
-                    custom_rigs_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
+                    custom_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_folder
+                    custom_rigs_folder = os.path.join(custom_folder, RIG_DIR, '')
                     rig = get_rig_type(rig_name, custom_rigs_folder)
                 else:
                     rig = get_rig_type(rig_name)
@@ -844,8 +846,8 @@ class Sample(bpy.types.Operator):
             context.user_preferences.edit.use_global_undo = False
             try:
                 if 'external' in rig_lists.rigs_dict and self.metarig_type in rig_lists.rigs_dict['external']['rig_list']:
-                    custom_rigs_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
-                    custom_rigs_folder = os.path.join(custom_rigs_folder, 'rigs', '')
+                    custom_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_folder
+                    custom_rigs_folder = os.path.join(custom_folder, RIG_DIR, '')
                     rig = get_rig_type(self.metarig_type, custom_rigs_folder)
                 else:
                     rig = get_rig_type(self.metarig_type)

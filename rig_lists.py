@@ -66,7 +66,7 @@ def get_rig_list(path, mode='relative'):
                 rig = utils.get_rig_type(module_name, base_path=base_path)
             else:
                 module_name = "__init__"
-                rig = utils.get_rig_type(module_name, base_path=base_path + f + os.sep)
+                rig = utils.get_rig_type(module_name, base_path=os.path.join(base_path, f, ''))
             # Check if it's a rig itself
             if hasattr(rig, "Rig"):
                 rigs += [f]
@@ -82,10 +82,10 @@ def get_rig_list(path, mode='relative'):
                 module_name = os.path.join(path, t).replace(os.sep, ".")
                 rig = utils.get_rig_type(module_name, base_path=base_path)
             else:
-                external_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
-                external_folder = os.path.join(external_folder, 'rigs', '')
-                module_name = os.path.join(path, t).replace(external_folder, '').replace(os.sep, ".")
-                rig = utils.get_rig_type(module_name, base_path=external_folder)
+                custom_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_folder
+                custom_rigs_folder = os.path.join(custom_folder, utils.RIG_DIR, '')
+                module_name = os.path.join(path, t).replace(custom_rigs_folder, '').replace(os.sep, ".")
+                rig = utils.get_rig_type(module_name, base_path=custom_rigs_folder)
             if hasattr(rig, "Rig"):
                 rigs += [t]
             if hasattr(rig, 'IMPLEMENTATION') and rig.IMPLEMENTATION:

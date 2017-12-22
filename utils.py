@@ -972,13 +972,27 @@ def get_rig_type(rig_type, base_path=''):
     return submod
 
 
-def get_metarig_module(metarig_name, path=METARIG_DIR):
+def get_metarig_module(metarig_name, base_path):
     """ Fetches a rig module by name, and returns it.
     """
+    if not base_path:
+        name = ".%s.%s" % (METARIG_DIR, metarig_name)
+        submod = importlib.import_module(name, package=MODULE_NAME)
+        importlib.reload(submod)
+    else:
+        if '.' in metarig_name:
+            module_subpath = str.join(os.sep, metarig_name.split('.'))
+            package = metarig_name.split('.')[0]
+            importlib.import_module(package)
+            for sub in metarig_name.split('.')[1:]:
+                package = '.'.join([package, sub])
+                importlib.import_module(package)
+        else:
+            module_subpath = metarig_name
 
-    name = ".%s.%s" % (path, metarig_name)
-    submod = importlib.import_module(name, package=MODULE_NAME)
-    importlib.reload(submod)
+        spec = importlib.util.spec_from_file_location(metarig_name, base_path + module_subpath + '.py')
+        submod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(submod)
     return submod
 
 

@@ -124,27 +124,41 @@ class RigifyPreferences(AddonPreferences):
         if self.legacy_mode:
             return
 
-        custom_rigs_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
+        custom_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_folder
 
-        if custom_rigs_folder == "" and 'external' in rig_lists.rigs_dict:
-            rig_lists.rigs_dict.pop('external')
-            return
+        if custom_folder == "":
+            if 'external' in rig_lists.rigs_dict:
+                rig_lists.rigs_dict.pop('external')
+            if 'external' in metarig_menu.metarigs_dict:
+                metarig_menu.metarigs_dict.pop('external')
+            custom_metarigs_folder = ''
 
-        if 'rigs' in os.listdir(custom_rigs_folder):
-            custom_rigs_folder = os.path.join(custom_rigs_folder, 'rigs', '')
+        else:
+            # Reload rigs
+            if utils.RIG_DIR in os.listdir(custom_folder):
+                custom_rigs_folder = os.path.join(custom_folder, utils.RIG_DIR, '')
 
-        if custom_rigs_folder not in sys.path:
-            sys.path.append(custom_rigs_folder)
+                if custom_rigs_folder not in sys.path:
+                    sys.path.append(custom_rigs_folder)
 
-        rig_lists.get_external_rigs(custom_rigs_folder)
-        if rig_lists.rigs_dict['external']:
-            # Add external rig parameters
-            for rig in rig_lists.rigs_dict['external']['rig_list']:
-                r = utils.get_rig_type(rig, custom_rigs_folder)
-                try:
-                    r.add_parameters(RigifyParameters)
-                except AttributeError:
-                    pass
+                rig_lists.get_external_rigs(custom_rigs_folder)
+                if rig_lists.rigs_dict['external']:
+                    # Add external rig parameters
+                    for rig in rig_lists.rigs_dict['external']['rig_list']:
+                        r = utils.get_rig_type(rig, custom_rigs_folder)
+                        try:
+                            r.add_parameters(RigifyParameters)
+                        except AttributeError:
+                            pass
+
+            # Reload metarigs
+            if utils.METARIG_DIR in os.listdir(custom_folder):
+                custom_metarigs_folder = os.path.join(custom_folder, utils.METARIG_DIR)
+
+                if custom_metarigs_folder not in sys.path:
+                    sys.path.append(custom_metarigs_folder)
+
+        metarig_menu.get_external_metarigs(custom_metarigs_folder)
 
     legacy_mode = BoolProperty(
         name='Rigify Legacy Mode',
@@ -153,7 +167,7 @@ class RigifyPreferences(AddonPreferences):
         update=update_legacy
     )
 
-    custom_rigs_folder = StringProperty(
+    custom_folder = StringProperty(
         name='Rigify Custom Rigs',
         description='Folder Containing User Defined Rig Types',
         default='',
@@ -189,7 +203,7 @@ class RigifyPreferences(AddonPreferences):
         if expand:
             split = col.row().split(percentage=0.15)
             split.label('Description:')
-            split.label(text='This is the folder containing user defined Rig Types')
+            split.label(text='When enabled the add-on will run in legacy mode using the old 2.76b feature set.')
 
         box = column.box()
         rigs_expand = getattr(self, 'show_rigs_folder_expanded')
@@ -202,12 +216,12 @@ class RigifyPreferences(AddonPreferences):
         op = sub.operator('wm.context_toggle', text='', icon=icon,
                           emboss=False)
         op.data_path = 'addon_prefs.show_rigs_folder_expanded'
-        row.prop(self, 'custom_rigs_folder')
+        row.prop(self, 'custom_folder')
 
         if rigs_expand:
             split = col.row().split(percentage=0.15)
             split.label('Description:')
-            split.label(text='When enabled the add-on will run in legacy mode using the old 2.76b feature set.')
+            split.label(text='This is the folder containing user defined Rig Types')
 
         row = layout.row()
         row.label("End of Rigify Preferences")
@@ -390,10 +404,10 @@ def register():
         except AttributeError:
             pass
 
-    external_rigs_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder
+    external_rigs_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_folder
     if external_rigs_folder and not 'external' in rig_lists.rigs_dict:
         #force update on reload
-        bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder = external_rigs_folder
+        bpy.context.user_preferences.addons['rigify'].preferences.custom_folder = external_rigs_folder
 
 
 def unregister():
@@ -425,8 +439,8 @@ def unregister():
 
     bpy.utils.unregister_class(RigifyArmatureLayer)
 
-    if bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder in sys.path:
-        sys.path.remove(bpy.context.user_preferences.addons['rigify'].preferences.custom_rigs_folder)
+    if bpy.context.user_preferences.addons['rigify'].preferences.custom_folder in sys.path:
+        sys.path.remove(bpy.context.user_preferences.addons['rigify'].preferences.custom_folder)
     bpy.utils.unregister_class(RigifyPreferences)
 
     metarig_menu.unregister()

@@ -19,6 +19,7 @@
 # <pep8 compliant>
 
 import bpy
+import os
 import re
 import time
 import traceback
@@ -34,6 +35,7 @@ from .utils import copy_attributes
 from .utils import gamma_correct
 from .rig_ui_template import UI_SLIDERS, layers_ui, UI_REGISTER
 
+from . import rig_lists
 
 RIG_MODULE = "rigs"
 ORG_LAYER = [n == 31 for n in range(0, 32)]  # Armature layer that original bones should be moved to.
@@ -622,7 +624,13 @@ def get_bone_rigs(obj, bone_name, halt_on_missing=False):
 
         # Get the rig
         try:
-            rig = get_rig_type(rig_type).Rig(obj, bone_name, params)
+            if rig_type in rig_lists.rigs_dict['external']['rig_list']:
+                custom_folder = bpy.context.user_preferences.addons['rigify'].preferences.custom_folder
+                custom_rigs_folder = os.path.join(custom_folder, RIG_DIR, '')
+                rig = get_rig_type(rig_type, custom_rigs_folder)
+            else:
+                rig = get_rig_type(rig_type)
+            rig = rig.Rig(obj, bone_name, params)
         except ImportError:
             message = "Rig Type Missing: python module for type '%s' not found (bone: %s)" % (rig_type, bone_name)
             if halt_on_missing:
