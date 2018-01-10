@@ -469,11 +469,11 @@ def create(obj):
     pbone.bone.layers = [False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     pbone = obj.pose.bones[bones['Skirt']]
     pbone.rigify_type = 'pantin.skirt'
-    pbone.lock_location = (False, False, False)
-    pbone.lock_rotation = (False, False, False)
+    pbone.lock_location = (False, False, True)
+    pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
-    pbone.rotation_mode = 'QUATERNION'
+    pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
     pbone = obj.pose.bones[bones['Shin']]
     pbone.rigify_type = ''

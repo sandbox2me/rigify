@@ -553,8 +553,8 @@ def create(obj):
         pass
     pbone = obj.pose.bones[bones['Skirt']]
     pbone.rigify_type = 'pantin.skirt'
-    pbone.lock_location = (False, False, False)
-    pbone.lock_rotation = (False, False, False)
+    pbone.lock_location = (False, False, True)
+    pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'

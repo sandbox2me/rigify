@@ -42,6 +42,7 @@ class Rig:
 
         trackers = []
         flaps = []
+        flaps_MCH = []
 
         # Left and right tracking bones
         for side in ['.L', '.R']:
@@ -54,10 +55,15 @@ class Rig:
 
         # Front and rear bones
         for i, flap in enumerate(['.Front', '.Rear']):
-            flap_b = copy_bone(
+            flap_mch_b = copy_bone(
                 self.obj, self.org_bone,
                 make_mechanism_name(
                     strip_org(self.org_bone)) + flap
+            )
+            flaps_MCH.append(flap_mch_b)
+            flap_b = copy_bone(
+                self.obj, self.org_bone,
+                strip_org(self.org_bone) + flap
             )
             flaps.append(flap_b)
 
@@ -69,9 +75,9 @@ class Rig:
                 bone_index=i,
                 new_name=strip_org(self.org_bone) + flap)
 
-        # Parenting
-        if self.params.detach:
-            eb[self.head].use_connect = False
+            # Parenting
+            eb[flap_b].parent = eb[flap_mch_b]
+            eb[flap_b].use_connect = False
 
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
@@ -86,7 +92,19 @@ class Rig:
             con.target = self.obj
             con.subtarget = "ORG-" + shin
 
-        for f_i, f in enumerate(flaps):
+        for f in flaps:
+            # Widgets
+            widget_size = pb[f].length
+            pantin_utils.create_capsule_widget(
+                self.obj,
+                f,
+                length=widget_size,
+                width=widget_size*0.2,
+                head_tail=0.5,
+                horizontal=False
+            )
+
+        for f_i, f in enumerate(flaps_MCH):
             for s_i, shin in enumerate((self.params.shin_name_l, self.params.shin_name_r)):
                 con = pb[f].constraints.new('DAMPED_TRACK')
                 con.name = "Track " + shin
@@ -178,8 +196,8 @@ def create_sample(obj):
     bpy.ops.object.mode_set(mode='OBJECT')
     pbone = obj.pose.bones[bones['Skirt']]
     pbone.rigify_type = 'pantin.skirt'
-    pbone.lock_location = (False, False, False)
-    pbone.lock_rotation = (False, False, False)
+    pbone.lock_location = (False, False, True)
+    pbone.lock_rotation = (True, True, False)
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
