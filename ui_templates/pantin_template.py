@@ -398,7 +398,7 @@ class Rigify_Sort_Doubles(bpy.types.Operator):
                     continue
                 pb['bone_index'] = i
 
-        bpy.ops.pose.rigify_fill_members()
+        getattr(bpy.ops.pose, 'rigify_fill_members' + rig_id)()
         return {'FINISHED'}
 
 class Rigify_Reorder_Members(bpy.types.Operator):
