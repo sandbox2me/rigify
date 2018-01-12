@@ -201,6 +201,10 @@ def create_sample(obj):
     pbone.lock_rotation_w = False
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
+    try:
+        pbone.rigify_parameters.Z_index = 2.5
+    except AttributeError:
+        pass
 
     bpy.ops.object.mode_set(mode='EDIT')
     for bone in arm.edit_bones:

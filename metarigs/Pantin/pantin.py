@@ -475,6 +475,10 @@ def create(obj):
     pbone.lock_scale = (False, False, False)
     pbone.rotation_mode = 'XZY'
     pbone.bone.layers = [False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+    try:
+        pbone.rigify_parameters.Z_index = 2.5
+    except AttributeError:
+        pass
     pbone = obj.pose.bones[bones['Shin']]
     pbone.rigify_type = ''
     pbone.lock_location = (False, False, True)
