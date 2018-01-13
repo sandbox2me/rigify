@@ -53,6 +53,12 @@ class Rig:
             )
             trackers.append(tracker)
 
+        vertical = copy_bone(
+            self.obj, self.org_bone,
+            make_mechanism_name(
+                strip_org(self.org_bone)) + '.vertical'
+        )
+
         # Front and rear bones
         for i, flap in enumerate(['.Front', '.Rear']):
             flap_mch_b = copy_bone(
@@ -84,6 +90,17 @@ class Rig:
 
         # Constraints
 
+        con = pb[vertical].constraints.new('COPY_ROTATION')
+        con.name = "Copy Pelvis"
+        con.target = self.obj
+        con.subtarget = pb[self.org_bone].parent.name
+        con.use_x = False
+        con.use_y = False
+        con.use_z = True
+        con.invert_z = True
+        con.target_space = 'LOCAL'
+        con.owner_space = 'LOCAL'
+
         for f, shin in zip(trackers, (self.params.shin_name_l,
                                    self.params.shin_name_r)
                            ):
@@ -105,6 +122,12 @@ class Rig:
             )
 
         for f_i, f in enumerate(flaps_MCH):
+            con = pb[f].constraints.new('DAMPED_TRACK')
+            con.name = "Track vertical"
+            con.target = self.obj
+            con.subtarget = vertical
+            con.head_tail = 1.0
+
             for s_i, shin in enumerate((self.params.shin_name_l, self.params.shin_name_r)):
                 con = pb[f].constraints.new('DAMPED_TRACK')
                 con.name = "Track " + shin
@@ -121,9 +144,9 @@ class Rig:
                     relative = 'L <= R'
 
                 if s_i == 0:  # Left
-                    absolute = 'L '
+                    absolute = 'L+P '
                 else:  # Right
-                    absolute = 'R '
+                    absolute = 'R+P '
 
                 # Absolute component: do not track if rotation is below / above 0
                 if f_i == 0:  # Front
@@ -148,6 +171,15 @@ class Rig:
                 var.targets[0].bone_target = trackers[1]
                 var.targets[0].transform_type = 'ROT_Z'
                 var.targets[0].transform_space = 'LOCAL_SPACE'
+
+                var = driver.driver.variables.new()
+                var.type = 'TRANSFORMS'
+                var.name = 'P'
+                var.targets[0].id = self.obj
+                var.targets[0].bone_target = pb[self.org_bone].parent.name
+                var.targets[0].transform_type = 'ROT_Z'
+                var.targets[0].transform_space = 'LOCAL_SPACE'
+
 
         # return []
 
