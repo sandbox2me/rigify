@@ -153,6 +153,7 @@ class Rig:
                     empty_obj.parent = self.obj
                     empty_obj.parent_type = 'BONE'
                     empty_obj.parent_bone = ctrl_bone
+                    empty_obj.matrix_local = Matrix()
                     empty_obj.use_slow_parent = True
                     empty_obj.slow_parent_offset = 1.0
 
