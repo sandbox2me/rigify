@@ -63,12 +63,13 @@ for obj in bpy.data.objects:
 # Set up custom properties
 pb = obj.pose.bones
 root = pb["root"]
-prop = rna_idprop_ui_prop_get(root, "flip", create=True)
-root["flip"] = 0
-prop["soft_min"] = 0
-prop["soft_max"] = 1
-prop["min"] = 0
-prop["max"] = 1
+if not "flip" in root:
+    prop = rna_idprop_ui_prop_get(root, "flip", create=True)
+    root["flip"] = 0
+    prop["soft_min"] = 0
+    prop["soft_max"] = 1
+    prop["min"] = 0
+    prop["max"] = 1
 
 root.rotation_mode = 'XZY'
 
