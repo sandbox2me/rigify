@@ -83,28 +83,34 @@ def generate_rig(context, metarig):
 
     rig_new_name = ""
     rig_old_name = ""
-    if id_store.rigify_rig_basename:
-        rig_new_name = id_store.rigify_rig_basename + "_rig"
-
-    if id_store.rigify_generate_mode == 'overwrite':
-        name = id_store.rigify_target_rig or "rig"
-        try:
-            obj = scene.objects[name]
-            rig_old_name = name
-            obj.name = rig_new_name or name
-        except KeyError:
-            rig_old_name = name
-            name = rig_new_name or name
-            obj = bpy.data.objects.new(name, bpy.data.armatures.new(name))
-            obj.draw_type = 'WIRE'
-            scene.objects.link(obj)
+    if metarig.data.rigify_rig_basename:
+        rig_new_name = metarig.data.rigify_rig_basename + "_rig"
     else:
-        name = rig_new_name or "rig"
-        obj = bpy.data.objects.new(name, bpy.data.armatures.new(name))  # in case name 'rig' exists it will be rig.001
+        rig_new_name = "rig"
+
+    if metarig.data.rigify_generate_mode == 'overwrite':
+        if metarig.data.rigify_target_rig is not None:
+            rig_old_name = metarig.data.rigify_target_rig.name
+            obj = metarig.data.rigify_target_rig
+            obj.name = rig_new_name or obj.name
+        else:
+            name = rig_new_name
+            if name in bpy.data.objects:
+                obj = bpy.data.objects[name]
+            else:
+                obj = bpy.data.objects.new(name, bpy.data.armatures.new(name))
+                obj.draw_type = 'WIRE'
+                scene.objects.link(obj)
+    else:
+        name = rig_new_name
+        obj = bpy.data.objects.new(name, bpy.data.armatures.new(name))
         obj.draw_type = 'WIRE'
         scene.objects.link(obj)
 
-    id_store.rigify_target_rig = obj.name
+    if obj.name not in bpy.context.scene.objects:  # rig exists but deleted
+        bpy.context.scene.objects.link(obj)
+
+    metarig.data.rigify_target_rig = obj
     obj.data.pose_position = 'POSE'
 
     # Get rid of anim data in case the rig already existed
@@ -118,7 +124,7 @@ def generate_rig(context, metarig):
 
     # Remove wgts if force update is set
     wgts_group_name = "WGTS_" + (rig_old_name or obj.name)
-    if wgts_group_name in scene.objects and id_store.rigify_force_widget_update:
+    if wgts_group_name in scene.objects and metarig.data.rigify_force_widget_update:
         bpy.ops.object.select_all(action='DESELECT')
         for i, lyr in enumerate(WGT_LAYERS):
             if lyr:
@@ -476,23 +482,25 @@ def generate_rig(context, metarig):
         layer_layout += [(l.name, l.row)]
 
     # Generate the UI script
-    if id_store.rigify_generate_mode == 'overwrite':
-        rig_ui_name = id_store.rigify_rig_ui or 'rig_ui.py'
+    if metarig.data.rigify_rig_basename:
+        script_name = metarig.data.rigify_rig_basename + "_rig_ui.py"
     else:
-        rig_ui_name = 'rig_ui.py'
+        script_name = "rig_ui.py"
 
-    if id_store.rigify_generate_mode == 'overwrite' and rig_ui_name in bpy.data.texts.keys():
-        script = bpy.data.texts[rig_ui_name]
-        script.clear()
+    if metarig.data.rigify_generate_mode == 'overwrite':
+        if metarig.data.rigify_rig_ui:
+            script = metarig.data.rigify_rig_ui
+        else:
+            if script_name in bpy.data.texts:
+                script = bpy.data.texts[script_name]
+            else:
+                script = bpy.data.texts.new(script_name)
     else:
         script = bpy.data.texts.new("rig_ui.py")
 
-    rig_ui_old_name = ""
-    if id_store.rigify_rig_basename:
-        rig_ui_old_name = script.name
-        script.name = id_store.rigify_rig_basename + "_rig_ui.py"
+    script.name = script_name
 
-    id_store.rigify_rig_ui = script.name
+    metarig.data.rigify_rig_ui = script
 
     script.write(UI_SLIDERS % rig_id)
     for s in ui_scripts:
