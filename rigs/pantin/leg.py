@@ -285,6 +285,9 @@ class Rig:
                     overshoot=True
                 )
 
+                # Default follow value
+                pb[ulimb_fk]["follow"] = 0.0
+
             # Foot WGT
             down = pb[heel_fr].head.z
             left = pb[heel_fr].head.x - (side_factor - 1) * pb[heel_fr].length

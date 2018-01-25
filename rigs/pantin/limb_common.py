@@ -382,14 +382,20 @@ class FKLimb:
 
         ulimb_fk_name = pantin_utils.strip_LR_numbers(
             strip_org(self.org_bones[0])) + '.FK' + self.side_suffix
+        follow_name = pantin_utils.strip_LR_numbers(
+            make_mechanism_name(
+                strip_org(
+                    self.org_bones[0])
+                )
+            ) + '.FK.follow' + self.side_suffix
         target = eb[self.org_bones[0]].parent_recursive[-1].name
         target = strip_org(target)
         ulimb_fk, ulimb_follow = pantin_utils.make_follow(
             self.obj,
             self.org_bones[0],
             target,
-            ctrl_name=ulimb_fk_name
-        )
+            ctrl_name=ulimb_fk_name,
+            follow_name=follow_name)
         flimb_fk = copy_bone(
             self.obj,
             self.org_bones[1],

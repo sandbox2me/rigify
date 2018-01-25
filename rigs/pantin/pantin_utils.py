@@ -188,7 +188,7 @@ def create_deformation(obj,
 #     var_pf.targets[0].data_path = bone_p.path_from_id() + '["pelvis_follow"]'
 
 
-def make_follow(obj, b, target, ctrl_name=None):
+def make_follow(obj, b, target, ctrl_name=None, follow_name=None):
     eb = obj.data.edit_bones
 
     # Control bone
@@ -197,17 +197,19 @@ def make_follow(obj, b, target, ctrl_name=None):
     ctrl_bone = copy_bone(obj, b, ctrl_name)
 
     # Follow bone
-
+    if follow_name is None:
+        follow_name = make_mechanism_name(strip_org(b)) + ".follow"
     follow_bone = copy_bone(
         obj,
         b,
-        make_mechanism_name(strip_org(b)) + ".follow"
+        follow_name
     )
     eb[follow_bone].tail = eb[follow_bone].head + Vector((0, 0, 0.1))
     align_bone_z_axis(obj, follow_bone, Vector((0, 1, 0)))
 
     # Parenting
-    bone_parent_name = strip_org(eb[b].parent.name)
+    bone_parent_name = eb[b].parent.name
+    eb[ctrl_bone].use_connect = False
     eb[follow_bone].parent = eb[bone_parent_name]
     eb[ctrl_bone].use_connect = False
     eb[ctrl_bone].parent = eb[follow_bone]
@@ -223,28 +225,34 @@ def make_follow(obj, b, target, ctrl_name=None):
     prop["min"] = 0.0
     prop["max"] = 1.0
 
-    con = pb[follow_bone].constraints.new('COPY_ROTATION')
-    con.name = "follow"
-    con.target = obj
-    con.subtarget = target
-    con.use_x = True
-    con.use_y = True
-    con.use_z = True
-    con.target_space = 'WORLD'
-    # TODO investigate strange behaviour with FLIP
-    con.owner_space = 'WORLD'
+    for i_c, con_name in enumerate(('follow', 'follow_inverse')):
+        con = pb[follow_bone].constraints.new('COPY_ROTATION')
+        con.name = con_name
+        con.target = obj
+        con.subtarget = target
+        con.use_x = True
+        con.use_y = True
+        con.use_z = True
+        if i_c:
+            con.invert_x = True
+            con.invert_y = True
+            con.invert_z = True
+            con.invert_z = True
+        con.target_space = 'LOCAL' if i_c else 'WORLD'
+        con.owner_space = 'LOCAL' if i_c else 'WORLD'
+        # TODO investigate strange behaviour with FLIP
 
-    # Drivers
-    driver = obj.driver_add(con.path_from_id("influence"))
-    driver.driver.expression = '1-follow'
-    var_pf = driver.driver.variables.new()
+        # Drivers
+        driver = obj.driver_add(con.path_from_id("influence"))
+        driver.driver.expression = '1-follow'
+        var_pf = driver.driver.variables.new()
 
-    var_pf.type = 'SINGLE_PROP'
-    var_pf.name = 'follow'
-    var_pf.targets[0].id_type = 'OBJECT'
-    var_pf.targets[0].id = obj
-    var_pf.targets[0].data_path = pb[ctrl_bone].path_from_id() + '["follow"]'
-    bpy.ops.object.mode_set(mode='EDIT')
+        var_pf.type = 'SINGLE_PROP'
+        var_pf.name = 'follow'
+        var_pf.targets[0].id_type = 'OBJECT'
+        var_pf.targets[0].id = obj
+        var_pf.targets[0].data_path = pb[ctrl_bone].path_from_id() + '["follow"]'
+        bpy.ops.object.mode_set(mode='EDIT')
 
     return ctrl_bone, follow_bone
 
