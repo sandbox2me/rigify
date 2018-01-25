@@ -60,6 +60,25 @@ class Rig:
             self.params.chain_type = "Curve"
 
     def generate(self):
+        def parent_ctrl(eb, child, parent_to=None):
+            """This tries to parent the child to a .L/.R bone."""
+            # Get parent if none supplied
+            if parent_to is None and eb[child].parent is not None:
+                parent_to = eb[child].parent.name
+            print(parent_to)
+
+            if parent_to + self.params.object_side in eb:
+                eb[child].parent = (eb[parent_to
+                                        + self.params.object_side])
+            elif parent_to in eb:
+                eb[child].parent = eb[parent_to]
+            elif 'MCH-Flip' in eb:
+                eb[child].parent = eb['MCH-Flip']
+            else:
+                raise Exception(
+                    "RIGIFY ERROR: Bone %s does not have a %s side"
+                    % (strip_org(eb[b].parent.name), side))
+
         if self.params.use_parent_Z_index and self.org_parent is not None:
             # Get parent's Z indices
             bpy.ops.object.mode_set(mode='OBJECT')
@@ -68,9 +87,8 @@ class Rig:
             if (self.params.object_side != ".C" and
                     def_parent_name[-2:] not in ['.L', '.R']):
                 def_parent_name += self.params.object_side
-            # print("DEF PARENT", def_parent_name)
             if not def_parent_name in pb:
-                raise MetarigError(
+                raise Exception(
                     "RIGIFY ERROR: Bone %s does not have a %s side" % (
                         strip_org(self.org_parent), self.params.object_side))
             parent_p = pb[def_parent_name]
@@ -127,9 +145,11 @@ class Rig:
                     ctrl_bone_e.use_connect = False
                     if self.params.curve_parent_to_first:
                         if i > 0:
-                            ctrl_bone_e.parent = eb[ctrl_chain[0]]
+                            parent_ctrl(eb, ctrl_bone, parent_to=ctrl_chain[0])
+                        else:
+                            parent_ctrl(eb, ctrl_bone, parent_to=self.org_parent)
                     else:
-                        ctrl_bone_e.parent = eb[self.org_parent]
+                        parent_ctrl(eb, ctrl_bone, parent_to=self.org_parent)
                     ctrl_bone_e.tail = (ctrl_bone_e.head
                                     + Vector((0, 0, 1)) * ctrl_bone_e.length)
                     align_bone_z_axis(self.obj, ctrl_bone, Vector((0, 1, 0)))
@@ -137,7 +157,8 @@ class Rig:
                 elif self.params.chain_type == 'Dynamic':
                     # Create an empty object to use slow parent
                     # What follows is quite dirty.
-                    ctrl_bone_e.parent = eb[self.org_parent]
+                    # ctrl_bone_e.parent = eb[self.org_parent]
+                    parent_ctrl(eb, ctrl_bone)
 
                     empty_name = self.obj.name + "_" + strip_org(b) + '.dyn'
                     if empty_name in bpy.data.objects:
@@ -186,28 +207,9 @@ class Rig:
                 mch_chain.append(dyn_bone)
 
             # Parenting
-            if self.params.chain_type == 'Normal':
-                if i == 0:
-                    # First bone
-                    # TODO Check if parent still exists,
-                    # else check if .L / .R exists, else do nothing
-                    if eb[b].parent is not None:
-                        bone_parent_name = eb[b].parent.name
-                        if bone_parent_name + self.params.object_side in eb:
-                            ctrl_bone_e.parent = (eb[bone_parent_name
-                                                  + self.params.object_side])
-                        elif bone_parent_name in eb:
-                            ctrl_bone_e.parent = eb[bone_parent_name]
-                        else:
-                            raise MetarigError(
-                                "RIGIFY ERROR: Bone %s does not have a %s side"
-                                % (strip_org(eb[b].parent.name), side))
-                    elif 'MCH-Flip' in eb:
-                        ctrl_bone_e.parent = eb['MCH-Flip']
-                    else:
-                        raise MetarigError(
-                            "RIGIFY ERROR: Bone %s needs to have a parent"
-                            % strip_org(eb[b].name))
+            # if self.params.chain_type == 'Normal':
+            if (i == 0 and self.params.chain_type in ('Normal', 'Dynamic')):
+                parent_ctrl(eb, ctrl_bone)
 
             # Def bones
             def_bone = pantin_utils.create_deformation(
@@ -229,7 +231,7 @@ class Rig:
             if self.params.curve_parent_to_first:
                 ctrl_bone_e.parent = eb[ctrl_chain[0]]
             else:
-                ctrl_bone_e.parent = eb[self.org_parent]
+                parent_ctrl(eb, ctrl_bone, parent_to=self.org_parent)
             ctrl_bone_e.head = last_bone_e.tail
             ctrl_bone_e.tail = (ctrl_bone_e.head
                                 + (last_bone_e.tail - last_bone_e.head))
@@ -237,6 +239,8 @@ class Rig:
             ctrl_chain.append(ctrl_bone)
             ctrl_bone_e.layers = last_bone_e.layers
             # ctrl_bone_e.layers = layers
+
+
         bpy.ops.object.mode_set(mode='OBJECT')
         pb = self.obj.pose.bones
 
