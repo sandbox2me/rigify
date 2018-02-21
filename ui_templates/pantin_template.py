@@ -603,7 +603,7 @@ class DATA_PT_members_panel(bpy.types.Panel):
     bl_region_type = 'UI'
     # bl_context = "object"
     bl_options = {'DEFAULT_CLOSED'}
-    bl_idname = "PT_members"
+    bl_idname = rig_id + "PT_members"
 
     @classmethod
     def poll(self, context):
