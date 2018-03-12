@@ -137,7 +137,12 @@ class Rig:
         for i, b in enumerate(self.org_bones):
             # Control bones
             if self.params.chain_type in {'Normal', 'Curve', 'Dynamic'}:
-                ctrl_bone = copy_bone(self.obj, b, strip_org(b) + side)
+                if side in b:
+                    ctrl_bone_name = b
+                else:
+                    ctrl_bone_name = b + side
+                ctrl_bone_name = strip_org(ctrl_bone_name)
+                ctrl_bone = copy_bone(self.obj, b, ctrl_bone_name)
                 ctrl_bone_e = eb[ctrl_bone]
                 ctrl_chain.append(ctrl_bone)
 
